@@ -1,0 +1,4 @@
+# Copy only reviewed options into your own config.toml.
+# Keep credentials in environment variables or the tool's secure auth store.
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
