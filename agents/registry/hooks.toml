@@ -1,0 +1,3 @@
+schema_version = 1
+
+# Hook entries will use [[hooks]].

@@ -1,32 +1,135 @@
 # dotagents
 
-Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 규칙·스킬·프롬프트 저장소입니다. 공통 원본은 `agents/` 한 곳에만 두고, 도구별 파일은 원본 위치와 도구별 차이만 설명하는 얇은 어댑터입니다.
+Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 단일 원본입니다. 공통 규칙, 워크플로우, 직접 만든 스킬, 프롬프트, 훅, 외부 연동 규격과 도구별 어댑터를 한 저장소에서 관리하고 여러 프로젝트에 재사용합니다.
+
+현재 단계는 이 운영체계를 담을 구조와 설치 기반을 정의합니다. 제품 개발 워크플로우와 실제 훅·MCP·외부 스킬 동기화는 이 구조 위에 후속 작업으로 추가합니다.
 
 ## 원칙과 우선순위
 
-적용 우선순위는 **프로젝트 고유 규칙 → 도구 전용 설정 → 개인 공통 기본 규칙**입니다. 공통 규칙은 프로젝트가 선택한 프레임워크, 패키지 매니저, 테스트 도구, 브랜치 정책을 바꾸지 않습니다.
+적용 우선순위는 **프로젝트 고유 규칙 → 도구 전용 설정 → 개인 공통 기본 규칙**입니다. 공통 설정은 프로젝트가 선택한 프레임워크, 패키지 매니저, 테스트 도구, 브랜치 정책을 바꾸지 않습니다.
 
-`agents/rules/`와 `agents/skills/`가 단일 원본(SSOT)입니다. 전역 설치에서는 `~/.agents`가 이 원본을 가리키고, 프로젝트 설치에서는 `<project>/.agents`가 가리킵니다. Claude·Codex·Gemini 진입 파일은 규칙 본문을 복제하지 않습니다.
+- `agents/`는 사람이 편집하는 모든 AI 자산의 단일 원본(SSOT)입니다.
+- `tooling/`은 설치, 생성, 갱신, 진단, 검증을 담당합니다.
+- `docs/`는 구조를 넘어서는 긴 설명과 설계 결정을 보관합니다.
+- `dist/`는 원본에서 생성한 도구별 최종본을 위한 출력 영역입니다.
+- 행동과 설명은 Markdown으로, 목록·버전·프로필 같은 기계 판독 정보는 TOML로 관리합니다.
+- 비밀 값과 로컬 세션 상태는 저장소에 넣지 않습니다.
 
-## 구조
+## 저장소 구조
+
+루트는 원본, 관리 도구, 문서, 생성 결과만 드러내도록 작게 유지합니다.
 
 ```text
 .
-├── AGENTS.md                 # 이 저장소 자체의 작업 규칙
-├── agents/
-│   ├── rules/                # 공통 규칙 SSOT
-│   ├── skills/README.md      # 재사용 스킬 추가 규약
-│   └── prompts/README.md     # 재사용 프롬프트 추가 규약
-├── claude/                   # Claude 어댑터와 안전한 설정 예제
-├── codex/                    # Codex 어댑터와 안전한 설정 예제
-├── gemini/                   # Gemini 어댑터
-├── templates/generic/        # 일반 프로젝트 템플릿
-├── templates/nextjs/         # 범용 Next.js 템플릿과 선택형 FSD 규칙
-├── scripts/                  # 설치·제거·검증
-└── tests/                    # 격리된 설치 시나리오 테스트
+├── AGENTS.md
+├── README.md
+├── dotagents.toml                 # 저장소 레이아웃 메타데이터
+├── agents/                        # 모든 공통 AI 자산의 원본
+│   ├── rules/                     # 행동·코딩·Git·보안 규칙
+│   ├── routing/                   # 요청을 워크플로우와 스킬로 연결하는 규격
+│   ├── workflows/                 # 여러 스킬을 조합한 개발 절차
+│   ├── skills/
+│   │   ├── owned/                 # 직접 만든 스킬
+│   │   └── wrappers/              # 외부 스킬의 로컬 보정 계층
+│   ├── prompts/                   # 재사용 프롬프트
+│   ├── hooks/                     # 세션·도구·출하 수명주기 훅 규격
+│   ├── profiles/                  # 프로젝트 유형별 구성 조합
+│   ├── integrations/
+│   │   ├── skills/                # gstack, Superpowers 등 외부 스킬 연동
+│   │   ├── mcp/                   # 외부 MCP 연동
+│   │   ├── plugins/               # 외부 플러그인 연동
+│   │   └── tools/                 # 브라우저·CLI 등 외부 도구 연동
+│   ├── adapters/
+│   │   ├── claude/                # Claude Code 진입 파일과 설정 예제
+│   │   ├── codex/                 # Codex 진입 파일과 설정 예제
+│   │   └── gemini/                # Gemini CLI 진입 파일
+│   ├── registry/                  # 외부 자산 목록과 버전 잠금
+│   └── templates/                 # 범용·스택별 프로젝트 템플릿
+├── tooling/
+│   ├── scripts/                   # 설치·제거·검증 명령
+│   ├── schemas/                   # 향후 TOML/JSON 스키마
+│   └── tests/                     # 격리 설치·구조·회귀 테스트
+├── docs/
+│   └── decisions/                 # 장기 설계 결정 기록
+└── dist/                          # 생성된 Claude/Codex/Gemini 최종본
 ```
 
-지원 대상은 macOS의 zsh/bash 환경과 Claude Code, Codex, Gemini CLI입니다. 스크립트는 POSIX 경로와 `bash`를 사용합니다.
+`tooling/schemas/`는 첫 기계 판독 설정 소비자와 함께 추가합니다. 소비자 없이 스키마만 미리 고정하지 않습니다.
+
+## 영역별 규격
+
+### Rules, routing, workflows
+
+- 범용 규칙은 `agents/rules/<topic>.md`에 작고 독립적인 문서로 둡니다.
+- 라우팅은 요청의 종류와 규모에 따라 사용할 워크플로우 또는 단일 스킬을 선택합니다.
+- 워크플로우는 `agents/workflows/<name>/` 아래에 사람용 `WORKFLOW.md`와 기계 판독용 `workflow.toml`을 함께 둘 수 있습니다.
+- 워크플로우는 진입 조건, 단계, 입력·출력 산출물, 사용자 승인 지점, 실패·복구 방법, 선택 단계를 명시합니다.
+
+간단한 수정에 전체 프로세스를 강제하지 않습니다. 예를 들어 오타 수정은 구현과 검증만, 버그는 조사와 회귀 테스트를, 큰 기능은 문제 정의부터 계획·구현·QA·회고까지 실행할 수 있어야 합니다.
+
+### Skills and prompts
+
+- 직접 만든 스킬은 `agents/skills/owned/<name>/SKILL.md`에 둡니다.
+- 외부 스킬을 수정하지 않고 보정할 때는 `agents/skills/wrappers/<name>/SKILL.md`를 사용합니다.
+- 외부 원본 자체는 복사하지 않고 `agents/registry/skills.toml`과 `sources.lock`에 출처와 고정 버전을 기록합니다.
+- 프롬프트는 목적, 입력, 출력, 사용 조건, 안전 제한을 문서화합니다.
+
+### Hooks
+
+훅은 세션 시작, 도구 실행 전후, 커밋 전, 출하 전, 컨텍스트 복구 같은 수명주기 작업을 담당합니다. 각 훅은 실행 조건, 지원 호스트, 부작용, 실패 정책을 명시하고 `agents/registry/hooks.toml`에 등록합니다.
+
+훅은 로컬 명령을 실행할 수 있는 신뢰 경계입니다. 검토되지 않은 외부 훅을 자동 활성화하지 않습니다.
+
+### Integrations and registry
+
+`agents/integrations/`에는 외부 자산의 전체 복사본이 아니라 설치 방법, 설정 템플릿, health check, 호스트별 차이와 로컬 wrapper를 둡니다.
+
+- `skills.toml`: 내부·외부 스킬 ID, 출처, 지원 호스트, 적용 프로필
+- `mcp.toml`: MCP 용도, transport, 필요한 환경 변수 이름, 권한과 health check
+- `hooks.toml`: 훅 이벤트, 실행 항목, 지원 호스트, 기본 활성화 정책
+- `plugins.toml`: 외부 플러그인 출처, 버전, 설치 대상
+- `sources.lock`: 실제로 검토한 태그나 커밋을 고정하는 잠금 파일
+
+API 키, 토큰, 쿠키, 실제 endpoint 인증값은 레지스트리에 넣지 않습니다. `GITHUB_TOKEN`처럼 필요한 환경 변수의 이름만 기록합니다.
+
+### Profiles, adapters, dist
+
+프로필은 `minimal`, `default`, `full`, `nextjs`처럼 규칙·스킬·훅·연동 묶음을 선택하는 단위입니다. 프로젝트는 프로필을 선택한 뒤 로컬 규칙으로 필요한 차이만 덮어씁니다.
+
+어댑터는 공통 원본을 Claude Code, Codex, Gemini의 진입 형식으로 연결합니다. 현재 설치기는 `agents/adapters/`의 얇은 어댑터를 직접 링크합니다. 향후 생성기가 도입되면 `profile + project override + adapter`를 조합한 검토 완료 최종본을 `dist/`에 만듭니다.
+
+```text
+agents/ 원본
+  + profile
+  + project override
+  + host adapter
+        |
+        +--> dist/claude
+        +--> dist/codex
+        +--> dist/gemini
+```
+
+`dist/` 파일은 직접 편집하지 않고 원본을 수정한 뒤 다시 생성합니다.
+
+## 현재 범위와 후속 작업
+
+현재 저장소가 제공하는 것은 다음과 같습니다.
+
+- 공통 규칙과 도구별 얇은 어댑터
+- 범용 및 Next.js 프로젝트 템플릿
+- 전역·프로젝트 심볼릭 링크 설치와 안전한 제거
+- 충돌 감지, 강제 설치 전 백업, 제거 시 복구
+- 저장소 이동과 내부 경로 변경 후 재설치 복구
+- 구조, 비밀 패턴, 셸 문법과 설치 시나리오 검증
+
+다음 항목은 구조만 예약되어 있으며 아직 실행 기능이 아닙니다.
+
+- 이미지로 정의한 제품 개발 워크플로우 오케스트레이션
+- 외부 스킬·플러그인 다운로드와 버전 갱신
+- MCP 설정 생성과 health check
+- 호스트별 훅 설치와 실행
+- 프로필 합성 및 `dist/` 생성
+- 스킬 라우팅 및 행동 eval
 
 ## 설치
 
@@ -34,50 +137,52 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 규칙·스킬·프롬�
 
 ```bash
 cd /path/to/dotagents
-./scripts/install.sh --dry-run --global
-./scripts/install.sh --global
+./tooling/scripts/install.sh --dry-run --global
+./tooling/scripts/install.sh --global
 ```
 
 전역 모드는 다음 링크를 만듭니다.
 
 - `~/.agents` → 이 저장소의 `agents/`
-- `~/.claude/CLAUDE.md` → `claude/CLAUDE.md`
-- `~/.codex/AGENTS.md` → `codex/AGENTS.md`
-- `~/.gemini/GEMINI.md` → `gemini/GEMINI.md`
+- `~/.claude/CLAUDE.md` → `agents/adapters/claude/CLAUDE.md`
+- `~/.codex/AGENTS.md` → `agents/adapters/codex/AGENTS.md`
+- `~/.gemini/GEMINI.md` → `agents/adapters/gemini/GEMINI.md`
 
 기존 대상이 있으면 기본 동작은 충돌을 표시하고 아무것도 변경하지 않는 것입니다. `--force`는 기존 항목을 타임스탬프가 붙은 형제 경로로 백업한 뒤 설치합니다. 실제 설정을 먼저 검토하지 않은 상태에서는 `--force`를 사용하지 마세요.
 
 ```bash
-./scripts/install.sh --dry-run --global --force
+./tooling/scripts/install.sh --dry-run --global --force
 ```
 
 ### 프로젝트에 적용
 
 ```bash
-./scripts/install.sh --dry-run --project /path/to/project
-./scripts/install.sh --project /path/to/project
+./tooling/scripts/install.sh --dry-run --project /path/to/project
+./tooling/scripts/install.sh --project /path/to/project
 ```
 
-프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` 링크를 설치합니다. 기존 프로젝트 파일이 있으면 중단하므로 그 파일을 유지하면서 공통 규칙 경로만 직접 참고하거나, 내용을 검토한 뒤 명시적으로 `--force`를 사용해야 합니다. 프로젝트 고유 규칙을 새로 작성할 때는 다음 템플릿을 복사해 프로젝트 상황에 맞게 수정하세요.
+프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` 링크를 설치합니다. 기존 프로젝트 파일이 있으면 중단하므로 그 파일을 유지하면서 공통 규칙 경로만 직접 참고하거나, 내용을 검토한 뒤 명시적으로 `--force`를 사용해야 합니다.
+
+프로젝트 고유 규칙을 새로 작성할 때는 템플릿을 복사해 실제 상황에 맞게 수정하세요.
 
 ```bash
-cp templates/generic/AGENTS.md /path/to/project/AGENTS.md
+cp agents/templates/generic/AGENTS.md /path/to/project/AGENTS.md
 # 또는
-cp templates/nextjs/AGENTS.md /path/to/project/AGENTS.md
+cp agents/templates/nextjs/AGENTS.md /path/to/project/AGENTS.md
 ```
 
-Next.js 템플릿은 기술 선택을 자동으로 가정하지 않습니다. FSD를 실제로 채택한 프로젝트만 `templates/nextjs/fsd-optional.md`를 참고하세요.
+Next.js 템플릿은 기술 선택을 자동으로 가정하지 않습니다. FSD를 실제로 채택한 프로젝트만 `agents/templates/nextjs/fsd-optional.md`를 참고하세요.
 
 ## 제거
 
 설치 매니페스트에 기록되고 현재도 같은 원본을 가리키는 링크만 제거합니다. `--force` 설치 때 만든 백업은 대상 경로가 비어 있을 때 복원합니다. 사용자가 링크를 다른 대상으로 바꿨다면 건너뜁니다.
 
 ```bash
-./scripts/uninstall.sh --dry-run --global
-./scripts/uninstall.sh --global
+./tooling/scripts/uninstall.sh --dry-run --global
+./tooling/scripts/uninstall.sh --global
 
-./scripts/uninstall.sh --dry-run --project /path/to/project
-./scripts/uninstall.sh --project /path/to/project
+./tooling/scripts/uninstall.sh --dry-run --project /path/to/project
+./tooling/scripts/uninstall.sh --project /path/to/project
 ```
 
 전역 매니페스트는 `${XDG_STATE_HOME:-$HOME/.local/state}/dotagents/install.tsv`, 프로젝트 매니페스트는 `<project>/.dotagents-install.tsv`입니다.
@@ -85,24 +190,31 @@ Next.js 템플릿은 기술 선택을 자동으로 가정하지 않습니다. FS
 ## 검증
 
 ```bash
-bash -n scripts/install.sh
-bash -n scripts/uninstall.sh
-bash -n scripts/check.sh
-./scripts/install.sh --dry-run
-./scripts/uninstall.sh --dry-run
-./scripts/check.sh
-./tests/install_test.sh
+bash -n tooling/scripts/install.sh
+bash -n tooling/scripts/uninstall.sh
+bash -n tooling/scripts/check.sh
+./tooling/scripts/install.sh --dry-run
+./tooling/scripts/uninstall.sh --dry-run
+./tooling/scripts/check.sh
+./tooling/tests/install_test.sh
+./tooling/tests/structure_test.sh
 ```
 
-`check.sh`는 필수 파일, 깨진 링크, 셸 문법, 저장소 경로 하드코딩, 의심되는 비밀 패턴·파일명, 어댑터의 공통 규칙 중복, 설치 dry-run을 검사합니다. 탐지 시 비밀 값은 출력하지 않습니다.
+`check.sh`는 필수 구조, 깨진 링크, 셸 문법, 저장소 경로 하드코딩, 의심되는 비밀 패턴·파일명, 어댑터의 공통 규칙 중복, 레지스트리 기본 형식과 설치 dry-run을 검사합니다. 탐지 시 비밀 값은 출력하지 않습니다.
 
-## 규칙·스킬·프롬프트 추가
+## 자산 추가
 
-- 범용 규칙은 `agents/rules/<topic>.md`에 작고 독립적인 문서로 추가합니다.
-- 재사용 스킬은 `agents/skills/<skill-name>/SKILL.md`에 추가합니다.
-- 프롬프트는 `agents/prompts/`에 추가하고 입력·출력·사용 조건을 문서화합니다.
-- 특정 도구에서만 필요한 동작은 해당 도구 디렉터리의 어댑터에 최소한으로 적습니다.
-- 특정 프로젝트의 기술·아키텍처·검증 명령은 그 프로젝트의 로컬 규칙에 둡니다.
+- 공통 규칙: `agents/rules/<topic>.md`
+- 워크플로우: `agents/workflows/<name>/WORKFLOW.md`
+- 직접 만든 스킬: `agents/skills/owned/<name>/SKILL.md`
+- 외부 스킬 wrapper: `agents/skills/wrappers/<name>/SKILL.md`
+- 프롬프트: `agents/prompts/<name>.md`
+- 훅: `agents/hooks/<name>/`
+- 외부 연동: `agents/integrations/<kind>/<name>/`
+- 도구별 동작: `agents/adapters/<host>/`
+- 프로젝트 템플릿: `agents/templates/<profile>/`
+
+새 자산은 특정 프로젝트 경로, 비밀, 비공개 조직 정보, 불필요하게 고정된 도구 버전을 포함하지 않아야 합니다.
 
 ## 비밀 정보
 
@@ -113,12 +225,12 @@ API 키, 토큰, 쿠키, 세션, 개인 키, 실제 MCP 인증 정보, 비공개
 ```bash
 git clone <your-dotagents-repository-url> ~/Documents/GitHub/dotagents
 cd ~/Documents/GitHub/dotagents
-./scripts/check.sh
-./scripts/install.sh --dry-run --global
-./scripts/install.sh --global
+./tooling/scripts/check.sh
+./tooling/scripts/install.sh --dry-run --global
+./tooling/scripts/install.sh --global
 ```
 
-clone 위치를 바꾸면 기존 절대 심볼릭 링크는 이전 위치를 가리킵니다. 새 위치에서 같은 설치 명령을 다시 실행하면 dotagents가 소유한 링크를 새 원본으로 갱신합니다. 다른 기존 파일은 자동 변경하지 않습니다.
+clone 위치나 저장소 내부 어댑터 경로가 바뀌면 기존 절대 심볼릭 링크는 이전 위치를 가리킬 수 있습니다. 새 위치에서 같은 설치 명령을 다시 실행하면 dotagents가 소유한 링크를 새 원본으로 갱신합니다. 다른 기존 파일은 자동 변경하지 않습니다.
 
 ## 알려진 제한 사항
 
@@ -126,7 +238,7 @@ clone 위치를 바꾸면 기존 절대 심볼릭 링크는 이전 위치를 가
 - 기존 설정 파일과 구조적으로 병합하지 않습니다. 충돌을 중단하거나 `--force` 백업으로 처리합니다.
 - Windows는 지원하지 않습니다.
 - 설정 예제는 자동 설치하지 않습니다. 실제 설정과 비밀을 안전하게 병합하는 작업은 사용자 책임입니다.
-- 저장소 이동은 파일시스템이 추적할 수 없으므로 새 위치에서 설치 스크립트를 다시 실행해야 합니다.
+- 레지스트리, 프로필, 훅, `dist/`는 현재 구조 규격이며 아직 설치기에서 소비하지 않습니다.
 
 ## 라이선스
 

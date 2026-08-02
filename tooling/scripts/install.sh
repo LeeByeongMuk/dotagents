@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd -P)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 DRY_RUN=0
 FORCE=0
 MODE="global"
@@ -41,9 +41,9 @@ if [[ "$MODE" == "global" ]]; then
   manifest="$state_root/dotagents/install.tsv"
   entries=(
     "$target_root/.agents|$REPO_ROOT/agents"
-    "$target_root/.claude/CLAUDE.md|$REPO_ROOT/claude/CLAUDE.md"
-    "$target_root/.codex/AGENTS.md|$REPO_ROOT/codex/AGENTS.md"
-    "$target_root/.gemini/GEMINI.md|$REPO_ROOT/gemini/GEMINI.md"
+    "$target_root/.claude/CLAUDE.md|$REPO_ROOT/agents/adapters/claude/CLAUDE.md"
+    "$target_root/.codex/AGENTS.md|$REPO_ROOT/agents/adapters/codex/AGENTS.md"
+    "$target_root/.gemini/GEMINI.md|$REPO_ROOT/agents/adapters/gemini/GEMINI.md"
   )
 else
   [[ -n "$PROJECT_DIR" ]] || fail "project path is required"
@@ -53,9 +53,9 @@ else
   manifest="$target_root/.dotagents-install.tsv"
   entries=(
     "$target_root/.agents|$REPO_ROOT/agents"
-    "$target_root/AGENTS.md|$REPO_ROOT/codex/AGENTS.md"
-    "$target_root/CLAUDE.md|$REPO_ROOT/claude/CLAUDE.md"
-    "$target_root/GEMINI.md|$REPO_ROOT/gemini/GEMINI.md"
+    "$target_root/AGENTS.md|$REPO_ROOT/agents/adapters/codex/AGENTS.md"
+    "$target_root/CLAUDE.md|$REPO_ROOT/agents/adapters/claude/CLAUDE.md"
+    "$target_root/GEMINI.md|$REPO_ROOT/agents/adapters/gemini/GEMINI.md"
   )
 fi
 

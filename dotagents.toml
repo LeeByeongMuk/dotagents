@@ -1,0 +1,5 @@
+schema_version = 1
+name = "dotagents"
+source_root = "agents"
+tooling_root = "tooling"
+output_root = "dist"
