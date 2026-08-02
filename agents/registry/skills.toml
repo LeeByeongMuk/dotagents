@@ -1,0 +1,3 @@
+schema_version = 1
+
+# External and owned skill entries will use [[skills]].

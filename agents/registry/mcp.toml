@@ -1,0 +1,3 @@
+schema_version = 1
+
+# MCP server entries will use [[servers]].
