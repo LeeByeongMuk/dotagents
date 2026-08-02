@@ -42,8 +42,10 @@ if [[ "$MODE" == "global" ]]; then
   entries=(
     "$target_root/.agents|$REPO_ROOT/agents"
     "$target_root/.claude/CLAUDE.md|$REPO_ROOT/agents/adapters/claude/CLAUDE.md"
+    "$target_root/.claude/skills/product-development-workflow|$REPO_ROOT/agents/skills/owned/product-development-workflow"
     "$target_root/.codex/AGENTS.md|$REPO_ROOT/agents/adapters/codex/AGENTS.md"
     "$target_root/.gemini/GEMINI.md|$REPO_ROOT/agents/adapters/gemini/GEMINI.md"
+    "$target_root/.local/bin/dotagents-workflow|$REPO_ROOT/tooling/scripts/workflow.sh"
   )
 else
   [[ -n "$PROJECT_DIR" ]] || fail "project path is required"
@@ -55,9 +57,37 @@ else
     "$target_root/.agents|$REPO_ROOT/agents"
     "$target_root/AGENTS.md|$REPO_ROOT/agents/adapters/codex/AGENTS.md"
     "$target_root/CLAUDE.md|$REPO_ROOT/agents/adapters/claude/CLAUDE.md"
+    "$target_root/.claude/skills/product-development-workflow|$REPO_ROOT/agents/skills/owned/product-development-workflow"
     "$target_root/GEMINI.md|$REPO_ROOT/agents/adapters/gemini/GEMINI.md"
+    "$target_root/.dotagents/bin/dotagents-workflow|$REPO_ROOT/tooling/scripts/workflow.sh"
   )
 fi
+
+validate_target_parent() {
+  local target="$1"
+  local parent relative current component
+  local -a components
+  [[ "$target" == "$target_root"/* ]] || fail "install target escapes the target root: $target"
+  parent="$(dirname "$target")"
+  [[ "$parent" == "$target_root" ]] && return 0
+  relative="${parent#"$target_root"/}"
+  current="$target_root"
+  IFS='/' read -r -a components <<< "$relative"
+  for component in "${components[@]}"; do
+    [[ -n "$component" && "$component" != "." && "$component" != ".." ]] || fail "unsafe install path component: $target"
+    current="$current/$component"
+    if [[ "$MODE" == "project" && -L "$current" ]]; then
+      fail "project install parent must not be a symbolic link: $current"
+    fi
+    if [[ -e "$current" || -L "$current" ]]; then
+      [[ -d "$current" ]] || fail "install parent is not a directory: $current"
+    fi
+  done
+}
+
+for entry in "${entries[@]}"; do
+  validate_target_parent "${entry%%|*}"
+done
 
 echo "Mode: $MODE"
 echo "Repository: $REPO_ROOT"
@@ -66,6 +96,12 @@ echo "Targets:"
 for entry in "${entries[@]}"; do
   echo "  ${entry%%|*} -> ${entry#*|}"
 done
+if [[ "$MODE" == "global" ]]; then
+  case ":${PATH:-}:" in
+    *":$target_root/.local/bin:"*) ;;
+    *) echo "Warning: $target_root/.local/bin is not on PATH; use the full dotagents-workflow path or add it to PATH." ;;
+  esac
+fi
 
 previous_source() {
   local wanted="$1"
@@ -123,6 +159,7 @@ temp_manifest="${manifest}.tmp.$$"
 for entry in "${entries[@]}"; do
   target="${entry%%|*}"
   source="${entry#*|}"
+  validate_target_parent "$target"
   backup="$(previous_backup "$target" 2>/dev/null || echo '-')"
 
   if [[ -L "$target" && "$(readlink "$target")" == "$source" ]]; then

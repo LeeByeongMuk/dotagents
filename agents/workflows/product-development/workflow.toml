@@ -1,0 +1,103 @@
+schema_version = 1
+id = "product-development"
+state_version = 1
+
+[[stages]]
+number = 1
+id = "interview"
+title_ko = "그릴미 인터뷰"
+title_en = "Grill-me interview"
+artifact = "01-interview"
+optional = false
+predecessor = 0
+requires_approval = true
+
+[[stages]]
+number = 2
+id = "domain"
+title_ko = "도메인 파일 작성"
+title_en = "Domain document"
+artifact = "02-domain"
+optional = false
+predecessor = 1
+requires_approval = true
+
+[[stages]]
+number = 3
+id = "office-hours"
+title_ko = "gstack office hours"
+title_en = "gstack office hours"
+artifact = "03-design"
+optional = false
+predecessor = 2
+requires_approval = true
+
+[[stages]]
+number = 4
+id = "light-spec"
+title_ko = "라이트 스펙"
+title_en = "Light spec"
+artifact = "04-spec"
+optional = false
+predecessor = 3
+requires_approval = true
+
+[[stages]]
+number = 5
+id = "plan"
+title_ko = "플랜"
+title_en = "Plan"
+artifact = "05-plan"
+optional = false
+predecessor = 4
+requires_approval = true
+
+[[stages]]
+number = 6
+id = "plan-review"
+title_ko = "플랜 리뷰 검수"
+title_en = "Plan review"
+artifact = "06-plan-review"
+optional = false
+predecessor = 5
+requires_approval = true
+
+[[stages]]
+number = 7
+id = "implementation"
+title_ko = "서브에이전트 코드"
+title_en = "Subagent implementation"
+artifact = "07-implementation"
+optional = false
+predecessor = 6
+requires_approval = true
+
+[[stages]]
+number = 8
+id = "code-test-review"
+title_ko = "코드·테스트 리뷰"
+title_en = "Code and test review"
+artifact = "08-review"
+optional = false
+predecessor = 7
+requires_approval = true
+
+[[stages]]
+number = 9
+id = "architecture"
+title_ko = "아키텍처 평가·개선"
+title_en = "Architecture assessment and improvement"
+artifact = "09-architecture"
+optional = false
+predecessor = 8
+requires_approval = true
+
+[[stages]]
+number = 10
+id = "skill-retro"
+title_ko = "스킬 리팩터링 후보"
+title_en = "Skill-refactoring candidate"
+artifact = "10-skill-retro"
+optional = true
+predecessor = 9
+requires_approval = true

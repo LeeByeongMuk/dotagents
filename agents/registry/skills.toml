@@ -1,3 +1,84 @@
 schema_version = 1
 
-# External and owned skill entries will use [[skills]].
+[[skills]]
+id = "product-development-workflow"
+kind = "owned"
+source = "agents/skills/owned/product-development-workflow"
+license = "MIT"
+hosts = ["claude", "codex", "gemini"]
+profiles = ["default", "full"]
+workflows = ["product-development"]
+optional = false
+enabled_by_default = true
+
+[[skills]]
+id = "mattpocock-grilling"
+kind = "external"
+source_id = "mattpocock-skills"
+path = "skills/productivity/grilling/SKILL.md"
+license = "MIT"
+hosts = ["claude", "codex", "gemini"]
+profiles = ["full"]
+workflows = ["product-development:1"]
+optional = true
+enabled_by_default = false
+
+[[skills]]
+id = "gstack-office-hours"
+kind = "external"
+source_id = "gstack"
+path = "office-hours/SKILL.md"
+license = "MIT"
+hosts = ["claude", "codex", "gemini"]
+profiles = ["full"]
+workflows = ["product-development:3"]
+optional = true
+enabled_by_default = false
+
+[[skills]]
+id = "superpowers-writing-plans"
+kind = "external"
+source_id = "superpowers"
+path = "skills/writing-plans/SKILL.md"
+license = "MIT"
+hosts = ["claude", "codex", "gemini"]
+profiles = ["full"]
+workflows = ["product-development:5"]
+optional = true
+enabled_by_default = false
+
+[[skills]]
+id = "gstack-autoplan"
+kind = "external"
+source_id = "gstack"
+path = "autoplan/SKILL.md"
+license = "MIT"
+hosts = ["claude", "codex", "gemini"]
+profiles = ["full"]
+workflows = ["product-development:6"]
+optional = true
+enabled_by_default = false
+
+[[skills]]
+id = "gstack-review"
+kind = "external"
+source_id = "gstack"
+path = "review/SKILL.md"
+license = "MIT"
+hosts = ["claude", "codex", "gemini"]
+profiles = ["full"]
+workflows = ["product-development:8"]
+optional = true
+enabled_by_default = false
+
+[[skills]]
+id = "gstack-qa"
+kind = "external"
+source_id = "gstack"
+path = "qa/SKILL.md"
+license = "MIT"
+hosts = ["claude", "codex", "gemini"]
+profiles = ["full"]
+workflows = ["product-development:8"]
+optional = true
+enabled_by_default = false
