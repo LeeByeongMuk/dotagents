@@ -31,12 +31,12 @@ dotagents를 사용하는 개발자가 일반 제품 기능을 만들 때, 기�
 
 ## 수용 조건
 
-- [ ] 스킬의 기본 경로가 `Brief → Execute → Verify`이고 audited는 명시적·고위험 선택 경로다.
-- [ ] Brief가 문제, 결과, 판단 원칙, 제약, 수용 조건, 결정 기록과 검증 증거를 필수로 담는다.
-- [ ] 고정 프롬프트 체인, 역할형 멀티에이전트, 모호한 자체 검토, 무조건 RAG·기억·도구 규칙을 기본 경로에서 배제한다.
-- [ ] 기존 10단계 계약과 상태 CLI가 audited 호환 경로로 계속 동작한다.
-- [ ] README, 사용서, 라우팅, 레지스트리, UI 메타데이터가 같은 기본 경로를 설명한다.
-- [ ] skill validator, 저장소 전체 검사와 관련 회귀 테스트가 통과한다.
+- [x] 스킬의 기본 경로가 `Brief → Execute → Verify`이고 audited는 명시적·고위험 선택 경로다.
+- [x] Brief가 문제, 결과, 판단 원칙, 제약, 수용 조건, 결정 기록과 검증 증거를 필수로 담는다.
+- [x] 고정 프롬프트 체인, 역할형 멀티에이전트, 모호한 자체 검토, 무조건 RAG·기억·도구 규칙을 기본 경로에서 배제한다.
+- [x] 기존 10단계 계약과 상태 CLI가 audited 호환 경로로 계속 동작한다.
+- [x] README, 사용서, 라우팅, 레지스트리, UI 메타데이터가 같은 기본 경로를 설명한다.
+- [x] skill validator, 저장소 전체 검사와 관련 회귀 테스트가 통과한다.
 - [ ] 변경 사항이 기능 브랜치에 커밋·푸시되고 PR이 생성되어 `LeeByeongMuk`에게 할당된다.
 
 ## 결정 기록
@@ -53,8 +53,8 @@ dotagents를 사용하는 개발자가 일반 제품 기능을 만들 때, 기�
 
 ## 실행 체크포인트
 
-- 현재 상태: lean 스킬, Brief 계약, 사용서·설계·라우팅·레지스트리와 audited CLI 표시를 개편했고 1차 검증을 통과했다.
-- 다음 행동: 전체 diff 리뷰와 fresh 검증을 마친 뒤 커밋·푸시·PR 생성·담당자 할당을 수행한다.
+- 현재 상태: 구현·커밋, 전체 diff 리뷰, 포워드 테스트와 fresh 검증을 마쳤으며 최종 전달만 남았다.
+- 다음 행동: 회귀 테스트 보강분을 커밋하고 브랜치를 푸시한 뒤 PR 생성·담당자 할당 증거를 기록한다.
 - 변경 파일: `agents/skills/owned/product-development-workflow/`, `agents/workflows/product-development/`, `docs/designs/product-development-workflow.md`, `README.md`, 관련 레지스트리·테스트
 
 ## 검증 증거
@@ -65,6 +65,9 @@ dotagents를 사용하는 개발자가 일반 제품 기능을 만들 때, 기�
 | audited 호환성 | `tooling/tests/workflow_test.sh` 14개 시나리오 | 통과 |
 | 전체 저장소 규칙 | `./tooling/scripts/check.sh` | 통과 |
 | 스킬 형식 | `skill-creator/scripts/quick_validate.py` | 통과 (`Skill is valid!`) |
+| 위험 기반 라우팅 | 민감한 팀 데이터 내보내기 포워드 테스트 | `audited`와 단일 기획 Brief 선택, 누락 정보만 질문 |
+| 일반 제품 기능 라우팅 | 개인용 저장 필터 기능 포워드 테스트 | `lean`과 단일 living Brief 선택, provider·서브에이전트·RAG 미사용 |
+| 회귀 방지 범위 | 사전 랜딩 커버리지 감사 후 구조 테스트 보강 | lean/audited 라우팅, Brief 전체 스키마, 레지스트리 매핑, CLI·UI 프롬프트 의미 검증 통과 |
 | PR과 담당자 | GitHub PR 상태 조회 | 실행 예정 |
 
 ## 남은 위험
