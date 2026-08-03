@@ -49,6 +49,7 @@ grep -Fqx 'name: product-development-workflow' "$workflow_skill" || fail "workfl
 grep -Eq '^description: .+' "$workflow_skill" || fail "workflow skill description is missing"
 grep -Fq 'Brief' "$workflow_skill" || fail "workflow skill must define the lean Brief path"
 grep -Fq 'audited' "$workflow_skill" || fail "workflow skill must preserve the audited path"
+grep -Fqx -- "- \`direct\`: a small edit, isolated bug, explanation, or research-only task. Do not use this workflow; follow the project's normal edit-and-verify path." "$workflow_skill" || fail "workflow skill must keep non-product work on the direct path"
 grep -Fqx -- '- `lean`: any product task routed to this skill. This is the default, including substantial features.' "$workflow_skill" || fail "workflow skill must route product work to lean by default"
 grep -Fqx -- '- `audited`: use only when the user explicitly requests the ten-stage workflow or when formal evidence is required for compliance, sensitive security boundaries, irreversible data migration, cross-team approval, or a long-lived handoff.' "$workflow_skill" || fail "workflow skill must keep audited routing risk-based"
 grep -Fqx 'Do not choose `audited` from file count, task size, or model distrust alone. Explain the concrete risk that requires it. If no such risk exists, use `lean`.' "$workflow_skill" || fail "workflow skill must not escalate from size or model distrust alone"
@@ -74,6 +75,7 @@ grep -Fq 'Status: `PLANNING`, `EXECUTING`, `VERIFYING`, or `COMPLETE`' "$workflo
 grep -Fq 'Set `Status: COMPLETE` only when:' "$workflow_brief" || fail "workflow Brief must define COMPLETE gates"
 grep -Fq 'every acceptance criterion is checked or explicitly rejected by the user;' "$workflow_brief" || fail "workflow Brief must gate completion on acceptance criteria"
 grep -Fq 'verification rows contain actual results rather than planned commands;' "$workflow_brief" || fail "workflow Brief must gate completion on actual evidence"
+grep -Fq 'remaining risks are explicit;' "$workflow_brief" || fail "workflow Brief must gate completion on explicit remaining risks"
 grep -Fq 'the requested delivery action, if any, is complete.' "$workflow_brief" || fail "workflow Brief must gate completion on requested delivery"
 
 workflow_metadata="$REPO_ROOT/agents/skills/owned/product-development-workflow/agents/openai.yaml"
