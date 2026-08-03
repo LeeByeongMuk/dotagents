@@ -1,7 +1,7 @@
 # 제품 Brief: Brief 중심 제품 개발 워크플로우
 
 - Run ID: `lean-product-workflow`
-- Status: `VERIFYING`
+- Status: `COMPLETE`
 - Updated: `2026-08-04`
 
 ## 문제
@@ -37,7 +37,7 @@ dotagents를 사용하는 개발자가 일반 제품 기능을 만들 때, 기�
 - [x] 기존 10단계 계약과 상태 CLI가 audited 호환 경로로 계속 동작한다.
 - [x] README, 사용서, 라우팅, 레지스트리, UI 메타데이터가 같은 기본 경로를 설명한다.
 - [x] skill validator, 저장소 전체 검사와 관련 회귀 테스트가 통과한다.
-- [ ] 변경 사항이 기능 브랜치에 커밋·푸시되고 PR이 생성되어 `LeeByeongMuk`에게 할당된다.
+- [x] 변경 사항이 기능 브랜치에 커밋·푸시되고 PR이 생성되어 `LeeByeongMuk`에게 할당된다.
 
 ## 결정 기록
 
@@ -53,8 +53,8 @@ dotagents를 사용하는 개발자가 일반 제품 기능을 만들 때, 기�
 
 ## 실행 체크포인트
 
-- 현재 상태: 구현·커밋, 전체 diff 리뷰, 포워드 테스트와 fresh 검증을 마쳤으며 최종 전달만 남았다.
-- 다음 행동: 회귀 테스트 보강분을 커밋하고 브랜치를 푸시한 뒤 PR 생성·담당자 할당 증거를 기록한다.
+- 현재 상태: 구현·검증·커버리지 감사·푸시·PR 생성과 담당자 할당을 모두 완료했다.
+- 다음 행동: 사용자가 PR #4의 최종 변경을 검토한다.
 - 변경 파일: `agents/skills/owned/product-development-workflow/`, `agents/workflows/product-development/`, `docs/designs/product-development-workflow.md`, `README.md`, 관련 레지스트리·테스트
 
 ## 검증 증거
@@ -68,7 +68,7 @@ dotagents를 사용하는 개발자가 일반 제품 기능을 만들 때, 기�
 | 위험 기반 라우팅 | 민감한 팀 데이터 내보내기 포워드 테스트 | `audited`와 단일 기획 Brief 선택, 누락 정보만 질문 |
 | 일반 제품 기능 라우팅 | 개인용 저장 필터 기능 포워드 테스트 | `lean`과 단일 living Brief 선택, provider·서브에이전트·RAG 미사용 |
 | 회귀 방지 범위 | 사전 랜딩 커버리지 감사 후 구조 테스트 보강 | lean/audited 라우팅, Brief 전체 스키마, 레지스트리 매핑, CLI·UI 프롬프트 의미 검증 통과 |
-| PR과 담당자 | GitHub PR 상태 조회 | 실행 예정 |
+| PR과 담당자 | `gh pr view 4 --json url,state,assignees,headRefName,baseRefName` | PR #4 OPEN, `feat/lean-product-workflow → main`, `LeeByeongMuk` 할당 확인 |
 
 ## 남은 위험
 
