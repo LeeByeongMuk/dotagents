@@ -49,6 +49,8 @@ trap 'exit 143' TERM
 
 usage() {
   cat <<'EOF'
+Audited compatibility workflow. The default product workflow is Brief -> Execute -> Verify.
+
 Usage:
   dotagents-workflow start --project PATH --run RUN_ID --scope standard|substantial [--skip-skill-refactor]
   dotagents-workflow status --project PATH --run RUN_ID
@@ -517,6 +519,7 @@ prepare_adopt_run_directory() {
 
 print_status() {
   local number id title_ko artifact optional marker
+  echo "mode: audited"
   echo "run: $RUN_ID"
   echo "scope: $STATE_SCOPE"
   echo "status: $STATE_STATUS"

@@ -22,6 +22,7 @@ required=(
   agents/skills/owned/README.md
   agents/skills/owned/product-development-workflow/SKILL.md
   agents/skills/owned/product-development-workflow/agents/openai.yaml
+  agents/skills/owned/product-development-workflow/references/brief.md
   agents/skills/owned/product-development-workflow/references/stages.md
   agents/skills/owned/product-development-workflow/references/artifacts.md
   agents/skills/wrappers/README.md

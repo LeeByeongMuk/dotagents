@@ -47,6 +47,14 @@ workflow_skill="$REPO_ROOT/agents/skills/owned/product-development-workflow/SKIL
 [[ "$(grep -c '^---$' "$workflow_skill")" -ge 2 ]] || fail "workflow skill is missing closing frontmatter"
 grep -Fqx 'name: product-development-workflow' "$workflow_skill" || fail "workflow skill name is invalid"
 grep -Eq '^description: .+' "$workflow_skill" || fail "workflow skill description is missing"
+grep -Fq 'Brief' "$workflow_skill" || fail "workflow skill must define the lean Brief path"
+grep -Fq 'audited' "$workflow_skill" || fail "workflow skill must preserve the audited path"
+
+workflow_brief="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/brief.md"
+[[ -f "$workflow_brief" ]] || fail "workflow living Brief contract is missing"
+grep -Fq '## 판단 원칙' "$workflow_brief" || fail "workflow Brief must capture decision principles"
+grep -Fq '## 결정 기록' "$workflow_brief" || fail "workflow Brief must capture decisions"
+grep -Fq '## 검증 증거' "$workflow_brief" || fail "workflow Brief must capture verification evidence"
 
 workflow_metadata="$REPO_ROOT/agents/skills/owned/product-development-workflow/agents/openai.yaml"
 grep -Fq 'display_name: "Product Development Workflow"' "$workflow_metadata" || fail "workflow display metadata is missing"
@@ -54,8 +62,9 @@ grep -Eq '^  short_description: ".+"$' "$workflow_metadata" || fail "workflow sh
 grep -Fq '$product-development-workflow' "$workflow_metadata" || fail "workflow default prompt must invoke the skill explicitly"
 
 workflow_contract="$REPO_ROOT/agents/workflows/product-development/workflow.toml"
+grep -Fq 'Audited compatibility contract' "$workflow_contract" || fail "ten-stage contract must be labeled audited"
 [[ "$(grep -c '^\[\[stages\]\]$' "$workflow_contract")" -eq 10 ]] || fail "product workflow must define exactly ten stages"
-[[ "$(grep -c '^requires_approval = true$' "$workflow_contract")" -eq 10 ]] || fail "every product workflow stage must require approval"
+[[ "$(grep -c '^requires_approval = true$' "$workflow_contract")" -eq 10 ]] || fail "every audited workflow stage must require approval"
 [[ "$(grep -c '^optional = true$' "$workflow_contract")" -eq 1 ]] || fail "only one product workflow stage may be optional"
 grep -A7 '^number = 10$' "$workflow_contract" | grep -Fq 'optional = true' || fail "only stage 10 may be optional"
 
