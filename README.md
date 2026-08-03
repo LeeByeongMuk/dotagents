@@ -2,7 +2,7 @@
 
 Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 단일 원본입니다. 공통 규칙, 워크플로우, 직접 만든 스킬, 프롬프트, 훅, 외부 연동 규격과 도구별 어댑터를 한 저장소에서 관리하고 여러 프로젝트에 재사용합니다.
 
-현재 단계는 이 운영체계를 담을 구조와 설치 기반을 정의합니다. 제품 개발 워크플로우와 실제 훅·MCP·외부 스킬 동기화는 이 구조 위에 후속 작업으로 추가합니다.
+현재는 구조와 설치 기반뿐 아니라 이미지로 정의한 10단계 제품 개발 워크플로우를 제공합니다. 실제 훅·MCP 설정 생성, 외부 스킬 자동 동기화와 프로필 합성은 후속 범위입니다.
 
 ## 원칙과 우선순위
 
@@ -27,9 +27,9 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 ├── agents/                        # 모든 공통 AI 자산의 원본
 │   ├── rules/                     # 행동·코딩·Git·보안 규칙
 │   ├── routing/                   # 요청을 워크플로우와 스킬로 연결하는 규격
-│   ├── workflows/                 # 여러 스킬을 조합한 개발 절차
+│   ├── workflows/                 # 여러 스킬을 조합한 개발 절차와 실행 계약
 │   ├── skills/
-│   │   ├── owned/                 # 직접 만든 스킬
+│   │   ├── owned/                 # 직접 만든 스킬(제품 개발 오케스트레이터 포함)
 │   │   └── wrappers/              # 외부 스킬의 로컬 보정 계층
 │   ├── prompts/                   # 재사용 프롬프트
 │   ├── hooks/                     # 세션·도구·출하 수명주기 훅 규격
@@ -111,7 +111,7 @@ agents/ 원본
 
 `dist/` 파일은 직접 편집하지 않고 원본을 수정한 뒤 다시 생성합니다.
 
-## 현재 범위와 후속 작업
+## 현재 제공 기능과 후속 작업
 
 현재 저장소가 제공하는 것은 다음과 같습니다.
 
@@ -121,10 +121,13 @@ agents/ 원본
 - 충돌 감지, 강제 설치 전 백업, 제거 시 복구
 - 저장소 이동과 내부 경로 변경 후 재설치 복구
 - 구조, 비밀 패턴, 셸 문법과 설치 시나리오 검증
+- 인터뷰부터 아키텍처 평가까지의 10단계 제품 개발 워크플로우
+- 단계별 한국어 산출물, 명시적 사용자 승인, 중단 후 재개와 기존 문서 가져오기
+- Claude Code, Codex, Gemini의 공통 스킬 발견과 전역·프로젝트 워크플로우 CLI
+- owned/external 스킬 목록과 검토한 외부 소스 커밋 잠금
 
-다음 항목은 구조만 예약되어 있으며 아직 실행 기능이 아닙니다.
+다음 항목은 구조만 예약되어 있거나 아직 자동 실행 기능이 아닙니다.
 
-- 이미지로 정의한 제품 개발 워크플로우 오케스트레이션
 - 외부 스킬·플러그인 다운로드와 버전 갱신
 - MCP 설정 생성과 health check
 - 호스트별 훅 설치와 실행
@@ -145,8 +148,12 @@ cd /path/to/dotagents
 
 - `~/.agents` → 이 저장소의 `agents/`
 - `~/.claude/CLAUDE.md` → `agents/adapters/claude/CLAUDE.md`
+- `~/.claude/skills/product-development-workflow` → owned 워크플로우 스킬
 - `~/.codex/AGENTS.md` → `agents/adapters/codex/AGENTS.md`
 - `~/.gemini/GEMINI.md` → `agents/adapters/gemini/GEMINI.md`
+- `~/.local/bin/dotagents-workflow` → 워크플로우 상태 명령
+
+Codex와 Gemini는 `~/.agents/skills/product-development-workflow` 별칭에서 같은 owned 스킬을 발견합니다. `~/.local/bin`이 `PATH`에 없으면 설치기가 경고하며 전체 경로로 실행할 수 있습니다.
 
 기존 대상이 있으면 기본 동작은 충돌을 표시하고 아무것도 변경하지 않는 것입니다. `--force`는 기존 항목을 타임스탬프가 붙은 형제 경로로 백업한 뒤 설치합니다. 실제 설정을 먼저 검토하지 않은 상태에서는 `--force`를 사용하지 마세요.
 
@@ -161,7 +168,7 @@ cd /path/to/dotagents
 ./tooling/scripts/install.sh --project /path/to/project
 ```
 
-프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` 링크를 설치합니다. 기존 프로젝트 파일이 있으면 중단하므로 그 파일을 유지하면서 공통 규칙 경로만 직접 참고하거나, 내용을 검토한 뒤 명시적으로 `--force`를 사용해야 합니다.
+프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/skills/product-development-workflow`, `.dotagents/bin/dotagents-workflow` 링크를 설치합니다. Codex와 Gemini는 프로젝트의 `.agents/skills` 별칭을 사용합니다. 기존 프로젝트 파일이 있으면 중단하므로 그 파일을 유지하면서 공통 규칙 경로만 직접 참고하거나, 내용을 검토한 뒤 명시적으로 `--force`를 사용해야 합니다.
 
 프로젝트 고유 규칙을 새로 작성할 때는 템플릿을 복사해 실제 상황에 맞게 수정하세요.
 
@@ -172,6 +179,52 @@ cp agents/templates/nextjs/AGENTS.md /path/to/project/AGENTS.md
 ```
 
 Next.js 템플릿은 기술 선택을 자동으로 가정하지 않습니다. FSD를 실제로 채택한 프로젝트만 `agents/templates/nextjs/fsd-optional.md`를 참고하세요.
+
+## 제품 개발 워크플로우 사용
+
+지원 호스트에서 다음처럼 요청합니다.
+
+```text
+$product-development-workflow 로 이 아이디어를 인터뷰부터 구현 검수까지 진행해줘.
+```
+
+### Next.js 스타터 킷에서 사용하기
+
+여러 프로젝트에 반복 사용할 예정이라면 dotagents를 한 번 전역 설치한 뒤 대상 프로젝트에서 에이전트를 실행하는 방식이 가장 간단합니다.
+
+```bash
+cd /path/to/dotagents
+./tooling/scripts/install.sh --dry-run --global
+./tooling/scripts/install.sh --global
+
+cd /path/to/nextjs-starter-kit
+# 여기서 Codex, Claude Code 또는 Gemini를 실행
+```
+
+에이전트에게 다음처럼 요청합니다.
+
+```text
+$product-development-workflow 로 이 Next.js 스타터 킷에 인증 기능을 추가해줘. 인터뷰부터 구현 검수까지 진행해줘.
+```
+
+스킬이 작업 규모를 판정하고 프로젝트 안에 실행 상태와 `docs/workflows/<run-id>/` 산출물을 만듭니다. 이미 전역 설치했다면 설치 명령은 다시 실행할 필요가 없습니다. 대상 프로젝트의 `AGENTS.md` 같은 고유 규칙이 공통 규칙보다 우선합니다.
+
+워크플로우는 작은 수정에는 적용하지 않고, `standard` 또는 `substantial` 제품 개발에 다음 단계를 실행합니다.
+
+```text
+인터뷰 → 도메인 → office hours → 라이트 스펙 → 플랜
+→ 플랜 리뷰 → 구현 → 코드·테스트 리뷰 → 아키텍처 평가
+→ 스킬 리팩터링 후보(선택)
+```
+
+직접 시작하거나 상태를 볼 수도 있습니다.
+
+```bash
+dotagents-workflow start --project /path/to/project --run feature-name --scope substantial
+dotagents-workflow status --project /path/to/project --run feature-name
+```
+
+산출물은 `<project>/docs/workflows/<run-id>/`에 한국어 `.md`로 저장됩니다. 에이전트는 각 파일을 보여주고 사용자의 명시적 승인을 받은 뒤에만 다음 단계로 이동합니다. 승인된 파일의 SHA-256이 상태에 고정되므로 이후 변경은 `status`와 완료 검증에서 거부됩니다. 기존 스펙·플랜 가져오기, 10단계 생략, 복구와 완료 검증은 [제품 개발 워크플로우 사용서](agents/workflows/product-development/WORKFLOW.md)를 참고하세요.
 
 ## 제거
 
@@ -193,19 +246,23 @@ Next.js 템플릿은 기술 선택을 자동으로 가정하지 않습니다. FS
 bash -n tooling/scripts/install.sh
 bash -n tooling/scripts/uninstall.sh
 bash -n tooling/scripts/check.sh
+bash -n tooling/scripts/workflow.sh
 ./tooling/scripts/install.sh --dry-run
 ./tooling/scripts/uninstall.sh --dry-run
 ./tooling/scripts/check.sh
+./tooling/scripts/check-sources.sh
 ./tooling/tests/install_test.sh
 ./tooling/tests/structure_test.sh
+./tooling/tests/workflow_test.sh
+./tooling/tests/sources_test.sh
 ```
 
-`check.sh`는 필수 구조, 깨진 링크, 셸 문법, 저장소 경로 하드코딩, 의심되는 비밀 패턴·파일명, 어댑터의 공통 규칙 중복, 레지스트리 기본 형식과 설치 dry-run을 검사합니다. 탐지 시 비밀 값은 출력하지 않습니다.
+`check.sh`는 필수 구조, 스킬 규격, 깨진 링크, 셸 문법, 저장소 경로 하드코딩, 의심되는 비밀 패턴·파일명, 어댑터의 공통 규칙 중복, 레지스트리 기본 형식, 워크플로우 계약과 설치 dry-run을 검사합니다. `check-sources.sh`는 별도의 네트워크 검사이며 GitHub CLI 인증이 필요합니다. 탐지 시 비밀 값은 출력하지 않습니다.
 
 ## 자산 추가
 
 - 공통 규칙: `agents/rules/<topic>.md`
-- 워크플로우: `agents/workflows/<name>/WORKFLOW.md`
+- 워크플로우: `agents/workflows/<name>/WORKFLOW.md`, `workflow.toml`
 - 직접 만든 스킬: `agents/skills/owned/<name>/SKILL.md`
 - 외부 스킬 wrapper: `agents/skills/wrappers/<name>/SKILL.md`
 - 프롬프트: `agents/prompts/<name>.md`
@@ -213,6 +270,8 @@ bash -n tooling/scripts/check.sh
 - 외부 연동: `agents/integrations/<kind>/<name>/`
 - 도구별 동작: `agents/adapters/<host>/`
 - 프로젝트 템플릿: `agents/templates/<profile>/`
+
+사람이 읽는 문서는 한국어 단일본으로 관리합니다. `SKILL.md`, `AGENTS.md`, TOML처럼 에이전트나 기계가 직접 실행하는 계약도 단일 원본으로 유지합니다.
 
 새 자산은 특정 프로젝트 경로, 비밀, 비공개 조직 정보, 불필요하게 고정된 도구 버전을 포함하지 않아야 합니다.
 
@@ -238,7 +297,7 @@ clone 위치나 저장소 내부 어댑터 경로가 바뀌면 기존 절대 심
 - 기존 설정 파일과 구조적으로 병합하지 않습니다. 충돌을 중단하거나 `--force` 백업으로 처리합니다.
 - Windows는 지원하지 않습니다.
 - 설정 예제는 자동 설치하지 않습니다. 실제 설정과 비밀을 안전하게 병합하는 작업은 사용자 책임입니다.
-- 레지스트리, 프로필, 훅, `dist/`는 현재 구조 규격이며 아직 설치기에서 소비하지 않습니다.
+- 스킬 레지스트리는 검토 목록과 잠금 기록이며 외부 자산 자동 설치에는 아직 사용하지 않습니다. 프로필, 훅, MCP와 `dist/`도 아직 설치기에서 합성하지 않습니다.
 
 ## 라이선스
 

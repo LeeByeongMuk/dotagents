@@ -1,3 +1,19 @@
 lock_version = 1
 
-# Resolved external sources will be recorded here by future update tooling.
+[[sources]]
+id = "gstack"
+url = "https://github.com/garrytan/gstack"
+revision = "a3259400a366593e0c909dd9ac3e59752efd2488"
+reviewed_at = "2026-08-02"
+
+[[sources]]
+id = "superpowers"
+url = "https://github.com/obra/superpowers"
+revision = "44c9b2d6e889982ac18c27d05a19fefe335194e1"
+reviewed_at = "2026-08-02"
+
+[[sources]]
+id = "mattpocock-skills"
+url = "https://github.com/mattpocock/skills"
+revision = "2ab958093e83e0ec752e6c1c5932da465bf23e0c"
+reviewed_at = "2026-08-02"

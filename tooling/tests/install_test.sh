@@ -17,11 +17,18 @@ echo "scenario 1: clean global install"
 DOTAGENTS_HOME="$home_dir" XDG_STATE_HOME="$state_dir" "$REPO_ROOT/tooling/scripts/install.sh" --global >/dev/null
 assert_link "$home_dir/.agents"
 assert_link "$home_dir/.claude/CLAUDE.md"
+assert_link "$home_dir/.claude/skills/product-development-workflow"
 assert_link "$home_dir/.codex/AGENTS.md"
 assert_link "$home_dir/.gemini/GEMINI.md"
+assert_link "$home_dir/.local/bin/dotagents-workflow"
+assert_link "$home_dir/.agents/skills/product-development-workflow"
+[[ -x "$home_dir/.local/bin/dotagents-workflow" ]] || fail "global workflow command is not executable"
+"$home_dir/.local/bin/dotagents-workflow" --help >/dev/null
 [[ "$(readlink "$home_dir/.claude/CLAUDE.md")" == "$REPO_ROOT/agents/adapters/claude/CLAUDE.md" ]] || fail "Claude adapter source was not updated"
 [[ "$(readlink "$home_dir/.codex/AGENTS.md")" == "$REPO_ROOT/agents/adapters/codex/AGENTS.md" ]] || fail "Codex adapter source was not updated"
 [[ "$(readlink "$home_dir/.gemini/GEMINI.md")" == "$REPO_ROOT/agents/adapters/gemini/GEMINI.md" ]] || fail "Gemini adapter source was not updated"
+[[ "$(readlink "$home_dir/.claude/skills/product-development-workflow")" == "$REPO_ROOT/agents/skills/owned/product-development-workflow" ]] || fail "Claude workflow skill source is incorrect"
+[[ "$(readlink "$home_dir/.local/bin/dotagents-workflow")" == "$REPO_ROOT/tooling/scripts/workflow.sh" ]] || fail "workflow command source is incorrect"
 
 echo "scenario 2: repeated install is idempotent"
 DOTAGENTS_HOME="$home_dir" XDG_STATE_HOME="$state_dir" "$REPO_ROOT/tooling/scripts/install.sh" --global >/dev/null
@@ -43,6 +50,7 @@ cp -R "$REPO_ROOT" "$moved_repo"
 moved_repo="$(cd "$moved_repo" && pwd -P)"
 DOTAGENTS_HOME="$home_dir" XDG_STATE_HOME="$state_dir" "$moved_repo/tooling/scripts/install.sh" --global >/dev/null
 [[ "$(readlink "$home_dir/.agents")" == "$moved_repo/agents" ]] || fail "moved source was not applied"
+[[ "$(readlink "$home_dir/.local/bin/dotagents-workflow")" == "$moved_repo/tooling/scripts/workflow.sh" ]] || fail "moved workflow command was not applied"
 
 echo "scenario 5: user-replaced file is preserved during uninstall"
 modified_home="$TEST_ROOT/modified-home"
@@ -53,6 +61,8 @@ unlink "$modified_home/.gemini/GEMINI.md"
 printf '%s\n' 'user replacement' > "$modified_home/.gemini/GEMINI.md"
 DOTAGENTS_HOME="$modified_home" XDG_STATE_HOME="$modified_state" "$REPO_ROOT/tooling/scripts/uninstall.sh" --global >/dev/null 2>&1
 grep -q 'user replacement' "$modified_home/.gemini/GEMINI.md" || fail "user-replaced file was removed"
+[[ ! -e "$modified_home/.claude/skills/product-development-workflow" ]] || fail "workflow skill link was not removed"
+[[ ! -e "$modified_home/.local/bin/dotagents-workflow" ]] || fail "workflow command link was not removed"
 
 echo "scenario 6: force backup is restored on uninstall"
 backup_home="$TEST_ROOT/backup-home"
@@ -72,10 +82,18 @@ mkdir -p "$project_dir"
 assert_link "$project_dir/.agents"
 assert_link "$project_dir/AGENTS.md"
 assert_link "$project_dir/CLAUDE.md"
+assert_link "$project_dir/.claude/skills/product-development-workflow"
 assert_link "$project_dir/GEMINI.md"
+assert_link "$project_dir/.dotagents/bin/dotagents-workflow"
+assert_link "$project_dir/.agents/skills/product-development-workflow"
+[[ -x "$project_dir/.dotagents/bin/dotagents-workflow" ]] || fail "project workflow command is not executable"
 [[ "$(readlink "$project_dir/AGENTS.md")" == "$REPO_ROOT/agents/adapters/codex/AGENTS.md" ]] || fail "project Codex adapter source is incorrect"
 [[ "$(readlink "$project_dir/CLAUDE.md")" == "$REPO_ROOT/agents/adapters/claude/CLAUDE.md" ]] || fail "project Claude adapter source is incorrect"
 [[ "$(readlink "$project_dir/GEMINI.md")" == "$REPO_ROOT/agents/adapters/gemini/GEMINI.md" ]] || fail "project Gemini adapter source is incorrect"
+[[ "$(readlink "$project_dir/.dotagents/bin/dotagents-workflow")" == "$REPO_ROOT/tooling/scripts/workflow.sh" ]] || fail "project workflow command source is incorrect"
+"$project_dir/.dotagents/bin/dotagents-workflow" start --project "$project_dir" --run installed-entrypoint --scope standard >/dev/null
+entry_status="$("$project_dir/.dotagents/bin/dotagents-workflow" status --project "$project_dir" --run installed-entrypoint)"
+[[ "$entry_status" == *"current_stage: 1"* ]] || fail "installed workflow command did not run a start/status flow"
 
 echo "scenario 8: reinstall repairs legacy internal adapter paths"
 legacy_home="$TEST_ROOT/legacy-home"
@@ -87,5 +105,32 @@ ln -s "$legacy_source" "$legacy_target"
 printf '%s\t%s\t-\n' "$legacy_target" "$legacy_source" > "$legacy_state/dotagents/install.tsv"
 DOTAGENTS_HOME="$legacy_home" XDG_STATE_HOME="$legacy_state" "$REPO_ROOT/tooling/scripts/install.sh" --global >/dev/null
 [[ "$(readlink "$legacy_target")" == "$REPO_ROOT/agents/adapters/codex/AGENTS.md" ]] || fail "legacy adapter link was not repaired"
+
+echo "scenario 9: parent path hazards fail before making partial changes"
+unsafe_global="$TEST_ROOT/unsafe-global"
+unsafe_global_state="$TEST_ROOT/unsafe-global-state"
+mkdir -p "$unsafe_global/.claude"
+printf '%s\n' 'not a directory' > "$unsafe_global/.claude/skills"
+if DOTAGENTS_HOME="$unsafe_global" XDG_STATE_HOME="$unsafe_global_state" "$REPO_ROOT/tooling/scripts/install.sh" --global >/dev/null 2>&1; then
+  fail "global install should reject a non-directory parent"
+fi
+[[ ! -e "$unsafe_global/.agents" ]] || fail "global parent validation left partial links"
+[[ ! -e "$unsafe_global/.claude/CLAUDE.md" ]] || fail "global parent validation left a partial adapter"
+
+for unsafe_parent in .claude .dotagents; do
+  unsafe_project="$TEST_ROOT/unsafe-${unsafe_parent#.}"
+  outside_parent="$TEST_ROOT/outside-${unsafe_parent#.}"
+  mkdir -p "$unsafe_project" "$outside_parent"
+  ln -s "$outside_parent" "$unsafe_project/$unsafe_parent"
+  if "$REPO_ROOT/tooling/scripts/install.sh" --project "$unsafe_project" >/dev/null 2>&1; then
+    fail "project install should reject symlinked parent: $unsafe_parent"
+  fi
+  [[ ! -e "$unsafe_project/.agents" ]] || fail "unsafe project install made partial changes: $unsafe_parent"
+  if [[ "$unsafe_parent" == ".claude" ]]; then
+    [[ ! -e "$outside_parent/skills/product-development-workflow" ]] || fail "project install escaped through .claude"
+  else
+    [[ ! -e "$outside_parent/bin/dotagents-workflow" ]] || fail "project install escaped through .dotagents"
+  fi
+done
 
 echo "All install scenarios passed."

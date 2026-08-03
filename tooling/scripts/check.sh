@@ -9,20 +9,41 @@ ok() { echo "ok: $*"; }
 bad() { echo "error: $*" >&2; failures=$((failures + 1)); }
 
 required=(
-  AGENTS.md README.md LICENSE .gitignore dotagents.toml agents/README.md
+  AGENTS.md README.md LICENSE .gitignore dotagents.toml
+  agents/README.md
   agents/rules/communication.md agents/rules/coding.md agents/rules/git.md
   agents/rules/security.md agents/rules/workflow.md
-  agents/routing/README.md agents/workflows/README.md agents/hooks/README.md
-  agents/skills/README.md agents/skills/owned/README.md agents/skills/wrappers/README.md
-  agents/prompts/README.md agents/profiles/README.md agents/integrations/README.md
+  agents/routing/README.md
+  agents/workflows/README.md
+  agents/workflows/product-development/WORKFLOW.md
+  agents/workflows/product-development/workflow.toml
+  agents/hooks/README.md
+  agents/skills/README.md
+  agents/skills/owned/README.md
+  agents/skills/owned/product-development-workflow/SKILL.md
+  agents/skills/owned/product-development-workflow/agents/openai.yaml
+  agents/skills/owned/product-development-workflow/references/stages.md
+  agents/skills/owned/product-development-workflow/references/artifacts.md
+  agents/skills/wrappers/README.md
+  agents/prompts/README.md
+  agents/profiles/README.md
+  agents/integrations/README.md
   agents/adapters/claude/CLAUDE.md agents/adapters/codex/AGENTS.md
   agents/adapters/gemini/GEMINI.md agents/registry/README.md
   agents/registry/skills.toml agents/registry/mcp.toml agents/registry/hooks.toml
   agents/registry/plugins.toml agents/registry/sources.lock
   tooling/scripts/install.sh tooling/scripts/uninstall.sh tooling/scripts/check.sh
+  tooling/scripts/check-sources.sh
+  tooling/scripts/workflow.sh
   agents/templates/generic/AGENTS.md agents/templates/nextjs/AGENTS.md
-  tooling/tests/install_test.sh tooling/tests/structure_test.sh
-  tooling/README.md tooling/schemas/README.md docs/README.md dist/README.md
+  tooling/tests/install_test.sh tooling/tests/structure_test.sh tooling/tests/workflow_test.sh
+  tooling/tests/sources_test.sh
+  tooling/README.md
+  tooling/schemas/README.md
+  docs/README.md
+  docs/decisions/README.md
+  docs/designs/product-development-workflow.md
+  dist/README.md
 )
 for path in "${required[@]}"; do
   [[ -f "$REPO_ROOT/$path" ]] || bad "missing required file: $path"
@@ -45,6 +66,18 @@ if "$REPO_ROOT/tooling/tests/structure_test.sh" >/dev/null; then
   ok "repository structure"
 else
   bad "repository structure failed"
+fi
+
+if "$REPO_ROOT/tooling/tests/workflow_test.sh" >/dev/null; then
+  ok "product workflow"
+else
+  bad "product workflow failed"
+fi
+
+if "$REPO_ROOT/tooling/tests/sources_test.sh" >/dev/null; then
+  ok "external source registry"
+else
+  bad "external source registry failed"
 fi
 
 hardcoded="$(rg -l --fixed-strings "$REPO_ROOT" "$REPO_ROOT" -g '!README.md' -g '!tooling/scripts/check.sh' -g '!.git/**' || true)"

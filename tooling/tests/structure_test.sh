@@ -13,7 +13,7 @@ required_dirs=(
   agents/integrations/plugins agents/integrations/tools
   agents/adapters/claude agents/adapters/codex agents/adapters/gemini
   agents/registry agents/templates tooling/scripts tooling/schemas tooling/tests
-  docs/decisions dist
+  docs/decisions docs/designs dist
 )
 
 for path in "${required_dirs[@]}"; do
@@ -33,5 +33,38 @@ grep -Eq '^lock_version = [0-9]+$' "$REPO_ROOT/agents/registry/sources.lock" || 
 grep -Fq 'source_root = "agents"' "$REPO_ROOT/dotagents.toml" || fail "dotagents source root is not agents"
 grep -Fq 'tooling_root = "tooling"' "$REPO_ROOT/dotagents.toml" || fail "dotagents tooling root is not tooling"
 grep -Fq 'output_root = "dist"' "$REPO_ROOT/dotagents.toml" || fail "dotagents output root is not dist"
+
+workflow_alias="$REPO_ROOT/agents/skills/product-development-workflow"
+[[ -L "$workflow_alias" ]] || fail "workflow discovery alias is not a symbolic link"
+[[ "$(readlink "$workflow_alias")" == "owned/product-development-workflow" ]] || fail "workflow discovery alias target is incorrect"
+[[ -f "$workflow_alias/SKILL.md" ]] || fail "workflow discovery alias does not expose SKILL.md"
+
+english_docs="$(find "$REPO_ROOT" -path "$REPO_ROOT/.git" -prune -o -type f -name '*.en.md' -print)"
+[[ -z "$english_docs" ]] || fail "duplicate English documentation must not be committed"
+
+workflow_skill="$REPO_ROOT/agents/skills/owned/product-development-workflow/SKILL.md"
+[[ "$(sed -n '1p' "$workflow_skill")" == "---" ]] || fail "workflow skill is missing opening frontmatter"
+[[ "$(grep -c '^---$' "$workflow_skill")" -ge 2 ]] || fail "workflow skill is missing closing frontmatter"
+grep -Fqx 'name: product-development-workflow' "$workflow_skill" || fail "workflow skill name is invalid"
+grep -Eq '^description: .+' "$workflow_skill" || fail "workflow skill description is missing"
+
+workflow_metadata="$REPO_ROOT/agents/skills/owned/product-development-workflow/agents/openai.yaml"
+grep -Fq 'display_name: "Product Development Workflow"' "$workflow_metadata" || fail "workflow display metadata is missing"
+grep -Eq '^  short_description: ".+"$' "$workflow_metadata" || fail "workflow short description is missing"
+grep -Fq '$product-development-workflow' "$workflow_metadata" || fail "workflow default prompt must invoke the skill explicitly"
+
+workflow_contract="$REPO_ROOT/agents/workflows/product-development/workflow.toml"
+[[ "$(grep -c '^\[\[stages\]\]$' "$workflow_contract")" -eq 10 ]] || fail "product workflow must define exactly ten stages"
+[[ "$(grep -c '^requires_approval = true$' "$workflow_contract")" -eq 10 ]] || fail "every product workflow stage must require approval"
+[[ "$(grep -c '^optional = true$' "$workflow_contract")" -eq 1 ]] || fail "only one product workflow stage may be optional"
+grep -A7 '^number = 10$' "$workflow_contract" | grep -Fq 'optional = true' || fail "only stage 10 may be optional"
+
+for source_id in $(sed -n 's/^source_id = "\([^"]*\)"$/\1/p' "$REPO_ROOT/agents/registry/skills.toml" | sort -u); do
+  grep -Fq "id = \"$source_id\"" "$REPO_ROOT/agents/registry/sources.lock" || fail "skill registry references unlocked source: $source_id"
+done
+
+skill_count="$(grep -c '^\[\[skills\]\]$' "$REPO_ROOT/agents/registry/skills.toml")"
+[[ "$(grep -c '^license = "[^"]\+"$' "$REPO_ROOT/agents/registry/skills.toml")" -eq "$skill_count" ]] || fail "every skill registry entry must declare a license"
+[[ "$(grep -c '^enabled_by_default = \(true\|false\)$' "$REPO_ROOT/agents/registry/skills.toml")" -eq "$skill_count" ]] || fail "every skill registry entry must declare default enablement"
 
 echo "Repository structure passed."

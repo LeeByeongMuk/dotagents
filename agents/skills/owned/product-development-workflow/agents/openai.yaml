@@ -1,0 +1,4 @@
+interface:
+  display_name: "Product Development Workflow"
+  short_description: "Interview-to-implementation product workflow"
+  default_prompt: "Use $product-development-workflow to take this product idea from interview through verified implementation."
