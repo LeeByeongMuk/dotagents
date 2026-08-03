@@ -5,7 +5,7 @@ description: Run a resumable ten-stage product-development workflow from intervi
 
 # Product Development Workflow
 
-Turn an unsettled product idea into implementation with explicit user approvals, bilingual artifacts, and resumable local state. Keep the workflow portable: prefer compatible installed skills, but use the built-in procedure when a provider is absent or fails.
+Turn an unsettled product idea into implementation with explicit user approvals, Korean artifacts, and resumable local state. Keep the workflow portable: prefer compatible installed skills, but use the built-in procedure when a provider is absent or fails.
 
 ## Required references
 
@@ -55,7 +55,7 @@ For an existing run, call `status` and continue at `current_stage`:
 dotagents-workflow status --project <project-root> --run <run-id>
 ```
 
-If existing approved material should become stages 1 through N, copy it into the exact canonical bilingual artifact names, fill any required missing sections, show the whole set to the user, and only after explicit approval run:
+If existing approved material should become stages 1 through N, copy it into the exact canonical artifact names, fill any required missing sections, show the whole set to the user, and only after explicit approval run:
 
 ```bash
 dotagents-workflow adopt --project <project-root> --run <run-id> \
@@ -71,7 +71,7 @@ For the current stage:
 1. Read every approved prior artifact relevant to the decision. Stage 7 must read the spec, plan, and plan review together.
 2. Use the preferred provider from `references/stages.md` when it is installed and compatible.
 3. If the provider is absent, execute the built-in procedure. If an installed provider fails, record that failure in the current artifact and execute the built-in procedure once. Do not install, downgrade, or edit an external skill unless the user separately requests it.
-4. Create both `<artifact>.md` in Korean and `<artifact>.en.md` in English under `docs/workflows/<run-id>/`. Keep them semantically equivalent and mark their content `FINAL` before presenting them for approval.
+4. Create `<artifact>.md` in Korean under `docs/workflows/<run-id>/` and mark its content `FINAL` before presenting it for approval.
 5. Check the artifact against `references/artifacts.md`. For stages 7–9, include commands, exit results, changed files, remaining failures, and decisions.
 6. Present the result and ask the user for explicit approval. Product decisions and gates belong to the user.
 7. Only after an affirmative answer, advance with:
@@ -84,7 +84,7 @@ dotagents-workflow approve --project <project-root> --run <run-id> \
 8. Call `status` and report the next stage.
 
 Do not combine approval for an unseen artifact with the work that creates it. Do not call `--user-approved` based on an earlier general request to proceed.
-Do not edit an approved artifact. Its recorded SHA-256 hashes make it immutable workflow evidence; put later corrections in a newly approved stage or replace the run explicitly.
+Do not edit an approved artifact. Its recorded SHA-256 hash makes it immutable workflow evidence; put later corrections in a newly approved stage or replace the run explicitly.
 
 ## Stage-specific gates
 
@@ -112,6 +112,5 @@ Report the structural verification result separately from implementation correct
 
 - Never write runtime state under the shared `.agents` link.
 - Never edit state files by hand or source them as shell code.
-- Treat artifact translation quality as a human/agent review, not something the CLI proves.
 - Use separate branches or worktrees for concurrent implementation runs; run IDs isolate state, not code changes.
 - Preserve project-specific rules, test commands, package managers, and release policy.

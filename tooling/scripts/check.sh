@@ -9,28 +9,27 @@ ok() { echo "ok: $*"; }
 bad() { echo "error: $*" >&2; failures=$((failures + 1)); }
 
 required=(
-  AGENTS.md README.md README.en.md LICENSE .gitignore dotagents.toml
-  agents/README.md agents/README.en.md
+  AGENTS.md README.md LICENSE .gitignore dotagents.toml
+  agents/README.md
   agents/rules/communication.md agents/rules/coding.md agents/rules/git.md
   agents/rules/security.md agents/rules/workflow.md
-  agents/routing/README.md agents/routing/README.en.md
-  agents/workflows/README.md agents/workflows/README.en.md
+  agents/routing/README.md
+  agents/workflows/README.md
   agents/workflows/product-development/WORKFLOW.md
-  agents/workflows/product-development/WORKFLOW.en.md
   agents/workflows/product-development/workflow.toml
-  agents/hooks/README.md agents/hooks/README.en.md
-  agents/skills/README.md agents/skills/README.en.md
-  agents/skills/owned/README.md agents/skills/owned/README.en.md
+  agents/hooks/README.md
+  agents/skills/README.md
+  agents/skills/owned/README.md
   agents/skills/owned/product-development-workflow/SKILL.md
   agents/skills/owned/product-development-workflow/agents/openai.yaml
   agents/skills/owned/product-development-workflow/references/stages.md
   agents/skills/owned/product-development-workflow/references/artifacts.md
-  agents/skills/wrappers/README.md agents/skills/wrappers/README.en.md
-  agents/prompts/README.md agents/prompts/README.en.md
-  agents/profiles/README.md agents/profiles/README.en.md
-  agents/integrations/README.md agents/integrations/README.en.md
+  agents/skills/wrappers/README.md
+  agents/prompts/README.md
+  agents/profiles/README.md
+  agents/integrations/README.md
   agents/adapters/claude/CLAUDE.md agents/adapters/codex/AGENTS.md
-  agents/adapters/gemini/GEMINI.md agents/registry/README.md agents/registry/README.en.md
+  agents/adapters/gemini/GEMINI.md agents/registry/README.md
   agents/registry/skills.toml agents/registry/mcp.toml agents/registry/hooks.toml
   agents/registry/plugins.toml agents/registry/sources.lock
   tooling/scripts/install.sh tooling/scripts/uninstall.sh tooling/scripts/check.sh
@@ -39,13 +38,12 @@ required=(
   agents/templates/generic/AGENTS.md agents/templates/nextjs/AGENTS.md
   tooling/tests/install_test.sh tooling/tests/structure_test.sh tooling/tests/workflow_test.sh
   tooling/tests/sources_test.sh
-  tooling/README.md tooling/README.en.md
-  tooling/schemas/README.md tooling/schemas/README.en.md
-  docs/README.md docs/README.en.md
-  docs/decisions/README.md docs/decisions/README.en.md
+  tooling/README.md
+  tooling/schemas/README.md
+  docs/README.md
+  docs/decisions/README.md
   docs/designs/product-development-workflow.md
-  docs/designs/product-development-workflow.en.md
-  dist/README.md dist/README.en.md
+  dist/README.md
 )
 for path in "${required[@]}"; do
   [[ -f "$REPO_ROOT/$path" ]] || bad "missing required file: $path"

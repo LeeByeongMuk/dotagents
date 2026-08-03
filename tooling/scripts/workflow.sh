@@ -96,7 +96,7 @@ parse_contract() {
     }
     function finish_stage() {
       if (!in_stage) return
-      if (field != 8) fail("stage " stage_count " has " field " fields; expected 8")
+      if (field != 7) fail("stage " stage_count " has " field " fields; expected 7")
       if (number != stage_count) fail("stage numbers must be contiguous")
       if (predecessor != number - 1) fail("invalid predecessor for stage " number)
       if (number == 10 && optional != "true") fail("stage 10 must be optional")
@@ -104,7 +104,7 @@ parse_contract() {
       if (requires_approval != "true") fail("every version 1 stage requires approval")
       if (seen_id[id]++) fail("duplicate stage id: " id)
       if (seen_artifact[artifact]++) fail("duplicate artifact basename: " artifact)
-      print number, id, title_ko, title_en, artifact, optional
+      print number, id, title_ko, artifact, optional
     }
     BEGIN {
       OFS = "\t"
@@ -146,19 +146,16 @@ parse_contract() {
         if (key != "title_ko") fail("stage field 3 must be title_ko")
         title_ko = quoted(value)
       } else if (field == 4) {
-        if (key != "title_en") fail("stage field 4 must be title_en")
-        title_en = quoted(value)
-      } else if (field == 5) {
-        if (key != "artifact") fail("stage field 5 must be artifact")
+        if (key != "artifact") fail("stage field 4 must be artifact")
         artifact = quoted(value)
         if (artifact !~ /^[0-9][0-9]-[a-z0-9]+(-[a-z0-9]+)*$/) fail("invalid artifact basename")
-      } else if (field == 6) {
+      } else if (field == 5) {
         if (key != "optional" || value !~ /^(true|false)$/) fail("invalid optional flag")
         optional = value
-      } else if (field == 7) {
+      } else if (field == 6) {
         if (key != "predecessor" || value !~ /^[0-9]+$/) fail("invalid predecessor")
         predecessor = value + 0
-      } else if (field == 8) {
+      } else if (field == 7) {
         if (key != "requires_approval" || value !~ /^(true|false)$/) fail("invalid requires_approval flag")
         requires_approval = value
       } else {
@@ -357,20 +354,18 @@ STATE_KEYS=(
   approval_06_at approval_07_at approval_08_at approval_09_at approval_10_at
 )
 for state_key_stage in 01 02 03 04 05 06 07 08 09 10; do
-  STATE_KEYS+=("artifact_${state_key_stage}_ko_sha256" "artifact_${state_key_stage}_en_sha256")
+  STATE_KEYS+=("artifact_${state_key_stage}_sha256")
 done
 
 STATE_APPROVALS=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
-STATE_HASHES_KO=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
-STATE_HASHES_EN=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
+STATE_HASHES=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
 
 load_state() {
-  local line key value expected count index approval_value hash_value hash_position timestamp_pattern hash_pattern
+  local line key value expected count index approval_value hash_value timestamp_pattern hash_pattern
   [[ -f "$STATE_FILE" && ! -L "$STATE_FILE" ]] || validation_error "workflow state is missing or unsafe: $STATE_FILE"
   count=0
   STATE_APPROVALS=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
-  STATE_HASHES_KO=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
-  STATE_HASHES_EN=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
+  STATE_HASHES=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
   while IFS= read -r line || [[ -n "$line" ]]; do
     [[ "$line" == *=* ]] || validation_error "invalid state line $((count + 1))"
     [[ "$count" -lt "${#STATE_KEYS[@]}" ]] || validation_error "state has unexpected extra keys"
@@ -391,13 +386,8 @@ load_state() {
         STATE_APPROVALS[$index]="$value"
         ;;
       artifact_*_sha256)
-        hash_position=$((count - 17))
-        index=$((hash_position / 2))
-        if ((hash_position % 2 == 0)); then
-          STATE_HASHES_KO[$index]="$value"
-        else
-          STATE_HASHES_EN[$index]="$value"
-        fi
+        index=$((count - 17))
+        STATE_HASHES[$index]="$value"
         ;;
     esac
     count=$((count + 1))
@@ -421,13 +411,12 @@ load_state() {
     else
       [[ "$approval_value" == "-" ]] || validation_error "approval timestamps must be continuous"
     fi
-    for hash_value in "${STATE_HASHES_KO[$index]}" "${STATE_HASHES_EN[$index]}"; do
-      if [[ "$index" -lt "$STATE_APPROVED_THROUGH" ]]; then
-        [[ "$hash_value" =~ $hash_pattern ]] || validation_error "approved artifact hashes are missing or invalid for stage $((index + 1))"
-      else
-        [[ "$hash_value" == "-" ]] || validation_error "artifact hashes must be continuous with approvals"
-      fi
-    done
+    hash_value="${STATE_HASHES[$index]}"
+    if [[ "$index" -lt "$STATE_APPROVED_THROUGH" ]]; then
+      [[ "$hash_value" =~ $hash_pattern ]] || validation_error "approved artifact hash is missing or invalid for stage $((index + 1))"
+    else
+      [[ "$hash_value" == "-" ]] || validation_error "artifact hashes must be continuous with approvals"
+    fi
   done
 
   if [[ "$STATE_STATUS" == "active" ]]; then
@@ -459,8 +448,7 @@ write_state() {
       printf 'approval_%02d_at=%s\n' "$((index + 1))" "${STATE_APPROVALS[$index]}"
     done
     for ((index = 0; index < 10; index++)); do
-      printf 'artifact_%02d_ko_sha256=%s\n' "$((index + 1))" "${STATE_HASHES_KO[$index]}"
-      printf 'artifact_%02d_en_sha256=%s\n' "$((index + 1))" "${STATE_HASHES_EN[$index]}"
+      printf 'artifact_%02d_sha256=%s\n' "$((index + 1))" "${STATE_HASHES[$index]}"
     done
   } > "$STATE_TEMP"
   lock_owned_by_self || validation_error "workflow lock ownership was lost before state update: $RUN_ID"
@@ -473,14 +461,12 @@ artifact_is_safe() {
   [[ -f "$path" && -s "$path" && ! -L "$path" && "$(dirname "$path")" == "$ARTIFACT_DIR" ]]
 }
 
-validate_artifact_pair() {
+validate_artifact() {
   local stage_number="$1"
-  local artifact_base korean english
-  artifact_base="$(stage_field "$stage_number" 5)" || validation_error "unknown stage: $stage_number"
-  korean="$ARTIFACT_DIR/$artifact_base.md"
-  english="$ARTIFACT_DIR/$artifact_base.en.md"
-  artifact_is_safe "$korean" || validation_error "missing, empty, or unsafe artifact: $korean"
-  artifact_is_safe "$english" || validation_error "missing, empty, or unsafe artifact: $english"
+  local artifact_base artifact_path
+  artifact_base="$(stage_field "$stage_number" 4)" || validation_error "unknown stage: $stage_number"
+  artifact_path="$ARTIFACT_DIR/$artifact_base.md"
+  artifact_is_safe "$artifact_path" || validation_error "missing, empty, or unsafe artifact: $artifact_path"
 }
 
 file_sha256() {
@@ -497,25 +483,22 @@ file_sha256() {
   printf '%s\n' "$digest"
 }
 
-record_artifact_hashes() {
+record_artifact_hash() {
   local stage_number="$1"
   local index artifact_base
   index=$((stage_number - 1))
-  artifact_base="$(stage_field "$stage_number" 5)" || validation_error "unknown stage: $stage_number"
-  STATE_HASHES_KO[$index]="$(file_sha256 "$ARTIFACT_DIR/$artifact_base.md")"
-  STATE_HASHES_EN[$index]="$(file_sha256 "$ARTIFACT_DIR/$artifact_base.en.md")"
+  artifact_base="$(stage_field "$stage_number" 4)" || validation_error "unknown stage: $stage_number"
+  STATE_HASHES[$index]="$(file_sha256 "$ARTIFACT_DIR/$artifact_base.md")"
 }
 
 validate_approved_artifacts() {
-  local stage_number index artifact_base actual_ko actual_en
+  local stage_number index artifact_base actual_hash
   for ((stage_number = 1; stage_number <= STATE_APPROVED_THROUGH; stage_number++)); do
-    validate_artifact_pair "$stage_number"
+    validate_artifact "$stage_number"
     index=$((stage_number - 1))
-    artifact_base="$(stage_field "$stage_number" 5)" || validation_error "unknown stage: $stage_number"
-    actual_ko="$(file_sha256 "$ARTIFACT_DIR/$artifact_base.md")"
-    actual_en="$(file_sha256 "$ARTIFACT_DIR/$artifact_base.en.md")"
-    [[ "$actual_ko" == "${STATE_HASHES_KO[$index]}" ]] || validation_error "approved Korean artifact changed after approval: $artifact_base.md"
-    [[ "$actual_en" == "${STATE_HASHES_EN[$index]}" ]] || validation_error "approved English artifact changed after approval: $artifact_base.en.md"
+    artifact_base="$(stage_field "$stage_number" 4)" || validation_error "unknown stage: $stage_number"
+    actual_hash="$(file_sha256 "$ARTIFACT_DIR/$artifact_base.md")"
+    [[ "$actual_hash" == "${STATE_HASHES[$index]}" ]] || validation_error "approved artifact changed after approval: $artifact_base.md"
   done
 }
 
@@ -533,7 +516,7 @@ prepare_adopt_run_directory() {
 }
 
 print_status() {
-  local number id title_ko title_en artifact optional marker
+  local number id title_ko artifact optional marker
   echo "run: $RUN_ID"
   echo "scope: $STATE_SCOPE"
   echo "status: $STATE_STATUS"
@@ -541,7 +524,7 @@ print_status() {
   echo "approved_through: $STATE_APPROVED_THROUGH"
   echo "artifacts: $ARTIFACT_DIR"
   echo "stages:"
-  while IFS=$'\t' read -r number id title_ko title_en artifact optional; do
+  while IFS=$'\t' read -r number id title_ko artifact optional; do
     if [[ "$number" -le "$STATE_APPROVED_THROUGH" ]]; then
       marker="approved"
     elif [[ "$number" -eq 10 && "$STATE_OPTIONAL_SKILL_REFACTOR" == "no" ]]; then
@@ -551,7 +534,7 @@ print_status() {
     else
       marker="pending"
     fi
-    printf '  %s. [%s] %s / %s -> %s.md + %s.en.md\n' "$number" "$marker" "$title_ko" "$title_en" "$artifact" "$artifact"
+    printf '  %s. [%s] %s -> %s.md\n' "$number" "$marker" "$title_ko" "$artifact"
   done < "$CONTRACT_TSV"
 }
 
@@ -635,8 +618,7 @@ case "$COMMAND" in
       STATE_OPTIONAL_SKILL_REFACTOR="yes"
     fi
     STATE_APPROVALS=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
-    STATE_HASHES_KO=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
-    STATE_HASHES_EN=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
+    STATE_HASHES=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
     write_state "$STATE_FILE"
     print_status
     ;;
@@ -654,8 +636,8 @@ case "$COMMAND" in
     load_state
     [[ "$STATE_STATUS" == "active" ]] || validation_error "completed runs cannot be approved again"
     [[ "$STAGE_ARG" -eq "$STATE_CURRENT_STAGE" ]] || validation_error "only current stage $STATE_CURRENT_STAGE may be approved"
-    validate_artifact_pair "$STAGE_ARG"
-    record_artifact_hashes "$STAGE_ARG"
+    validate_artifact "$STAGE_ARG"
+    record_artifact_hash "$STAGE_ARG"
     STATE_APPROVALS[$((STAGE_ARG - 1))]="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     STATE_APPROVED_THROUGH="$STAGE_ARG"
     if [[ "$STAGE_ARG" -eq 10 || ( "$STAGE_ARG" -eq 9 && "$STATE_OPTIONAL_SKILL_REFACTOR" == "no" ) ]]; then
@@ -681,7 +663,7 @@ case "$COMMAND" in
     acquire_lock
     prepare_adopt_run_directory
     for ((stage_number = 1; stage_number <= THROUGH_ARG; stage_number++)); do
-      validate_artifact_pair "$stage_number"
+      validate_artifact "$stage_number"
     done
     add_local_git_exclude
     mkdir -p "$RUN_DIR"
@@ -704,11 +686,10 @@ case "$COMMAND" in
     fi
     adopted_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     STATE_APPROVALS=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
-    STATE_HASHES_KO=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
-    STATE_HASHES_EN=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
+    STATE_HASHES=("-" "-" "-" "-" "-" "-" "-" "-" "-" "-")
     for ((stage_number = 0; stage_number < THROUGH_ARG; stage_number++)); do
       STATE_APPROVALS[$stage_number]="$adopted_at"
-      record_artifact_hashes "$((stage_number + 1))"
+      record_artifact_hash "$((stage_number + 1))"
     done
     write_state "$STATE_FILE"
     print_status
@@ -719,7 +700,7 @@ case "$COMMAND" in
     load_state
     [[ "$STATE_STATUS" == "completed" ]] || validation_error "workflow is not completed; current stage is $STATE_CURRENT_STAGE"
     for ((stage_number = 1; stage_number <= STATE_APPROVED_THROUGH; stage_number++)); do
-      validate_artifact_pair "$stage_number"
+      validate_artifact "$stage_number"
     done
     echo "verified: true"
     echo "run: $RUN_ID"

@@ -1,7 +1,5 @@
 # dotagents
 
-[English](README.en.md)
-
 Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 단일 원본입니다. 공통 규칙, 워크플로우, 직접 만든 스킬, 프롬프트, 훅, 외부 연동 규격과 도구별 어댑터를 한 저장소에서 관리하고 여러 프로젝트에 재사용합니다.
 
 현재는 구조와 설치 기반뿐 아니라 이미지로 정의한 10단계 제품 개발 워크플로우를 제공합니다. 실제 훅·MCP 설정 생성, 외부 스킬 자동 동기화와 프로필 합성은 후속 범위입니다.
@@ -25,7 +23,6 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 .
 ├── AGENTS.md
 ├── README.md
-├── README.en.md                   # 영문 문서
 ├── dotagents.toml                 # 저장소 레이아웃 메타데이터
 ├── agents/                        # 모든 공통 AI 자산의 원본
 │   ├── rules/                     # 행동·코딩·Git·보안 규칙
@@ -125,7 +122,7 @@ agents/ 원본
 - 저장소 이동과 내부 경로 변경 후 재설치 복구
 - 구조, 비밀 패턴, 셸 문법과 설치 시나리오 검증
 - 인터뷰부터 아키텍처 평가까지의 10단계 제품 개발 워크플로우
-- 단계별 한·영 산출물, 명시적 사용자 승인, 중단 후 재개와 기존 문서 가져오기
+- 단계별 한국어 산출물, 명시적 사용자 승인, 중단 후 재개와 기존 문서 가져오기
 - Claude Code, Codex, Gemini의 공통 스킬 발견과 전역·프로젝트 워크플로우 CLI
 - owned/external 스킬 목록과 검토한 외부 소스 커밋 잠금
 
@@ -191,6 +188,27 @@ Next.js 템플릿은 기술 선택을 자동으로 가정하지 않습니다. FS
 $product-development-workflow 로 이 아이디어를 인터뷰부터 구현 검수까지 진행해줘.
 ```
 
+### Next.js 스타터 킷에서 사용하기
+
+여러 프로젝트에 반복 사용할 예정이라면 dotagents를 한 번 전역 설치한 뒤 대상 프로젝트에서 에이전트를 실행하는 방식이 가장 간단합니다.
+
+```bash
+cd /path/to/dotagents
+./tooling/scripts/install.sh --dry-run --global
+./tooling/scripts/install.sh --global
+
+cd /path/to/nextjs-starter-kit
+# 여기서 Codex, Claude Code 또는 Gemini를 실행
+```
+
+에이전트에게 다음처럼 요청합니다.
+
+```text
+$product-development-workflow 로 이 Next.js 스타터 킷에 인증 기능을 추가해줘. 인터뷰부터 구현 검수까지 진행해줘.
+```
+
+스킬이 작업 규모를 판정하고 프로젝트 안에 실행 상태와 `docs/workflows/<run-id>/` 산출물을 만듭니다. 이미 전역 설치했다면 설치 명령은 다시 실행할 필요가 없습니다. 대상 프로젝트의 `AGENTS.md` 같은 고유 규칙이 공통 규칙보다 우선합니다.
+
 워크플로우는 작은 수정에는 적용하지 않고, `standard` 또는 `substantial` 제품 개발에 다음 단계를 실행합니다.
 
 ```text
@@ -206,7 +224,7 @@ dotagents-workflow start --project /path/to/project --run feature-name --scope s
 dotagents-workflow status --project /path/to/project --run feature-name
 ```
 
-산출물은 `<project>/docs/workflows/<run-id>/`에 한국어 `.md`와 영어 `.en.md` 쌍으로 저장됩니다. 에이전트는 각 쌍을 보여주고 사용자의 명시적 승인을 받은 뒤에만 다음 단계로 이동합니다. 승인된 파일의 SHA-256이 상태에 고정되므로 이후 변경은 `status`와 완료 검증에서 거부됩니다. 기존 스펙·플랜 가져오기, 10단계 생략, 복구와 완료 검증은 [제품 개발 워크플로우 사용서](agents/workflows/product-development/WORKFLOW.md)를 참고하세요.
+산출물은 `<project>/docs/workflows/<run-id>/`에 한국어 `.md`로 저장됩니다. 에이전트는 각 파일을 보여주고 사용자의 명시적 승인을 받은 뒤에만 다음 단계로 이동합니다. 승인된 파일의 SHA-256이 상태에 고정되므로 이후 변경은 `status`와 완료 검증에서 거부됩니다. 기존 스펙·플랜 가져오기, 10단계 생략, 복구와 완료 검증은 [제품 개발 워크플로우 사용서](agents/workflows/product-development/WORKFLOW.md)를 참고하세요.
 
 ## 제거
 
@@ -239,12 +257,12 @@ bash -n tooling/scripts/workflow.sh
 ./tooling/tests/sources_test.sh
 ```
 
-`check.sh`는 필수 구조, 한·영 README 쌍, 스킬 규격, 깨진 링크, 셸 문법, 저장소 경로 하드코딩, 의심되는 비밀 패턴·파일명, 어댑터의 공통 규칙 중복, 레지스트리 기본 형식, 워크플로우 계약과 설치 dry-run을 검사합니다. `check-sources.sh`는 별도의 네트워크 검사이며 GitHub CLI 인증이 필요합니다. 탐지 시 비밀 값은 출력하지 않습니다.
+`check.sh`는 필수 구조, 스킬 규격, 깨진 링크, 셸 문법, 저장소 경로 하드코딩, 의심되는 비밀 패턴·파일명, 어댑터의 공통 규칙 중복, 레지스트리 기본 형식, 워크플로우 계약과 설치 dry-run을 검사합니다. `check-sources.sh`는 별도의 네트워크 검사이며 GitHub CLI 인증이 필요합니다. 탐지 시 비밀 값은 출력하지 않습니다.
 
 ## 자산 추가
 
 - 공통 규칙: `agents/rules/<topic>.md`
-- 워크플로우: `agents/workflows/<name>/WORKFLOW.md`, `WORKFLOW.en.md`, `workflow.toml`
+- 워크플로우: `agents/workflows/<name>/WORKFLOW.md`, `workflow.toml`
 - 직접 만든 스킬: `agents/skills/owned/<name>/SKILL.md`
 - 외부 스킬 wrapper: `agents/skills/wrappers/<name>/SKILL.md`
 - 프롬프트: `agents/prompts/<name>.md`
@@ -253,7 +271,7 @@ bash -n tooling/scripts/workflow.sh
 - 도구별 동작: `agents/adapters/<host>/`
 - 프로젝트 템플릿: `agents/templates/<profile>/`
 
-사람이 읽는 한국어 문서를 추가하면 같은 위치에 `<name>.en.md`를 함께 작성합니다. `README.md`의 영문 짝은 `README.en.md`입니다. `SKILL.md`, `AGENTS.md`, TOML처럼 에이전트나 기계가 직접 실행하는 계약은 의미가 갈라지지 않도록 단일 원본으로 유지합니다.
+사람이 읽는 문서는 한국어 단일본으로 관리합니다. `SKILL.md`, `AGENTS.md`, TOML처럼 에이전트나 기계가 직접 실행하는 계약도 단일 원본으로 유지합니다.
 
 새 자산은 특정 프로젝트 경로, 비밀, 비공개 조직 정보, 불필요하게 고정된 도구 버전을 포함하지 않아야 합니다.
 

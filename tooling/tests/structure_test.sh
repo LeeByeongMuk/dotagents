@@ -39,20 +39,8 @@ workflow_alias="$REPO_ROOT/agents/skills/product-development-workflow"
 [[ "$(readlink "$workflow_alias")" == "owned/product-development-workflow" ]] || fail "workflow discovery alias target is incorrect"
 [[ -f "$workflow_alias/SKILL.md" ]] || fail "workflow discovery alias does not expose SKILL.md"
 
-while IFS= read -r korean_readme; do
-  english_readme="${korean_readme%.md}.en.md"
-  [[ -f "$english_readme" ]] || fail "missing English README sibling: ${english_readme#"$REPO_ROOT/"}"
-done < <(find "$REPO_ROOT" -path "$REPO_ROOT/.git" -prune -o -type f -name 'README.md' -print)
-
-while IFS= read -r korean_workflow; do
-  english_workflow="${korean_workflow%.md}.en.md"
-  [[ -f "$english_workflow" ]] || fail "missing English workflow sibling: ${english_workflow#"$REPO_ROOT/"}"
-done < <(find "$REPO_ROOT/agents/workflows" -type f -name 'WORKFLOW.md' -print)
-
-while IFS= read -r korean_doc; do
-  english_doc="${korean_doc%.md}.en.md"
-  [[ -f "$english_doc" ]] || fail "missing English documentation sibling: ${english_doc#"$REPO_ROOT/"}"
-done < <(find "$REPO_ROOT/docs" -type f -name '*.md' ! -name '*.en.md' -print)
+english_docs="$(find "$REPO_ROOT" -path "$REPO_ROOT/.git" -prune -o -type f -name '*.en.md' -print)"
+[[ -z "$english_docs" ]] || fail "duplicate English documentation must not be committed"
 
 workflow_skill="$REPO_ROOT/agents/skills/owned/product-development-workflow/SKILL.md"
 [[ "$(sed -n '1p' "$workflow_skill")" == "---" ]] || fail "workflow skill is missing opening frontmatter"

@@ -1,6 +1,6 @@
 # Artifact contract
 
-Write every artifact as a Korean `.md` file and a semantically equivalent English `.en.md` file. The CLI checks only safe file structure and state; the agent and user own semantic review.
+Write every artifact as a Korean `.md` file. The CLI checks only safe file structure and state; the agent and user own content review.
 
 ## Common required sections
 
@@ -15,7 +15,7 @@ Every stage artifact must contain:
 7. Open questions or `None`
 8. Next-stage handoff
 
-`FINAL` means the content is frozen for review; it does not mean the user approved it. The workflow state is the authority for approval. After `approve` succeeds, do not edit either file: the CLI stores their SHA-256 hashes and rejects later changes during `status`, subsequent approval, and `verify`. Record corrections in the next stage as a new decision, or start/adopt a replacement run when an already-approved artifact itself must change.
+`FINAL` means the content is frozen for review; it does not mean the user approved it. The workflow state is the authority for approval. After `approve` succeeds, do not edit the file: the CLI stores its SHA-256 hash and rejects later changes during `status`, subsequent approval, and `verify`. Record corrections in the next stage as a new decision, or start/adopt a replacement run when an already-approved artifact itself must change.
 
 ## Stage-specific content
 
@@ -111,10 +111,9 @@ Every stage artifact must contain:
 
 Before requesting approval, verify:
 
-- Both files exist, are non-empty regular files, and are not symlinks.
-- Both files live directly in `docs/workflows/<run-id>/`.
+- The file exists, is a non-empty regular file, and is not a symlink.
+- The file lives directly in `docs/workflows/<run-id>/`.
 - Required common and stage-specific sections are present.
 - Facts are sourced from the repository or authoritative documentation where possible.
 - Product decisions are explicit rather than inferred.
-- Korean and English versions express the same decisions, risks, and evidence.
 - Stages 7–9 include real command results, not commands that were merely planned.
