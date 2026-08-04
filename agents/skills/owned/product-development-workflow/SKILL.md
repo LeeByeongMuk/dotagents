@@ -17,6 +17,8 @@ Choose one path before creating artifacts:
 
 Do not choose `audited` from file count, task size, or model distrust alone. Explain the concrete risk that requires it. If no such risk exists, use `lean`.
 
+If a `lean` run must escalate to `audited` mid-run, keep the Brief as source material. The audited CLI refuses `start` when the run's artifact directory already exists, so either start a new run ID or author the canonical stage artifacts in the same directory and use `adopt` after the user reviews them.
+
 ## Run the lean path
 
 Read `references/brief.md` completely. Do not load `references/stages.md`, `references/artifacts.md`, or the machine contract on the lean path.
