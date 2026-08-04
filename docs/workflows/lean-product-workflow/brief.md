@@ -62,7 +62,7 @@ dotagents를 사용하는 개발자가 일반 제품 기능을 만들 때, 기�
 | 수용 조건/위험 | 검증 방법 | 결과 |
 |---|---|---|
 | 기본 lean 라우팅 | `tooling/tests/structure_test.sh`, 핵심 원칙 `rg` 검색 | 통과 |
-| audited 호환성 | `tooling/tests/workflow_test.sh` 14개 시나리오 | 통과 |
+| audited 호환성 | `tooling/tests/workflow_test.sh` 15개 시나리오 | 통과 |
 | 전체 저장소 규칙 | `./tooling/scripts/check.sh` | 통과 |
 | 스킬 형식 | `skill-creator/scripts/quick_validate.py` | 통과 (`Skill is valid!`) |
 | 위험 기반 라우팅 | 민감한 팀 데이터 내보내기 포워드 테스트 | `audited`와 단일 기획 Brief 선택, 누락 정보만 질문 |
