@@ -1,6 +1,6 @@
-# Stage execution reference
+# Audited stage execution reference
 
-Use this reference after reading `SKILL.md`. Installed provider skills are optional accelerators. Their absence must not change the artifact or approval contract.
+Read this reference only after the workflow has selected the audited path. Installed provider skills are optional accelerators. Their absence must not change the artifact or approval contract.
 
 ## Provider rules
 

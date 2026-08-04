@@ -67,10 +67,11 @@ write_artifacts_through() {
   done
 }
 
-echo "scenario 1: start exposes the ten-stage contract"
+echo "scenario 1: start exposes the audited ten-stage contract"
 project_one="$(new_project start)"
 start_output="$(bash "$WORKFLOW" start --project "$project_one" --run checkout-flow --scope substantial --skip-skill-refactor)"
 assert_contains "$start_output" "current_stage: 1"
+assert_contains "$start_output" "mode: audited"
 assert_contains "$start_output" "10. [skipped]"
 [[ -f "$project_one/.dotagents/runs/checkout-flow/state" ]] || fail "start did not create state"
 grep -Fqx '/.dotagents/runs/' "$project_one/.git/info/exclude" || fail "local workflow state was not excluded"

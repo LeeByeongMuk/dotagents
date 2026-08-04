@@ -1,6 +1,6 @@
-# Artifact contract
+# Audited artifact contract
 
-Write every artifact as a Korean `.md` file. The CLI checks only safe file structure and state; the agent and user own content review.
+Read this reference only after the workflow has selected the audited path. Write every audited artifact as a Korean `.md` file. The CLI checks only safe file structure and state; the agent and user own content review.
 
 ## Common required sections
 

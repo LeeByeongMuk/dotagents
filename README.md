@@ -2,7 +2,7 @@
 
 Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 단일 원본입니다. 공통 규칙, 워크플로우, 직접 만든 스킬, 프롬프트, 훅, 외부 연동 규격과 도구별 어댑터를 한 저장소에서 관리하고 여러 프로젝트에 재사용합니다.
 
-현재는 구조와 설치 기반뿐 아니라 이미지로 정의한 10단계 제품 개발 워크플로우를 제공합니다. 실제 훅·MCP 설정 생성, 외부 스킬 자동 동기화와 프로필 합성은 후속 범위입니다.
+현재는 구조와 설치 기반뿐 아니라 기획 하네스를 필수로 두는 `Brief → Execute → Verify` 제품 개발 워크플로우를 제공합니다. 기존 10단계 계약은 감사·고위험 작업의 선택 경로로 보존합니다. 실제 훅·MCP 설정 생성, 외부 스킬 자동 동기화와 프로필 합성은 후속 범위입니다.
 
 ## 원칙과 우선순위
 
@@ -61,7 +61,7 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 ### Rules, routing, workflows
 
 - 범용 규칙은 `agents/rules/<topic>.md`에 작고 독립적인 문서로 둡니다.
-- 라우팅은 요청의 종류와 규모에 따라 사용할 워크플로우 또는 단일 스킬을 선택합니다.
+- 라우팅은 요청의 종류, 제품 결정의 필요성, 위험과 증거 요구에 따라 워크플로우 또는 단일 스킬을 선택합니다.
 - 워크플로우는 `agents/workflows/<name>/` 아래에 사람용 `WORKFLOW.md`와 기계 판독용 `workflow.toml`을 함께 둘 수 있습니다.
 - 워크플로우는 진입 조건, 단계, 입력·출력 산출물, 사용자 승인 지점, 실패·복구 방법, 선택 단계를 명시합니다.
 
@@ -121,8 +121,8 @@ agents/ 원본
 - 충돌 감지, 강제 설치 전 백업, 제거 시 복구
 - 저장소 이동과 내부 경로 변경 후 재설치 복구
 - 구조, 비밀 패턴, 셸 문법과 설치 시나리오 검증
-- 인터뷰부터 아키텍처 평가까지의 10단계 제품 개발 워크플로우
-- 단계별 한국어 산출물, 명시적 사용자 승인, 중단 후 재개와 기존 문서 가져오기
+- 하나의 살아 있는 제품 Brief와 자율 실행, 결정론적 검증을 잇는 기본 제품 개발 워크플로우
+- 감사·고위험 작업을 위한 단계별 한국어 산출물, 명시적 승인, 중단 후 재개의 10단계 호환 경로
 - Claude Code, Codex, Gemini의 공통 스킬 발견과 전역·프로젝트 워크플로우 CLI
 - owned/external 스킬 목록과 검토한 외부 소스 커밋 잠금
 
@@ -185,7 +185,7 @@ Next.js 템플릿은 기술 선택을 자동으로 가정하지 않습니다. FS
 지원 호스트에서 다음처럼 요청합니다.
 
 ```text
-$product-development-workflow 로 이 아이디어를 인터뷰부터 구현 검수까지 진행해줘.
+$product-development-workflow 로 이 아이디어를 Brief부터 구현 검증까지 진행해줘.
 ```
 
 ### Next.js 스타터 킷에서 사용하기
@@ -204,27 +204,33 @@ cd /path/to/nextjs-starter-kit
 에이전트에게 다음처럼 요청합니다.
 
 ```text
-$product-development-workflow 로 이 Next.js 스타터 킷에 인증 기능을 추가해줘. 인터뷰부터 구현 검수까지 진행해줘.
+$product-development-workflow 로 이 Next.js 스타터 킷에 인증 기능을 추가해줘. Brief부터 구현 검증까지 진행해줘.
 ```
 
-스킬이 작업 규모를 판정하고 프로젝트 안에 실행 상태와 `docs/workflows/<run-id>/` 산출물을 만듭니다. 이미 전역 설치했다면 설치 명령은 다시 실행할 필요가 없습니다. 대상 프로젝트의 `AGENTS.md` 같은 고유 규칙이 공통 규칙보다 우선합니다.
+스킬은 프로젝트 안에 `docs/workflows/<run-id>/brief.md` 하나를 만들고 문제, 목적, 판단 원칙, 제약, 수용 조건과 결정 기록을 계속 갱신합니다. 이미 전역 설치했다면 설치 명령은 다시 실행할 필요가 없습니다. 대상 프로젝트의 `AGENTS.md` 같은 고유 규칙이 공통 규칙보다 우선합니다.
 
-워크플로우는 작은 수정에는 적용하지 않고, `standard` 또는 `substantial` 제품 개발에 다음 단계를 실행합니다.
+워크플로우는 작은 수정에는 적용하지 않고, 일반 제품 개발에는 다음 기본 경로를 실행합니다.
 
 ```text
-인터뷰 → 도메인 → office hours → 라이트 스펙 → 플랜
-→ 플랜 리뷰 → 구현 → 코드·테스트 리뷰 → 아키텍처 평가
-→ 스킬 리팩터링 후보(선택)
+Brief → Execute → Verify
 ```
 
-직접 시작하거나 상태를 볼 수도 있습니다.
+주 에이전트가 전체 문맥에서 계획과 도구를 자율적으로 선택하고, 외부 스킬·멀티에이전트·RAG는 실제 필요가 있을 때만 사용합니다. 검증은 수용 조건과 프로젝트 테스트·정적 검사·빌드처럼 판정 가능한 증거를 우선합니다.
+
+규제, 민감한 보안 경계, 비가역 마이그레이션, 공식 팀 승인처럼 단계 증거가 필요하면 `audited` 경로를 명시적으로 요청합니다.
+
+```text
+$product-development-workflow 의 audited 경로로 이 마이그레이션을 진행해줘.
+```
+
+이때만 기존 상태 CLI를 사용합니다.
 
 ```bash
 dotagents-workflow start --project /path/to/project --run feature-name --scope substantial
 dotagents-workflow status --project /path/to/project --run feature-name
 ```
 
-산출물은 `<project>/docs/workflows/<run-id>/`에 한국어 `.md`로 저장됩니다. 에이전트는 각 파일을 보여주고 사용자의 명시적 승인을 받은 뒤에만 다음 단계로 이동합니다. 승인된 파일의 SHA-256이 상태에 고정되므로 이후 변경은 `status`와 완료 검증에서 거부됩니다. 기존 스펙·플랜 가져오기, 10단계 생략, 복구와 완료 검증은 [제품 개발 워크플로우 사용서](agents/workflows/product-development/WORKFLOW.md)를 참고하세요.
+감사형 산출물은 `<project>/docs/workflows/<run-id>/`에 단계별 한국어 `.md`로 저장되며 사용자 승인 뒤 SHA-256으로 고정됩니다. 기본 living Brief에는 이 불변 정책을 적용하지 않습니다. 자세한 라우팅, 복구와 완료 검증은 [제품 개발 워크플로우 사용서](agents/workflows/product-development/WORKFLOW.md)를 참고하세요.
 
 ## 제거
 

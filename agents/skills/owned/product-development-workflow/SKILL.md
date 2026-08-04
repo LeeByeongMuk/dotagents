@@ -1,116 +1,83 @@
 ---
 name: product-development-workflow
-description: Run a resumable ten-stage product-development workflow from interview and domain modeling through spec, plan, implementation, review, architecture assessment, and an optional skill-refactoring report. Use for a new product or substantial feature with unresolved product decisions. Do not use for small edits, isolated bugs, explanations, or research-only tasks.
+description: Run a planning-harness-first product workflow for new products or meaningful features with unresolved what/why decisions. Default to one living Brief, autonomous Execute, and deterministic Verify; use the audited ten-stage path only when explicitly requested or when compliance, irreversible changes, formal handoffs, or high-risk security work require stage evidence. Do not use for small edits, isolated bugs, explanations, or research-only tasks.
 ---
 
 # Product Development Workflow
 
-Turn an unsettled product idea into implementation with explicit user approvals, Korean artifacts, and resumable local state. Keep the workflow portable: prefer compatible installed skills, but use the built-in procedure when a provider is absent or fails.
-
-## Required references
-
-Read these files completely before starting or resuming a run:
-
-1. `references/stages.md` for stage execution and provider fallbacks.
-2. `references/artifacts.md` for required artifact content and evidence.
-
-The machine contract is `agents/workflows/product-development/workflow.toml` in the dotagents source. Treat it as authoritative for stage numbers, artifact basenames, and optionality.
+Keep the planning harness mandatory and the execution harness light. Preserve what the user is building, why it matters, how tradeoffs should be decided, and which constraints cannot move. Let the capable model choose the execution order, tools, and local plan.
 
 ## Route the request
 
-Classify the task before creating state:
+Choose one path before creating artifacts:
 
-- `small`: a known local change with no unresolved product or domain decision. Do not start this workflow; use the project's normal implementation and verification path.
-- `standard`: new behavior or unresolved requirements within one bounded area.
-- `substantial`: multiple surfaces, services, or domain boundaries, or a meaningful architecture decision.
+- `direct`: a small edit, isolated bug, explanation, or research-only task. Do not use this workflow; follow the project's normal edit-and-verify path.
+- `lean`: any product task routed to this skill. This is the default, including substantial features.
+- `audited`: use only when the user explicitly requests the ten-stage workflow or when formal evidence is required for compliance, sensitive security boundaries, irreversible data migration, cross-team approval, or a long-lived handoff.
 
-If the user explicitly invokes this skill, confirm only the `standard` versus `substantial` scope when it is not evident. Otherwise, explain why the workflow applies and obtain confirmation before starting it. The user decides product scope; do not infer a consequential choice from silence.
-Explicit invocation does not turn a `small` task into product work. Explain that the normal edit-and-verify path is more appropriate and do not create workflow state or ask for a scope tier.
+Do not choose `audited` from file count, task size, or model distrust alone. Explain the concrete risk that requires it. If no such risk exists, use `lean`.
 
-## Find the state command
+If a `lean` run must escalate to `audited` mid-run, keep the Brief as source material. The audited CLI refuses `start` when the run's artifact directory already exists, so either start a new run ID or author the canonical stage artifacts in the same directory and use `adopt` after the user reviews them.
 
-Use the first executable path that exists:
+## Run the lean path
 
-1. `dotagents-workflow` on `PATH`.
-2. `<project>/.dotagents/bin/dotagents-workflow`.
-3. `./tooling/scripts/workflow.sh` when working in the dotagents repository.
+Read `references/brief.md` completely. Do not load `references/stages.md`, `references/artifacts.md`, or the machine contract on the lean path.
 
-If none exists, stop and tell the user to rerun the dotagents global or project installer. Do not recreate state manually.
+### Brief
 
-## Start, resume, or adopt
+1. Inspect the repository and all material the user supplied before asking questions.
+2. Create one Korean living document at `docs/workflows/<run-id>/brief.md`, using a lowercase hyphenated run ID.
+3. Capture the problem, desired outcome, success signal, decision principles with reasons, hard constraints, non-goals, acceptance criteria, explicit decisions, rejected alternatives, and open product decisions.
+4. Use the full source material when it fits the available context. Retrieve or chunk only when the corpus is too large, and preserve surrounding rules, exceptions, and document relationships.
+5. Ask only about missing product information that would materially change the result. Do not repeat a ceremonial interview when the current request already establishes what, why, and the decision criteria.
+6. Treat the user's explicit request as direction. Do not add a separate approval gate merely to confirm a faithful summary. Stop only for a consequential unresolved product choice.
 
-Use a lowercase hyphenated run ID that names the feature.
+The Brief is the planning harness and the single source of truth. Edit it as decisions change. Git history and its decision log preserve history; do not create correction documents that compete with the current truth.
 
-For a new run:
+### Execute
 
-```bash
-dotagents-workflow start --project <project-root> --run <run-id> --scope <standard|substantial>
-```
+1. Work from the Brief and current repository state in one continuous primary-agent context.
+2. Plan internally, choose the task order, and select tools from uncertainty and risk rather than keyword rules.
+3. Use an installed provider skill only when its specialized capability directly helps the current task. Do not invoke a fixed chain of providers or inherit unrelated provider gates.
+4. Use subagents only for genuine parallel work, context isolation, specialized tools, or an independent high-risk opinion. Do not split planner, writer, implementer, and reviewer roles for work one agent can own end to end.
+5. Avoid multi-call prompt chains that pass summaries between stages when the complete task fits one context.
+6. Do not auto-inject similarity-based memories. Read explicit project decisions and the living Brief instead.
+7. Update the Brief when the user makes a durable decision, rejects an alternative, changes a constraint, or when work pauses and needs a checkpoint.
+8. Ask before irreversible actions, external side effects outside the authorized workflow, or product choices not settled by the Brief. Make reversible technical choices autonomously and record the important ones.
 
-Add `--skip-skill-refactor` only when the user does not want stage 10. `start` never creates artifact content.
+### Verify
 
-For an existing run, call `status` and continue at `current_stage`:
+1. Check every acceptance criterion in the Brief against the implementation.
+2. Run the project's deterministic checks: relevant tests, static analysis, build, schema or format validators, and critical user-flow checks.
+3. Add targeted review only when the diff or risk profile justifies it. Prefer exact validators over open-ended requests to find problems.
+4. If a check fails, fix the in-scope cause and rerun the affected checks. Never weaken a check to obtain a pass.
+5. Record commands, exit results, observed behavior, remaining risks, and final status in the same Brief.
+6. Report implementation correctness separately from checks that prove only structure or formatting.
 
-```bash
-dotagents-workflow status --project <project-root> --run <run-id>
-```
+Do not run generic self-review loops until the model declares its own answer good. One evidence-based review pass plus deterministic verification is the default.
 
-If existing approved material should become stages 1 through N, copy it into the exact canonical artifact names, fill any required missing sections, show the whole set to the user, and only after explicit approval run:
+## Resume a lean run
 
-```bash
-dotagents-workflow adopt --project <project-root> --run <run-id> \
-  --scope <standard|substantial> --through <N> --user-approved
-```
+Read the living Brief, project rules, Git status, diff, and recent commits. Continue from the recorded checkpoint and current repository truth. Do not replay completed discovery or reconstruct a chain of intermediate summaries.
 
-Never approve empty placeholders. Never adopt symlinks or documents outside the canonical artifact directory.
+## Run the audited path
 
-## Execute one stage at a time
+The audited path is the preserved ten-stage compatibility workflow.
 
-For the current stage:
+1. Read `references/stages.md` and `references/artifacts.md` completely.
+2. Treat `agents/workflows/product-development/workflow.toml` as authoritative for its ten stages and artifacts.
+3. Find the state command in this order: `dotagents-workflow` on `PATH`, `<project>/.dotagents/bin/dotagents-workflow`, then `./tooling/scripts/workflow.sh` inside dotagents.
+4. Follow the stage, approval, resume, adopt, and verification contracts in those references.
 
-1. Read every approved prior artifact relevant to the decision. Stage 7 must read the spec, plan, and plan review together.
-2. Use the preferred provider from `references/stages.md` when it is installed and compatible.
-3. If the provider is absent, execute the built-in procedure. If an installed provider fails, record that failure in the current artifact and execute the built-in procedure once. Do not install, downgrade, or edit an external skill unless the user separately requests it.
-4. Create `<artifact>.md` in Korean under `docs/workflows/<run-id>/` and mark its content `FINAL` before presenting it for approval.
-5. Check the artifact against `references/artifacts.md`. For stages 7–9, include commands, exit results, changed files, remaining failures, and decisions.
-6. Present the result and ask the user for explicit approval. Product decisions and gates belong to the user.
-7. Only after an affirmative answer, advance with:
+The audited CLI verifies stage order, artifact safety, approval continuity, and hashes. It does not prove implementation correctness; stages 7-9 must contain real test and QA evidence.
 
-```bash
-dotagents-workflow approve --project <project-root> --run <run-id> \
-  --stage <N> --user-approved
-```
+## Complete the work
 
-8. Call `status` and report the next stage.
+For `lean`, finish after the Brief is updated with verification evidence and the user-requested delivery action is complete. For `audited`, finish only after the CLI `verify` command succeeds. In both paths, report unresolved risks and do not treat shipping as implicit unless the user requested it.
 
-Do not combine approval for an unseen artifact with the work that creates it. Do not call `--user-approved` based on an earlier general request to proceed.
-Do not edit an approved artifact. Its recorded SHA-256 hash makes it immutable workflow evidence; put later corrections in a newly approved stage or replace the run explicitly.
+## Safety
 
-## Stage-specific gates
-
-- Stage 3: compare at least two viable approaches and record why the user selected one.
-- Stage 5: include exact files, small build tasks, tests, and verification commands.
-- Stage 6: resolve every blocking plan-review finding before approval.
-- Stage 7: use fresh subagents per independent task when the host supports them; otherwise execute the same task boundaries inline. Follow the project test discipline.
-- Stage 8: run the project's required checks and product-appropriate QA. Fix in-scope findings, rerun the checks, and preserve evidence.
-- Stage 9: assess before changing. Make architecture changes only with evidence and user authorization, then rerun every relevant stage 8 check.
-- Stage 10: report repeated successful procedures and skill candidates. Creating or modifying a reusable skill needs separate write authorization.
-
-A generic affirmative reply to the stage 10 report approves only that report. Treat skill creation as authorized only when the user explicitly asks to create or modify the named skill and its target location.
-
-## Complete the run
-
-After the final required stage is approved, run:
-
-```bash
-dotagents-workflow verify --project <project-root> --run <run-id>
-```
-
-Report the structural verification result separately from implementation correctness. Summarize the artifact directory, checks recorded in stages 7–9, unresolved concerns, and the optional next action such as shipping or opening a PR. Shipping is not an implicit eleventh stage.
-
-## Safety rules
-
-- Never write runtime state under the shared `.agents` link.
-- Never edit state files by hand or source them as shell code.
-- Use separate branches or worktrees for concurrent implementation runs; run IDs isolate state, not code changes.
-- Preserve project-specific rules, test commands, package managers, and release policy.
+- Preserve project-specific rules, user changes, package managers, test commands, and release policy.
+- Never store secrets or hidden memory payloads in the Brief.
+- Never modify an external provider as a side effect of this workflow.
+- Use separate branches or worktrees for truly concurrent implementation.

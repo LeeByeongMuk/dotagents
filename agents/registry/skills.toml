@@ -19,7 +19,7 @@ path = "skills/productivity/grilling/SKILL.md"
 license = "MIT"
 hosts = ["claude", "codex", "gemini"]
 profiles = ["full"]
-workflows = ["product-development:1"]
+workflows = ["product-development:audited:1"]
 optional = true
 enabled_by_default = false
 
@@ -31,7 +31,7 @@ path = "office-hours/SKILL.md"
 license = "MIT"
 hosts = ["claude", "codex", "gemini"]
 profiles = ["full"]
-workflows = ["product-development:3"]
+workflows = ["product-development:audited:3"]
 optional = true
 enabled_by_default = false
 
@@ -43,7 +43,7 @@ path = "skills/writing-plans/SKILL.md"
 license = "MIT"
 hosts = ["claude", "codex", "gemini"]
 profiles = ["full"]
-workflows = ["product-development:5"]
+workflows = ["product-development:audited:5"]
 optional = true
 enabled_by_default = false
 
@@ -55,7 +55,7 @@ path = "autoplan/SKILL.md"
 license = "MIT"
 hosts = ["claude", "codex", "gemini"]
 profiles = ["full"]
-workflows = ["product-development:6"]
+workflows = ["product-development:audited:6"]
 optional = true
 enabled_by_default = false
 
@@ -67,7 +67,7 @@ path = "review/SKILL.md"
 license = "MIT"
 hosts = ["claude", "codex", "gemini"]
 profiles = ["full"]
-workflows = ["product-development:8"]
+workflows = ["product-development:verify", "product-development:audited:8"]
 optional = true
 enabled_by_default = false
 
@@ -79,6 +79,6 @@ path = "qa/SKILL.md"
 license = "MIT"
 hosts = ["claude", "codex", "gemini"]
 profiles = ["full"]
-workflows = ["product-development:8"]
+workflows = ["product-development:verify", "product-development:audited:8"]
 optional = true
 enabled_by_default = false
