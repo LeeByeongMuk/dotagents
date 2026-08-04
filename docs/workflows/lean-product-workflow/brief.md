@@ -22,7 +22,7 @@ dotagents를 사용하는 개발자가 일반 제품 기능을 만들 때, 기�
 
 ## 절대 제약과 비목표
 
-- 제약: 기획 하네스는 모든 이 스킬의 제품 작업에서 필수다.
+- 제약: 기획 하네스는 이 스킬로 수행하는 모든 제품 작업에서 필수다.
 - 제약: 공통 원본은 `agents/`에 두고 Claude Code, Codex, Gemini가 공유한다.
 - 제약: 기존 audited CLI 상태 버전과 회귀 테스트를 깨지 않는다.
 - 제약: 변경 후 `./tooling/scripts/check.sh`와 관련 테스트를 통과하고 PR을 생성해 `LeeByeongMuk`에게 할당한다.
@@ -62,7 +62,7 @@ dotagents를 사용하는 개발자가 일반 제품 기능을 만들 때, 기�
 | 수용 조건/위험 | 검증 방법 | 결과 |
 |---|---|---|
 | 기본 lean 라우팅 | `tooling/tests/structure_test.sh`, 핵심 원칙 `rg` 검색 | 통과 |
-| audited 호환성 | `tooling/tests/workflow_test.sh` 14개 시나리오 | 통과 |
+| audited 호환성 | `tooling/tests/workflow_test.sh` 15개 시나리오 | 통과 |
 | 전체 저장소 규칙 | `./tooling/scripts/check.sh` | 통과 |
 | 스킬 형식 | `skill-creator/scripts/quick_validate.py` | 통과 (`Skill is valid!`) |
 | 위험 기반 라우팅 | 민감한 팀 데이터 내보내기 포워드 테스트 | `audited`와 단일 기획 Brief 선택, 누락 정보만 질문 |

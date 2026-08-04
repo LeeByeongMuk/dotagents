@@ -230,4 +230,16 @@ recovered_state="$(bash "$WORKFLOW" adopt --project "$project_ten" --run recover
 assert_contains "$recovered_state" "current_stage: 2"
 assert_contains "$recovered_state" "approved_through: 1"
 
+echo "scenario 15: a lean brief blocks start and escalates through adopt"
+project_eleven="$(new_project lean-escalation)"
+mkdir -p "$project_eleven/docs/workflows/lean-run"
+printf '# 제품 Brief: 전환 테스트\n' > "$project_eleven/docs/workflows/lean-run/brief.md"
+assert_exit 3 bash "$WORKFLOW" start --project "$project_eleven" --run lean-run --scope standard
+assert_exit 3 bash "$WORKFLOW" adopt --project "$project_eleven" --run lean-run --scope standard --through 1 --user-approved
+write_artifact "$project_eleven" lean-run 1
+escalated="$(bash "$WORKFLOW" adopt --project "$project_eleven" --run lean-run --scope standard --through 1 --user-approved)"
+assert_contains "$escalated" "current_stage: 2"
+assert_contains "$escalated" "status: active"
+[[ -f "$project_eleven/docs/workflows/lean-run/brief.md" ]] || fail "escalation must preserve the lean brief"
+
 echo "All workflow scenarios passed."
