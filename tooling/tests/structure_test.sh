@@ -53,6 +53,7 @@ grep -Fqx -- "- \`direct\`: a small edit, isolated bug, explanation, or research
 grep -Fqx -- '- `lean`: any product task routed to this skill. This is the default, including substantial features.' "$workflow_skill" || fail "workflow skill must route product work to lean by default"
 grep -Fqx -- '- `audited`: use only when the user explicitly requests the ten-stage workflow or when formal evidence is required for compliance, sensitive security boundaries, irreversible data migration, cross-team approval, or a long-lived handoff.' "$workflow_skill" || fail "workflow skill must keep audited routing risk-based"
 grep -Fqx 'Do not choose `audited` from file count, task size, or model distrust alone. Explain the concrete risk that requires it. If no such risk exists, use `lean`.' "$workflow_skill" || fail "workflow skill must not escalate from size or model distrust alone"
+grep -Fqx '6. Before Execute, present the draft Brief in one batched exchange: the assumptions you made, the alternatives you weighed for consequential choices, and the open product questions only the user can answer. This elicits information the user did not think to volunteer; it is not an approval gate. Wait for an answer only when an open product decision blocks the direction; otherwise continue and fold replies into the Brief.' "$workflow_skill" || fail "workflow skill must present the draft Brief with assumptions and open questions"
 
 workflow_brief="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/brief.md"
 [[ -f "$workflow_brief" ]] || fail "workflow living Brief contract is missing"
@@ -77,6 +78,7 @@ grep -Fq 'every acceptance criterion is checked or explicitly rejected by the us
 grep -Fq 'verification rows contain actual results rather than planned commands;' "$workflow_brief" || fail "workflow Brief must gate completion on actual evidence"
 grep -Fq 'remaining risks are explicit;' "$workflow_brief" || fail "workflow Brief must gate completion on explicit remaining risks"
 grep -Fq 'the requested delivery action, if any, is complete.' "$workflow_brief" || fail "workflow Brief must gate completion on requested delivery"
+grep -Fqx -- '- Present assumptions, weighed alternatives, and open questions together in one exchange before execution begins; do not scatter questions across the run.' "$workflow_brief" || fail "workflow Brief must batch elicitation before execution"
 
 workflow_metadata="$REPO_ROOT/agents/skills/owned/product-development-workflow/agents/openai.yaml"
 grep -Fq 'display_name: "Product Development Workflow"' "$workflow_metadata" || fail "workflow display metadata is missing"

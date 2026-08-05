@@ -30,7 +30,8 @@ Read `references/brief.md` completely. Do not load `references/stages.md`, `refe
 3. Capture the problem, desired outcome, success signal, decision principles with reasons, hard constraints, non-goals, acceptance criteria, explicit decisions, rejected alternatives, and open product decisions.
 4. Use the full source material when it fits the available context. Retrieve or chunk only when the corpus is too large, and preserve surrounding rules, exceptions, and document relationships.
 5. Ask only about missing product information that would materially change the result. Do not repeat a ceremonial interview when the current request already establishes what, why, and the decision criteria.
-6. Treat the user's explicit request as direction. Do not add a separate approval gate merely to confirm a faithful summary. Stop only for a consequential unresolved product choice.
+6. Before Execute, present the draft Brief in one batched exchange: the assumptions you made, the alternatives you weighed for consequential choices, and the open product questions only the user can answer. This elicits information the user did not think to volunteer; it is not an approval gate. Wait for an answer only when an open product decision blocks the direction; otherwise continue and fold replies into the Brief.
+7. Treat the user's explicit request as direction. Do not add a separate approval gate merely to confirm a faithful summary. Stop only for a consequential unresolved product choice.
 
 The Brief is the planning harness and the single source of truth. Edit it as decisions change. Git history and its decision log preserve history; do not create correction documents that compete with the current truth.
 

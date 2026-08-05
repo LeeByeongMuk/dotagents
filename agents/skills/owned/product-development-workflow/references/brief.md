@@ -76,6 +76,7 @@ Do not hash-lock the Brief or fork corrections into additional stage documents. 
 - Record rejected alternatives only when they could otherwise be proposed again.
 - Keep routine implementation notes out of the decision log.
 - Ask the user only when an open product decision changes scope, behavior, risk acceptance, or a hard constraint.
+- Present assumptions, weighed alternatives, and open questions together in one exchange before execution begins; do not scatter questions across the run.
 - Verify facts from the repository or authoritative sources instead of asking the user to recall discoverable details.
 
 ## Completion rules
