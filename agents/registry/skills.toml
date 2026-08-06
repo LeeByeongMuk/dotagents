@@ -12,6 +12,17 @@ optional = false
 enabled_by_default = true
 
 [[skills]]
+id = "dotagents-promote"
+kind = "owned"
+source = "agents/skills/owned/dotagents-promote"
+license = "MIT"
+hosts = ["claude", "codex", "gemini"]
+profiles = ["default", "full"]
+workflows = []
+optional = true
+enabled_by_default = true
+
+[[skills]]
 id = "mattpocock-grilling"
 kind = "external"
 source_id = "mattpocock-skills"

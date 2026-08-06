@@ -39,6 +39,11 @@ workflow_alias="$REPO_ROOT/agents/skills/product-development-workflow"
 [[ "$(readlink "$workflow_alias")" == "owned/product-development-workflow" ]] || fail "workflow discovery alias target is incorrect"
 [[ -f "$workflow_alias/SKILL.md" ]] || fail "workflow discovery alias does not expose SKILL.md"
 
+promote_alias="$REPO_ROOT/agents/skills/dotagents-promote"
+[[ -L "$promote_alias" ]] || fail "promote discovery alias is not a symbolic link"
+[[ "$(readlink "$promote_alias")" == "owned/dotagents-promote" ]] || fail "promote discovery alias target is incorrect"
+[[ -f "$promote_alias/SKILL.md" ]] || fail "promote discovery alias does not expose SKILL.md"
+
 english_docs="$(find "$REPO_ROOT" -path "$REPO_ROOT/.git" -prune -o -type f -name '*.en.md' -print)"
 [[ -z "$english_docs" ]] || fail "duplicate English documentation must not be committed"
 
@@ -54,6 +59,13 @@ grep -Fqx -- '- `lean`: any product task routed to this skill. This is the defau
 grep -Fqx -- '- `audited`: use only when the user explicitly requests the ten-stage workflow or when formal evidence is required for compliance, sensitive security boundaries, irreversible data migration, cross-team approval, or a long-lived handoff.' "$workflow_skill" || fail "workflow skill must keep audited routing risk-based"
 grep -Fqx 'Do not choose `audited` from file count, task size, or model distrust alone. Explain the concrete risk that requires it. If no such risk exists, use `lean`.' "$workflow_skill" || fail "workflow skill must not escalate from size or model distrust alone"
 grep -Fqx '6. Before Execute, present the draft Brief in one batched exchange: the assumptions you made, the alternatives you weighed for consequential choices, and the open product questions only the user can answer. This elicits information the user did not think to volunteer; it is not an approval gate. Wait for an answer only when an open product decision blocks the direction; otherwise continue and fold replies into the Brief.' "$workflow_skill" || fail "workflow skill must present the draft Brief with assumptions and open questions"
+grep -Fq 'living context documents (domain overview, interface contract, integration map)' "$workflow_skill" || fail "workflow skill must require living context document updates"
+grep -Fq 'dotagents promotion candidate' "$workflow_skill" || fail "workflow skill must propose promotion candidates at completion"
+
+promote_skill="$REPO_ROOT/agents/skills/owned/dotagents-promote/SKILL.md"
+grep -Fq 'Never edit the primary checkout' "$promote_skill" || fail "promote skill must protect the live main checkout"
+grep -Fq 'Do not merge into `main` and do not push' "$promote_skill" || fail "promote skill must leave merging to the user"
+grep -Fq 'Never run this skill as a hook or as a side effect of another task.' "$promote_skill" || fail "promote skill must forbid background side-effect runs"
 
 workflow_brief="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/brief.md"
 [[ -f "$workflow_brief" ]] || fail "workflow living Brief contract is missing"
@@ -79,6 +91,8 @@ grep -Fq 'verification rows contain actual results rather than planned commands;
 grep -Fq 'remaining risks are explicit;' "$workflow_brief" || fail "workflow Brief must gate completion on explicit remaining risks"
 grep -Fq 'the requested delivery action, if any, is complete.' "$workflow_brief" || fail "workflow Brief must gate completion on requested delivery"
 grep -Fqx -- '- Present assumptions, weighed alternatives, and open questions together in one exchange before execution begins; do not scatter questions across the run.' "$workflow_brief" || fail "workflow Brief must batch elicitation before execution"
+grep -Fq 'living context documents affected by the change are updated, or the Brief records that none were affected;' "$workflow_brief" || fail "workflow Brief must gate completion on living context documents"
+grep -Fq '같은 변경 단위에서 영향받은 컨텍스트 문서를 함께 갱신한다' "$REPO_ROOT/agents/rules/documentation.md" || fail "documentation rule must require update-with-the-change"
 
 workflow_metadata="$REPO_ROOT/agents/skills/owned/product-development-workflow/agents/openai.yaml"
 grep -Fq 'display_name: "Product Development Workflow"' "$workflow_metadata" || fail "workflow display metadata is missing"

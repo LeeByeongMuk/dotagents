@@ -12,7 +12,7 @@ required=(
   AGENTS.md README.md LICENSE .gitignore dotagents.toml
   agents/README.md
   agents/rules/communication.md agents/rules/coding.md agents/rules/git.md
-  agents/rules/security.md agents/rules/workflow.md
+  agents/rules/security.md agents/rules/workflow.md agents/rules/documentation.md
   agents/routing/README.md
   agents/workflows/README.md
   agents/workflows/product-development/WORKFLOW.md
@@ -25,6 +25,8 @@ required=(
   agents/skills/owned/product-development-workflow/references/brief.md
   agents/skills/owned/product-development-workflow/references/stages.md
   agents/skills/owned/product-development-workflow/references/artifacts.md
+  agents/skills/owned/dotagents-promote/SKILL.md
+  agents/skills/owned/dotagents-promote/agents/openai.yaml
   agents/skills/wrappers/README.md
   agents/prompts/README.md
   agents/profiles/README.md
@@ -37,6 +39,8 @@ required=(
   tooling/scripts/check-sources.sh
   tooling/scripts/workflow.sh
   agents/templates/generic/AGENTS.md agents/templates/nextjs/AGENTS.md
+  agents/templates/context-docs/README.md agents/templates/context-docs/domain-overview.md
+  agents/templates/context-docs/interface-contract.md agents/templates/context-docs/integration-map.md
   tooling/tests/install_test.sh tooling/tests/structure_test.sh tooling/tests/workflow_test.sh
   tooling/tests/sources_test.sh
   tooling/README.md
@@ -44,6 +48,7 @@ required=(
   docs/README.md
   docs/decisions/README.md
   docs/designs/product-development-workflow.md
+  docs/decisions/0001-living-context-docs.md
   dist/README.md
 )
 for path in "${required[@]}"; do

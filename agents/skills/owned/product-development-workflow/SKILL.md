@@ -44,7 +44,8 @@ The Brief is the planning harness and the single source of truth. Edit it as dec
 5. Avoid multi-call prompt chains that pass summaries between stages when the complete task fits one context.
 6. Do not auto-inject similarity-based memories. Read explicit project decisions and the living Brief instead.
 7. Update the Brief when the user makes a durable decision, rejects an alternative, changes a constraint, or when work pauses and needs a checkpoint.
-8. Ask before irreversible actions, external side effects outside the authorized workflow, or product choices not settled by the Brief. Make reversible technical choices autonomously and record the important ones.
+8. Update the project's living context documents (domain overview, interface contract, integration map) in the same change when the work alters domain rules, public interfaces, or integration points. Follow the project's existing convention; use the context-docs template when none exists.
+9. Ask before irreversible actions, external side effects outside the authorized workflow, or product choices not settled by the Brief. Make reversible technical choices autonomously and record the important ones.
 
 ### Verify
 
@@ -74,7 +75,9 @@ The audited CLI verifies stage order, artifact safety, approval continuity, and 
 
 ## Complete the work
 
-For `lean`, finish after the Brief is updated with verification evidence and the user-requested delivery action is complete. For `audited`, finish only after the CLI `verify` command succeeds. In both paths, report unresolved risks and do not treat shipping as implicit unless the user requested it.
+For `lean`, finish after the Brief is updated with verification evidence, affected living context documents are current, and the user-requested delivery action is complete. For `audited`, finish only after the CLI `verify` command succeeds. In both paths, report unresolved risks and do not treat shipping as implicit unless the user requested it.
+
+When the run surfaced a convention, rule, or template worth reusing beyond this project, list it in the completion report as a dotagents promotion candidate with a proposed destination. Do not modify dotagents in the same run; apply accepted candidates through the `dotagents-promote` skill under separate approval.
 
 ## Safety
 
