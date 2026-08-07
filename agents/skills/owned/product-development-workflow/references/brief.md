@@ -78,6 +78,7 @@ Do not hash-lock the Brief or fork corrections into additional stage documents. 
 - Ask the user only when an open product decision changes scope, behavior, risk acceptance, or a hard constraint.
 - Present assumptions, weighed alternatives, and open questions together in one exchange before execution begins; do not scatter questions across the run.
 - Verify facts from the repository or authoritative sources instead of asking the user to recall discoverable details.
+- Update the living context documents affected by the change in the same change unit; create them from the context-docs template only when the project has no existing convention.
 
 ## Completion rules
 
@@ -86,4 +87,5 @@ Set `Status: COMPLETE` only when:
 1. every acceptance criterion is checked or explicitly rejected by the user;
 2. verification rows contain actual results rather than planned commands;
 3. remaining risks are explicit;
-4. the requested delivery action, if any, is complete.
+4. living context documents affected by the change are updated, or the Brief records that none were affected;
+5. the requested delivery action, if any, is complete.

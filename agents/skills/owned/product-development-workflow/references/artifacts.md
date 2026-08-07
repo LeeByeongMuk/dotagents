@@ -79,6 +79,7 @@ Every stage artifact must contain:
 - Changed files and commits
 - Commands with exit codes and meaningful results
 - Plan deviations and rationale
+- Updated living context documents or `None affected`
 - Remaining failures or `None`
 
 ### 08-review

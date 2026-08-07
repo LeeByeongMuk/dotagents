@@ -95,6 +95,7 @@ Built-in procedure:
 4. Keep dependent tasks sequential. Use separate worktrees for parallel code changes.
 5. Follow the repository's test-first or regression-test rules and commit discipline.
 6. Record the actual files, commits, commands, failures, and deviations from plan.
+7. Update the module's living context documents in the same stage when the implementation changes domain rules, public interfaces, or integration points.
 
 ## 8. Code and test review
 
@@ -117,6 +118,7 @@ Built-in procedure:
 3. Propose behavior-preserving changes with concrete evidence and blast radius.
 4. Obtain user authorization before changing architecture.
 5. After any code change, rerun every relevant stage 8 command and user flow.
+6. Update affected living context documents after any authorized architecture change.
 
 ## 10. Skill-refactoring candidate
 
