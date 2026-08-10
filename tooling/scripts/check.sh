@@ -23,6 +23,7 @@ required=(
   agents/skills/owned/product-development-workflow/SKILL.md
   agents/skills/owned/product-development-workflow/agents/openai.yaml
   agents/skills/owned/product-development-workflow/references/brief.md
+  agents/skills/owned/product-development-workflow/references/model-verification.md
   agents/skills/owned/product-development-workflow/references/stages.md
   agents/skills/owned/product-development-workflow/references/artifacts.md
   agents/skills/owned/dotagents-promote/SKILL.md
@@ -48,6 +49,7 @@ required=(
   docs/README.md
   docs/decisions/README.md
   docs/designs/product-development-workflow.md
+  docs/evals/product-development-workflow-model-behavior.md
   docs/decisions/0001-living-context-docs.md
   dist/README.md
 )

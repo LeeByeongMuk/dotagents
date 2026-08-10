@@ -54,12 +54,16 @@ grep -Fqx 'name: product-development-workflow' "$workflow_skill" || fail "workfl
 grep -Eq '^description: .+' "$workflow_skill" || fail "workflow skill description is missing"
 grep -Fq 'Brief' "$workflow_skill" || fail "workflow skill must define the lean Brief path"
 grep -Fq 'audited' "$workflow_skill" || fail "workflow skill must preserve the audited path"
-grep -Fqx -- "- \`direct\`: a small edit, isolated bug, explanation, or research-only task. Do not use this workflow; follow the project's normal edit-and-verify path." "$workflow_skill" || fail "workflow skill must keep non-product work on the direct path"
-grep -Fqx -- '- `lean`: any product task routed to this skill. This is the default, including substantial features.' "$workflow_skill" || fail "workflow skill must route product work to lean by default"
-grep -Fqx -- '- `audited`: use only when the user explicitly requests the ten-stage workflow or when formal evidence is required for compliance, sensitive security boundaries, irreversible data migration, cross-team approval, or a long-lived handoff.' "$workflow_skill" || fail "workflow skill must keep audited routing risk-based"
-grep -Fqx 'Do not choose `audited` from file count, task size, or model distrust alone. Explain the concrete risk that requires it. If no such risk exists, use `lean`.' "$workflow_skill" || fail "workflow skill must not escalate from size or model distrust alone"
-grep -Fqx '6. Before Execute, present the draft Brief in one batched exchange: the assumptions you made, the alternatives you weighed for consequential choices, and the open product questions only the user can answer. This elicits information the user did not think to volunteer; it is not an approval gate. Wait for an answer only when an open product decision blocks the direction; otherwise continue and fold replies into the Brief.' "$workflow_skill" || fail "workflow skill must present the draft Brief with assumptions and open questions"
-grep -Fq 'living context documents (domain overview, interface contract, integration map)' "$workflow_skill" || fail "workflow skill must require living context document updates"
+grep -Fq -- '- `direct`:' "$workflow_skill" && grep -Fq 'normal edit-and-verify path' "$workflow_skill" || fail "workflow skill must keep non-product work on the direct path"
+grep -Fq -- '- `lean`:' "$workflow_skill" && grep -Fq 'This is the default' "$workflow_skill" || fail "workflow skill must route product work to lean by default"
+grep -Fq -- '- `audited`:' "$workflow_skill" && grep -Fq 'formal evidence is required' "$workflow_skill" || fail "workflow skill must keep audited routing risk-based"
+grep -Fq 'model distrust alone' "$workflow_skill" && grep -Fq 'use `lean`' "$workflow_skill" || fail "workflow skill must not escalate from size or model distrust alone"
+grep -Fq 'Reuse a current, authoritative project PRD, issue, or specification' "$workflow_skill" || fail "workflow skill must reuse an authoritative product source"
+grep -Fq 'before Execute only when they could change the result' "$workflow_skill" && grep -Fq 'not an approval gate' "$workflow_skill" || fail "workflow skill must make pre-execution elicitation conditional"
+grep -Fq "project's living-context documentation rule" "$workflow_skill" || fail "workflow skill must require living context document updates"
+grep -Fq 'Do not auto-inject similarity-based memories' "$workflow_skill" || fail "workflow skill must reject automatic similarity-memory injection"
+grep -Fq 'references/model-verification.md' "$workflow_skill" || fail "workflow skill must route supported models to verification guidance"
+grep -Fq 'Do not require a fixed model-generated review pass' "$workflow_skill" || fail "workflow skill must not force a generic review pass"
 grep -Fq 'dotagents promotion candidate' "$workflow_skill" || fail "workflow skill must propose promotion candidates at completion"
 
 promote_skill="$REPO_ROOT/agents/skills/owned/dotagents-promote/SKILL.md"
@@ -84,13 +88,15 @@ brief_headings=(
 for heading in "${brief_headings[@]}"; do
   grep -Fq "$heading" "$workflow_brief" || fail "workflow Brief is missing required heading: $heading"
 done
-grep -Fq 'Status: `PLANNING`, `EXECUTING`, `VERIFYING`, or `COMPLETE`' "$workflow_brief" || fail "workflow Brief must define every lifecycle status"
-grep -Fq 'Set `Status: COMPLETE` only when:' "$workflow_brief" || fail "workflow Brief must define COMPLETE gates"
+grep -Fq 'Source priority: reuse a current project PRD, issue, or specification' "$workflow_brief" || fail "workflow Brief must prefer an authoritative existing source"
+grep -Fq 'Local fallback: `docs/workflows/<run-id>/brief.md`' "$workflow_brief" || fail "workflow Brief must define the local fallback"
+grep -Fq 'Status for a local fallback: `PLANNING`, `EXECUTING`, `VERIFYING`, or `COMPLETE`' "$workflow_brief" || fail "workflow Brief must define every local lifecycle status"
+grep -Fq 'Declare the run complete' "$workflow_brief" || fail "workflow Brief must define COMPLETE gates"
 grep -Fq 'every acceptance criterion is checked or explicitly rejected by the user;' "$workflow_brief" || fail "workflow Brief must gate completion on acceptance criteria"
 grep -Fq 'verification rows contain actual results rather than planned commands;' "$workflow_brief" || fail "workflow Brief must gate completion on actual evidence"
 grep -Fq 'remaining risks are explicit;' "$workflow_brief" || fail "workflow Brief must gate completion on explicit remaining risks"
 grep -Fq 'the requested delivery action, if any, is complete.' "$workflow_brief" || fail "workflow Brief must gate completion on requested delivery"
-grep -Fqx -- '- Present assumptions, weighed alternatives, and open questions together in one exchange before execution begins; do not scatter questions across the run.' "$workflow_brief" || fail "workflow Brief must batch elicitation before execution"
+grep -Fq 'only when they could change the result' "$workflow_brief" && grep -Fq 'not an approval gate' "$workflow_brief" || fail "workflow Brief must conditionally batch material elicitation"
 grep -Fq 'living context documents affected by the change are updated, or the Brief records that none were affected;' "$workflow_brief" || fail "workflow Brief must gate completion on living context documents"
 grep -Fq '같은 변경 단위에서 영향받은 컨텍스트 문서를 함께 갱신한다' "$REPO_ROOT/agents/rules/documentation.md" || fail "documentation rule must require update-with-the-change"
 
@@ -98,7 +104,14 @@ workflow_metadata="$REPO_ROOT/agents/skills/owned/product-development-workflow/a
 grep -Fq 'display_name: "Product Development Workflow"' "$workflow_metadata" || fail "workflow display metadata is missing"
 grep -Eq '^  short_description: ".+"$' "$workflow_metadata" || fail "workflow short description is missing"
 grep -Fq '$product-development-workflow' "$workflow_metadata" || fail "workflow default prompt must invoke the skill explicitly"
-grep -Fq 'default_prompt: "Use $product-development-workflow to capture the product Brief, execute autonomously, and verify the result."' "$workflow_metadata" || fail "workflow default prompt must preserve Brief-first execution"
+grep -Fq 'default_prompt:' "$workflow_metadata" && grep -Fq '$product-development-workflow' "$workflow_metadata" && grep -Fq 'verify the result' "$workflow_metadata" || fail "workflow default prompt must preserve Brief-first execution"
+
+model_verification="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/model-verification.md"
+[[ -f "$model_verification" ]] || fail "model-specific verification reference is missing"
+for model_heading in '## GPT-5.6 Sol' '## Claude Opus 5' '## Claude Fable 5'; do
+  grep -Fq "$model_heading" "$model_verification" || fail "model verification guidance is missing: $model_heading"
+done
+grep -Fiq 'deterministic project checks' "$model_verification" || fail "model verification guidance must preserve deterministic checks"
 
 workflow_contract="$REPO_ROOT/agents/workflows/product-development/workflow.toml"
 grep -Fq 'Audited compatibility contract' "$workflow_contract" || fail "ten-stage contract must be labeled audited"
@@ -106,6 +119,8 @@ grep -Fq 'Audited compatibility contract' "$workflow_contract" || fail "ten-stag
 [[ "$(grep -c '^requires_approval = true$' "$workflow_contract")" -eq 10 ]] || fail "every audited workflow stage must require approval"
 [[ "$(grep -c '^optional = true$' "$workflow_contract")" -eq 1 ]] || fail "only one product workflow stage may be optional"
 grep -A7 '^number = 10$' "$workflow_contract" | grep -Fq 'optional = true' || fail "only stage 10 may be optional"
+grep -A7 '^number = 7$' "$workflow_contract" | grep -Fq 'title_ko = "구현 증거"' || fail "audited implementation must not require a subagent by title"
+grep -Fq 'Use a subagent only for a sizeable task' "$REPO_ROOT/agents/skills/owned/product-development-workflow/references/stages.md" || fail "audited subagent use must be conditional"
 
 workflow_cli="$REPO_ROOT/tooling/scripts/workflow.sh"
 grep -Fq 'Audited compatibility workflow. The default product workflow is Brief -> Execute -> Verify.' "$workflow_cli" || fail "workflow CLI help must identify the audited compatibility path"

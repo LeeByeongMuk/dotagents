@@ -1,18 +1,22 @@
 # Living Brief contract
 
-Use this contract for the default `Brief → Execute → Verify` path. The Brief is a mandatory planning harness, not an execution checklist. Keep it current, compact, and readable without prior chat history.
+Use this contract for the default `Brief → Execute → Verify` path. The Brief is a mandatory planning authority, not necessarily a new file and not an execution checklist. Keep the authority and any local run record current, compact, and readable without prior chat history.
 
 ## Location and lifecycle
 
-- Path: `docs/workflows/<run-id>/brief.md`
-- Language: Korean
-- Status: `PLANNING`, `EXECUTING`, `VERIFYING`, or `COMPLETE`
-- Editing: update the same file throughout the run
-- History: preserve important changes in the decision log and Git history
+- Source priority: reuse a current project PRD, issue, or specification that already owns the product decisions.
+- Local fallback: `docs/workflows/<run-id>/brief.md`
+- External/read-only authority: link it from the local fallback and record only missing decisions, checkpoints, evidence, and risks locally.
+- Language: preserve an adopted project's language; write a new local fallback in Korean.
+- Status for a local fallback: `PLANNING`, `EXECUTING`, `VERIFYING`, or `COMPLETE`
+- Editing: update the authority and the same local fallback throughout the run.
+- History: preserve important changes in the decision log and the authority's or Git history.
 
-Do not hash-lock the Brief or fork corrections into additional stage documents. A resumed agent should find one current truth.
+Do not hash-lock the Brief, duplicate product facts into the local run record, or fork corrections into additional stage documents. A resumed agent should find one authority for product facts and at most one local run record.
 
 ## Required content
+
+The authority and local run record may use the project's existing structure, but together they must cover the fields below. Use this template only when creating the local fallback:
 
 ```markdown
 # 제품 Brief: <이름>
@@ -76,13 +80,13 @@ Do not hash-lock the Brief or fork corrections into additional stage documents. 
 - Record rejected alternatives only when they could otherwise be proposed again.
 - Keep routine implementation notes out of the decision log.
 - Ask the user only when an open product decision changes scope, behavior, risk acceptance, or a hard constraint.
-- Present assumptions, weighed alternatives, and open questions together in one exchange before execution begins; do not scatter questions across the run.
+- Surface material assumptions, consequential alternatives, and user-owned open questions together only when they could change the result; this is not an approval gate.
 - Verify facts from the repository or authoritative sources instead of asking the user to recall discoverable details.
-- Update the living context documents affected by the change in the same change unit; create them from the context-docs template only when the project has no existing convention.
+- Apply the project's living-context documentation rule before completion.
 
 ## Completion rules
 
-Set `Status: COMPLETE` only when:
+Declare the run complete, and set `Status: COMPLETE` when the local fallback has that field, only when:
 
 1. every acceptance criterion is checked or explicitly rejected by the user;
 2. verification rows contain actual results rather than planned commands;

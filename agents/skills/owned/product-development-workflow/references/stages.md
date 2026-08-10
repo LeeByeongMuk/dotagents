@@ -85,12 +85,12 @@ Built-in procedure:
 4. Review performance and developer experience.
 5. Resolve blocking findings by recording plan amendments in `06-plan-review`; do not edit the approved `05-plan` artifact. Record accepted, rejected, and deferred recommendations. Stage 7 treats the newer approved review as the superseding decision.
 
-## 7. Subagent implementation
+## 7. Implementation
 
 Built-in procedure:
 
 1. Reconcile `04-spec`, `05-plan`, and `06-plan-review`; the newest explicit approval wins conflicts.
-2. Use a fresh subagent for each independent task when available. Give it the task, approved context, file boundary, and verification command.
+2. Use a subagent only for a sizeable task that is genuinely independent and parallelizable, needs context isolation or a specialized tool, or requires an independent high-risk opinion. Keep small or dependent tasks in the primary context. Give every subagent a file boundary and verification command.
 3. After each task, review specification compliance before code quality.
 4. Keep dependent tasks sequential. Use separate worktrees for parallel code changes.
 5. Follow the repository's test-first or regression-test rules and commit discipline.

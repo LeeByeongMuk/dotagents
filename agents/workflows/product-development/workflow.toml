@@ -61,7 +61,7 @@ requires_approval = true
 [[stages]]
 number = 7
 id = "implementation"
-title_ko = "서브에이전트 코드"
+title_ko = "구현 증거"
 artifact = "07-implementation"
 optional = false
 predecessor = 6

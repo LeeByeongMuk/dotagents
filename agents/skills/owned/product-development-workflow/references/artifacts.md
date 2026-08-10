@@ -75,7 +75,7 @@ Every stage artifact must contain:
 ### 07-implementation
 
 - Approved spec, plan, and plan-review inputs
-- Task/subagent ledger
+- Task ledger and subagents used, or `None`
 - Changed files and commits
 - Commands with exit codes and meaningful results
 - Plan deviations and rationale
