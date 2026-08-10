@@ -1,7 +1,7 @@
 # 설계: Brief 중심 제품 개발 워크플로우
 
 - Original design: 2026-08-02
-- Revised: 2026-08-04
+- Revised: 2026-08-10
 - Status: APPROVED FOR IMPLEMENTATION
 - Default path: `Brief → Execute → Verify`
 - Compatibility path: `audited` ten-stage workflow
@@ -19,7 +19,7 @@
 
 ## 목표
 
-1. 제품 작업마다 한 개의 살아 있는 Brief를 필수 기획 하네스로 남긴다.
+1. 제품 작업마다 한 개의 권위 있는 Brief 원본을 사용하고, 현재 PRD·이슈·스펙이 있으면 새 문서보다 우선한다.
 2. 기본 실행은 한 주 에이전트가 전체 문맥을 유지한 채 자율적으로 수행한다.
 3. 성공은 단계 통과가 아니라 수용 조건과 결정론적 검증 증거로 판정한다.
 4. 규제·감사·고위험 인수인계에는 기존 10단계 계약을 계속 제공한다.
@@ -55,7 +55,7 @@ BRIEF                         EXECUTE                       VERIFY
 제약·결정 기록·수용 조건       단일 주 에이전트 문맥 유지       실패 수정과 재검증
 ```
 
-산출물은 `docs/workflows/<run-id>/brief.md` 하나다. 작업 중 계속 수정하며 Git과 결정 로그가 변경 이력을 보존한다.
+현재 PRD·이슈·스펙이 제품 결정을 소유하고 계속 갱신할 수 있으면 그것을 Brief로 채택한다. 적합한 원본이 없을 때만 `docs/workflows/<run-id>/brief.md`를 만든다. 외부·읽기 전용 원본에는 링크만 두고, 로컬 Brief는 누락된 결정·체크포인트·검증 증거·위험만 기록한다.
 
 ### audited: 선택
 
@@ -71,7 +71,7 @@ BRIEF                         EXECUTE                       VERIFY
 
 ## 필수 기획 하네스
 
-Brief는 다음을 반드시 포함한다.
+채택한 권위 원본과 로컬 실행 기록은 합쳐서 다음을 반드시 포함한다.
 
 1. `누가, 언제, 무엇을 하지 못해서, 무엇을 포기하는가` 형식의 문제
 2. 문제가 해결되면 달라지는 결과와 성공 신호
@@ -82,7 +82,7 @@ Brief는 다음을 반드시 포함한다.
 7. 열린 제품 결정
 8. 재개 체크포인트, 검증 증거와 남은 위험
 
-사용자가 이미 제공한 정보와 저장소에서 확인 가능한 사실을 다시 질문하지 않는다. 사용자가 결정해야 하는 정보가 결과를 바꿀 때만 멈춘다.
+사용자가 이미 제공한 정보와 저장소에서 확인 가능한 사실을 다시 질문하지 않는다. 중요한 가정·대안·사용자 소유 결정이 결과를 바꿀 수 있을 때만 실행 전에 한 묶음으로 알리고, 사용자가 결정해야 하는 정보가 방향을 막을 때만 멈춘다.
 
 ## 실행 원칙
 
@@ -106,7 +106,16 @@ Brief는 다음을 반드시 포함한다.
 
 ### 검토 루프
 
-문제가 없어도 흠을 찾게 하는 반복 검토를 사용하지 않는다. 수용 조건, 테스트, 형식, 계산, 보안 경계처럼 구체적 기준으로 한 번 검토하고, 변경이 생긴 부분만 다시 검증한다.
+문제가 없어도 흠을 찾게 하는 반복 검토나 고정된 모델 자기검토 패스를 사용하지 않는다. 수용 조건, 테스트, 형식, 계산, 보안 경계처럼 구체적 기준을 검증하고, diff나 위험이 정당화할 때만 표적 검토한다. 변경이 생기면 영향받은 기준만 다시 검증한다.
+
+### 모델별 검증
+
+결정론적 프로젝트 검사는 모델과 무관하게 유지한다. 모델이 생성하는 자기검토와 검증 위임만 다음처럼 구분한다.
+
+- GPT-5.6 Sol: 프롬프트를 간결하게 유지하고 구체적 diff 위험이 없는 일반 자기검토를 추가하지 않는다.
+- Claude Opus 5: 모델이 기본으로 수행하는 자기수정을 중복하는 최종 재검토나 검증 서브에이전트를 추가하지 않는다.
+- Claude Fable 5: 짧은 작업에는 추가 검증 하네스를 두지 않는다. 장기 실행에서는 도구 결과로 진행 주장을 확인하고, 결과를 바꿀 수 있는 스펙·위험 체크포인트에만 fresh-context 검증자를 사용할 수 있다.
+- 모델이 갱신되면 현재 하네스와 축소 하네스를 대표 작업에서 비교하고, 측정된 이득이 없는 모델 전용 지시는 제거한다.
 
 ### 외부 프레임워크와 스킬
 
@@ -139,12 +148,21 @@ Brief는 다음을 반드시 포함한다.
 - 기본 스킬은 lean 경로에서 감사형 reference와 machine contract를 읽지 않는다.
 - 기존 단계 공급자는 감사형 슬롯으로 계속 등록한다.
 - 기존 audited 상태 머신의 상세 잠금·해시·복구 설계는 최초 구현 커밋 `f18ca30`의 이 문서 이력과 현재 회귀 테스트에서 추적한다.
-- 실제 사용 후 시간, 토큰, 사용자 중단 횟수, 결함, 재개 성공률을 비교해 추가 단순화를 결정한다.
+- 실제 사용 후 시간, 토큰, 사용자 중단 횟수, 결함, 재개 성공률을 모델별로 비교해 추가 단순화를 결정한다.
+- audited 단계 수와 상태 버전은 실제 사용·감사 요구 증거 없이 줄이지 않는다. 사용되지 않거나 더 작은 승인 계약으로 같은 증거를 만들 수 있음이 확인되면 별도 호환 변경으로 축소한다.
 
 ## 성공 기준
 
 - 스킬 설명과 사용서에서 `Brief → Execute → Verify`가 기본 경로다.
-- Brief reference가 문제·결과·판단 기준·제약·결정 기록을 필수로 검증한다.
+- Brief reference가 기존 권위 원본 재사용과 로컬 fallback을 구분하고 문제·결과·판단 기준·제약·결정 기록을 필수로 검증한다.
 - 감사형 CLI와 기존 회귀 테스트가 계속 통과한다.
 - 구조 테스트가 lean 기본값과 audited 호환 경로를 모두 확인한다.
 - README와 레지스트리가 같은 라우팅을 설명한다.
+
+## 모델 가이드 근거
+
+- [OpenAI GPT-5.6 model guidance](https://developers.openai.com/api/docs/guides/latest-model?model=gpt-5.6#prompting-best-practices)
+- [Anthropic Claude Opus 5 prompting](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-opus-5)
+- [Anthropic Claude Fable 5 prompting](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5)
+
+초기 변경 전·후 행동 비교와 단일 실행 비용 신호는 [`docs/evals/product-development-workflow-model-behavior.md`](../evals/product-development-workflow-model-behavior.md)에 기록한다.
