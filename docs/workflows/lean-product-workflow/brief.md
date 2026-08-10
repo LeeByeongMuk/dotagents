@@ -1,7 +1,7 @@
 # 제품 Brief: Brief 중심 제품 개발 워크플로우
 
 - Run ID: `lean-product-workflow`
-- Status: `VERIFYING`
+- Status: `COMPLETE`
 - Updated: `2026-08-10`
 
 ## 문제
@@ -44,7 +44,7 @@ dotagents를 사용하는 개발자가 최신 GPT-5.6 Sol, Claude Opus 5, Claude
 - [x] README, 사용서, 설계, 스킬과 참조 문서가 같은 기본 경로를 설명한다.
 - [x] skill validator, 저장소 전체 검사와 관련 회귀 테스트가 통과한다.
 - [x] 변경 전·후 하네스를 같은 두 상황으로 GPT-5.6 Sol, Claude Opus 5, Claude Fable 5에서 비교하고 행동·비용 신호와 한계를 기록한다.
-- [ ] 변경 사항이 기능 브랜치에 커밋·푸시되고 `main` 대상 PR이 생성된다.
+- [x] 변경 사항이 기능 브랜치에 커밋·푸시되고 `main` 대상 PR이 생성된다.
 
 ## 결정 기록
 
@@ -66,8 +66,8 @@ dotagents를 사용하는 개발자가 최신 GPT-5.6 Sol, Claude Opus 5, Claude
 
 ## 실행 체크포인트
 
-- 현재 상태: 스킬·문서·테스트 수정과 세 모델의 초기 A/B 행동 eval을 완료했다.
-- 다음 행동: 기능 브랜치에 커밋·푸시하고 `main` 대상 PR을 생성한 뒤 전달 증거를 기록한다.
+- 현재 상태: 스킬·문서·테스트 수정, 세 모델의 초기 A/B 행동 eval, 기능 브랜치 푸시와 PR #9 생성을 완료했다.
+- 다음 행동: 사용자가 PR #9의 최종 변경을 검토한다.
 - 변경 파일: `agents/skills/owned/product-development-workflow/`, `agents/workflows/product-development/`, `docs/designs/product-development-workflow.md`, `docs/evals/product-development-workflow-model-behavior.md`, `README.md`, `tooling/tests/structure_test.sh`, `tooling/scripts/check.sh`
 
 ## 검증 증거
@@ -80,7 +80,7 @@ dotagents를 사용하는 개발자가 최신 GPT-5.6 Sol, Claude Opus 5, Claude
 | 스킬 형식 | `uv run --with pyyaml python skill-creator/scripts/quick_validate.py agents/skills/owned/product-development-workflow` | `Skill is valid!` |
 | 패치 형식 | `git diff --check` | 통과 |
 | 세 모델 행동 분기 | 변경 전·후 동일 2개 상황을 각 모델에 실행 | 후보 3개 모두 계약 통과; 상세는 `docs/evals/product-development-workflow-model-behavior.md` |
-| PR 전달 | `gh pr view` | 대기 |
+| PR 전달 | `gh pr view 9 --json number,url,state,isDraft,headRefName,baseRefName,mergeStateStatus,statusCheckRollup` | PR #9 OPEN, `feat/model-aware-workflow-harness → main`, non-draft, merge state `CLEAN`, 등록된 상태 검사 없음 |
 
 ## 남은 위험
 
