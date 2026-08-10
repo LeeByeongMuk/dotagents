@@ -80,7 +80,7 @@ dotagents를 사용하는 개발자가 최신 GPT-5.6 Sol, Claude Opus 5, Claude
 | 스킬 형식 | `uv run --with pyyaml python skill-creator/scripts/quick_validate.py agents/skills/owned/product-development-workflow` | `Skill is valid!` |
 | 패치 형식 | `git diff --check` | 통과 |
 | 세 모델 행동 분기 | 변경 전·후 동일 2개 상황을 각 모델에 실행 | 후보 3개 모두 계약 통과; 상세는 `docs/evals/product-development-workflow-model-behavior.md` |
-| PR 전달 | `gh pr view 9 --json number,url,state,isDraft,headRefName,baseRefName,mergeStateStatus,statusCheckRollup` | PR #9 OPEN, `feat/model-aware-workflow-harness → main`, non-draft, merge state `CLEAN`, 등록된 상태 검사 없음 |
+| PR 전달 | `gh pr view 9 --json number,url,state,isDraft,headRefName,baseRefName,statusCheckRollup` | PR #9 OPEN, `feat/model-aware-workflow-harness → main`, non-draft, 등록된 상태 검사 없음 |
 
 ## 남은 위험
 
