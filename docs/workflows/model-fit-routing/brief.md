@@ -1,7 +1,7 @@
 # 제품 Brief: 실행 전 Model Fit 판단
 
 - Run ID: `model-fit-routing`
-- Status: `VERIFYING`
+- Status: `COMPLETE`
 - Updated: `2026-08-19`
 - 제품 원본: [`docs/designs/product-development-workflow.md`](../../designs/product-development-workflow.md)
 
@@ -44,7 +44,7 @@ Claude Code와 Codex를 함께 사용할 수 있는 개발자가 제품 워크�
 - [x] 모델별 검증 정책과 Model Fit 선택 정책의 책임이 분리된다.
 - [x] README, 제품 워크플로우 사용서, 설계 문서와 구조 검사가 같은 계약을 설명한다.
 - [x] `./tooling/scripts/check.sh`와 관련 테스트가 통과한다.
-- [ ] 기능 브랜치가 원격에 푸시되고 PR이 생성된다.
+- [x] 기능 브랜치가 원격에 푸시되고 PR이 생성된다.
 
 ## 결정 기록
 
@@ -61,8 +61,8 @@ Claude Code와 Codex를 함께 사용할 수 있는 개발자가 제품 워크�
 
 ## 실행 체크포인트
 
-- 현재 상태: Model Fit 정책, lean 진입 규칙, 모델별 검증 책임 경계, 사용 문서, 설계 문서, 대표 시나리오와 결정론적 계약 검사를 구현했다. 독립 감사에서 발견된 고정 모델과 상위 하드 제약 충돌도 회귀 시나리오로 보강했다.
-- 다음 행동: 최종 diff를 커밋하고 기능 브랜치를 푸시한 뒤 PR을 생성한다.
+- 현재 상태: Model Fit 정책, lean 진입 규칙, 모델별 검증 책임 경계, 사용 문서, 설계 문서, 대표 시나리오와 결정론적 계약 검사를 구현하고 PR [#10](https://github.com/LeeByeongMuk/dotagents/pull/10)을 생성했다. 독립 감사에서 발견된 고정 모델과 상위 하드 제약 충돌도 회귀 시나리오로 보강했다.
+- 다음 행동: `None`
 - 변경 파일: `agents/skills/owned/product-development-workflow/`, `agents/workflows/product-development/WORKFLOW.md`, `agents/routing/README.md`, `README.md`, `docs/designs/product-development-workflow.md`, `docs/evals/product-development-workflow-model-fit.md`, `tooling/scripts/check.sh`, `tooling/tests/`
 
 ## 검증 증거
@@ -74,6 +74,7 @@ Claude Code와 Codex를 함께 사용할 수 있는 개발자가 제품 워크�
 | 저장소 구조와 workflow 회귀 | `./tooling/tests/structure_test.sh`, `./tooling/tests/workflow_test.sh` | PASS — 구조 검사와 15개 workflow 시나리오 통과 |
 | 독립 정적 계약 감사 | 17개 동작군의 정책·fixture·문서 assertion 매핑 | PASS — 17/17, 100%, 정적 gap 0개 |
 | 전체 결정론적 검사 | `./tooling/scripts/check.sh`, `git diff --check` | PASS |
+| 요청된 전달 | 원격 브랜치와 GitHub PR 확인 | PASS — [PR #10](https://github.com/LeeByeongMuk/dotagents/pull/10) |
 
 ## 남은 위험
 
