@@ -23,6 +23,7 @@ required=(
   agents/skills/owned/product-development-workflow/SKILL.md
   agents/skills/owned/product-development-workflow/agents/openai.yaml
   agents/skills/owned/product-development-workflow/references/brief.md
+  agents/skills/owned/product-development-workflow/references/model-fit.md
   agents/skills/owned/product-development-workflow/references/model-verification.md
   agents/skills/owned/product-development-workflow/references/stages.md
   agents/skills/owned/product-development-workflow/references/artifacts.md
@@ -43,6 +44,7 @@ required=(
   agents/templates/context-docs/README.md agents/templates/context-docs/domain-overview.md
   agents/templates/context-docs/interface-contract.md agents/templates/context-docs/integration-map.md
   tooling/tests/install_test.sh tooling/tests/structure_test.sh tooling/tests/workflow_test.sh
+  tooling/tests/model_fit_test.sh
   tooling/tests/sources_test.sh
   tooling/README.md
   tooling/schemas/README.md
@@ -50,6 +52,7 @@ required=(
   docs/decisions/README.md
   docs/designs/product-development-workflow.md
   docs/evals/product-development-workflow-model-behavior.md
+  docs/evals/product-development-workflow-model-fit.md
   docs/decisions/0001-living-context-docs.md
   dist/README.md
 )
@@ -80,6 +83,12 @@ if "$REPO_ROOT/tooling/tests/workflow_test.sh" >/dev/null; then
   ok "product workflow"
 else
   bad "product workflow failed"
+fi
+
+if "$REPO_ROOT/tooling/tests/model_fit_test.sh" >/dev/null; then
+  ok "model fit contract"
+else
+  bad "model fit contract failed"
 fi
 
 if "$REPO_ROOT/tooling/tests/sources_test.sh" >/dev/null; then

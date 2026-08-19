@@ -2,6 +2,8 @@
 
 Use this reference only for the exact active model named below. Deterministic project checks are common to every model. This policy governs only model-generated self-review and verifier delegation; it never replaces acceptance criteria, tests, static analysis, builds, schema checks, or observed user-flow evidence.
 
+This policy starts after model selection. `model-fit.md` decides which candidate and effort fit the run; this file adjusts verification behavior for the exact active model. A Model Fit recommendation must not be presented as verification evidence.
+
 ## GPT-5.6 Sol
 
 - Keep the prompt lean and do not add a generic self-review pass.
