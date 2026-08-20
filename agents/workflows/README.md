@@ -4,4 +4,4 @@
 
 현재 제공하는 워크플로우:
 
-- [`product-development`](product-development/WORKFLOW.md): 기본 Brief → Execute → Verify, 선택적 audited 10단계 증거 경로
+- [`product-development`](product-development/WORKFLOW.md): 기획 전용 Plan, 구현용 Brief → Execute → Verify, 선택적 audited 10단계 증거 경로

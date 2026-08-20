@@ -1,4 +1,4 @@
 interface:
   display_name: "Product Development Workflow"
-  short_description: "Brief-first product workflow with verified execution"
-  default_prompt: "Use $product-development-workflow to capture the product Brief, execute autonomously, and verify the result."
+  short_description: "Plan or build products across Codex and Claude"
+  default_prompt: "Use $product-development-workflow to route this product request to planning or verified implementation based on my requested action."

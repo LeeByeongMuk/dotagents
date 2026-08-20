@@ -1,16 +1,17 @@
 # 설계: Brief 중심 제품 개발 워크플로우
 
 - Original design: 2026-08-02
-- Revised: 2026-08-10
+- Revised: 2026-08-20
 - Status: APPROVED FOR IMPLEMENTATION
-- Default path: `Brief → Execute → Verify`
+- Planning path: `Plan`
+- Default implementation path: `Brief → Execute → Verify`
 - Compatibility path: `audited` ten-stage workflow
 
 ## 문제 정의
 
 기존 제품 개발 워크플로우는 인터뷰부터 검수까지 재개 가능한 10단계 증거 사슬을 만들었다. 안전한 상태 전이와 승인 기록은 제공하지만, 일반 제품 작업에도 9~10개 산출물, 단계별 승인, 공급자 스킬 체인, 서브에이전트와 반복 검토를 기본 적용한다.
 
-최신 모델은 전체 문맥에서 계획하고, 실행 순서와 도구를 선택하며, 결과를 검토할 수 있다. 실행 방법을 고정하는 하네스가 모델의 판단을 막고 시간·토큰·인수인계 손실을 만들 수 있다. 반면 모델은 사용자의 상황, 취향, 사업 목적과 과거 결정은 스스로 알 수 없다.
+최신 모델은 전체 문맥에서 계획하고, 실행 순서와 도구를 선택하며, 결과를 검토할 수 있다. 실행 방법을 고정하는 하네스가 모델의 판단을 막고 시간·토큰·인수인계 손실을 만들 수 있다. 반면 기획 요청과 구현 요청을 같은 경로로 처리하면 사용자가 승인하지 않은 변경으로 넘어갈 수 있고, Codex와 Claude Code의 검증 차이를 한 지침에 모두 넣으면 각 호스트가 불필요한 문맥을 읽는다.
 
 따라서 다음을 분리한다.
 
@@ -24,6 +25,8 @@
 3. 성공은 단계 통과가 아니라 수용 조건과 결정론적 검증 증거로 판정한다.
 4. 규제·감사·고위험 인수인계에는 기존 10단계 계약을 계속 제공한다.
 5. Claude Code, Codex, Gemini가 같은 원본을 사용한다.
+6. 기획 요청은 구현 없이 끝나고, 사용자가 구현을 요청한 경우에만 실행 경로로 넘어간다.
+7. Claude Code와 Codex는 같은 결과 계약을 사용하되 호스트별 검증 지침은 서로 로드하지 않는다.
 
 ## 비목표
 
@@ -45,7 +48,13 @@
 
 ### direct
 
-작은 수정, 단일 버그, 설명, 조사에 사용한다. 별도 제품 Brief나 워크플로 상태를 만들지 않고 프로젝트의 일반 구현·검증 절차를 따른다.
+작은 수정, 단일 버그, 설명과 제품 결정을 만들지 않는 사실 조사에 사용한다. 별도 제품 Brief나 워크플로 상태를 만들지 않고 프로젝트의 일반 절차를 따른다.
+
+### plan: 기획 전용
+
+제품 문제 탐색, 대안 비교, 기획, 설계 요청에 사용한다. 저장소와 현재 제품 원본을 조사하고 문제, 결과·성공 신호, 판단 원칙, 제약·비목표, `AC-<번호>` 수용 조건, 결정·버린 대안, 열린 결정을 반환한다. 사용자가 문서 수정을 요청하지 않았다면 파일을 만들지 않으며 구현과 구현 검증으로 넘어가지 않는다. “조사”나 “탐색”은 제품 결정을 만들 때만 이 경로이며 기존 사실 설명은 `direct`다.
+
+기획과 구현이 함께 명시되면 구현 권한을 우선해 `lean`을 선택하고, 형식적 증거가 필요한 구현이면 `audited`를 선택한다. 고위험 주제만 제시된 기획 요청은 구현 권한으로 확대하지 않는다.
 
 ### lean: 기본
 
@@ -55,7 +64,7 @@ BRIEF                         EXECUTE                       VERIFY
 제약·결정 기록·수용 조건       단일 주 에이전트 문맥 유지       실패 수정과 재검증
 ```
 
-현재 PRD·이슈·스펙이 제품 결정을 소유하고 계속 갱신할 수 있으면 그것을 Brief로 채택한다. 적합한 원본이 없을 때만 `docs/workflows/<run-id>/brief.md`를 만든다. 외부·읽기 전용 원본에는 링크만 두고, 로컬 Brief는 누락된 결정·체크포인트·검증 증거·위험만 기록한다.
+현재 PRD·이슈·스펙이 제품 결정을 소유하고 계속 갱신할 수 있으면 그것을 Brief로 채택하고 fallback 템플릿을 읽지 않는다. 적합한 원본이 없거나 외부·읽기 전용 원본에 실행 기록을 보완해야 할 때만 `references/brief-template.md`를 읽고 `docs/workflows/<run-id>/brief.md`를 만든다.
 
 ### audited: 선택
 
@@ -77,7 +86,7 @@ BRIEF                         EXECUTE                       VERIFY
 2. 문제가 해결되면 달라지는 결과와 성공 신호
 3. `A보다 B를 선택한다. 왜냐하면 ...` 형식의 판단 원칙
 4. 비용·법률·보안·일정·호환성 제약과 비목표
-5. 관찰 가능한 수용 조건
+5. 안정적인 `AC-<번호>`가 붙은 관찰 가능한 수용 조건
 6. 결정, 버린 대안, 이유와 결정자
 7. 열린 제품 결정
 8. 재개 체크포인트, 검증 증거와 남은 위험
@@ -110,12 +119,24 @@ BRIEF                         EXECUTE                       VERIFY
 
 ### 모델별 검증
 
-결정론적 프로젝트 검사는 모델과 무관하게 유지한다. 모델이 생성하는 자기검토와 검증 위임만 다음처럼 구분한다.
+결정론적 프로젝트 검사와 제품 결과 계약은 모델과 무관하게 유지한다. 공통 스킬은 활성 호스트의 참조 하나만 읽으며, 모델이 생성하는 자기검토와 검증 위임만 다음처럼 구분한다.
 
-- GPT-5.6 Sol: 프롬프트를 간결하게 유지하고 구체적 diff 위험이 없는 일반 자기검토를 추가하지 않는다.
-- Claude Opus 5: 모델이 기본으로 수행하는 자기수정을 중복하는 최종 재검토나 검증 서브에이전트를 추가하지 않는다.
-- Claude Fable 5: 짧은 작업에는 추가 검증 하네스를 두지 않는다. 장기 실행에서는 도구 결과로 진행 주장을 확인하고, 결과를 바꿀 수 있는 스펙·위험 체크포인트에만 fresh-context 검증자를 사용할 수 있다.
+- Codex는 `references/codex.md`만 읽는다. GPT-5.6 Sol에는 구체적 diff 위험이 없는 일반 자기검토를 추가하지 않는다.
+- Claude Code는 `references/claude.md`만 읽는다. Claude Opus 5에는 중복 최종 검증자를 추가하지 않고, Claude Fable 5는 장기 고위험 체크포인트에서만 fresh-context 검증자를 사용할 수 있다.
+- Gemini와 그 밖의 호스트는 공통 검증 정책만 사용한다.
 - 모델이 갱신되면 현재 하네스와 축소 하네스를 대표 작업에서 비교하고, 측정된 이득이 없는 모델 전용 지시는 제거한다.
+
+### 교차 호스트 결과 계약
+
+Codex와 Claude Code에 같은 내부 도구 순서를 강제하지 않는다. 다음 결과만 동일하게 평가한다.
+
+- 요청 의도에 맞는 `direct / plan / lean / audited` 경로
+- 제품 원본 재사용과 Brief 생성 결정
+- 구현 권한 준수
+- 질문, 수용 조건, 결정, 남은 위험
+- 서브에이전트 사용 근거와 결정론적 검증 증거
+
+공급자별 실행기는 동일 사례와 JSON 결과 스키마를 사용하고 모델·effort, 입력·출력·reasoning 또는 thinking 토큰, 캐시 읽기·쓰기, 지연, 비용을 가능한 범위에서 정규화한다. 공급자마다 입력과 캐시 토큰의 원시 의미가 다를 수 있으므로 서로 합쳐 직접 비교하지 않는다. `--require-all`은 Codex와 Claude의 모든 등록 사례가 있을 때만 성공한다. 기본 저장소 검사는 정상 fixture와 빈 결과·단일 공급자·중복·미등록·잘못된 구조 같은 부정 사례로 계약을 검증하고 실제 모델 호출은 명시적인 eval 실행에서만 수행한다.
 
 ### 외부 프레임워크와 스킬
 
@@ -146,6 +167,8 @@ BRIEF                         EXECUTE                       VERIFY
 - 기존 `workflow.toml`, `workflow.sh`, 상태 버전 1과 10단계 테스트를 유지한다.
 - 해당 CLI는 `audited` 경로에서만 사용한다는 설명을 추가한다.
 - 기본 스킬은 lean 경로에서 감사형 reference와 machine contract를 읽지 않는다.
+- 기존 제품 원본이 충분한 lean 경로는 fallback Brief 템플릿을 읽지 않는다.
+- 호스트별 검증 참조는 서로 배타적으로 로드한다.
 - 기존 단계 공급자는 감사형 슬롯으로 계속 등록한다.
 - 기존 audited 상태 머신의 상세 잠금·해시·복구 설계는 최초 구현 커밋 `f18ca30`의 이 문서 이력과 현재 회귀 테스트에서 추적한다.
 - 실제 사용 후 시간, 토큰, 사용자 중단 횟수, 결함, 재개 성공률을 모델별로 비교해 추가 단순화를 결정한다.
@@ -153,8 +176,10 @@ BRIEF                         EXECUTE                       VERIFY
 
 ## 성공 기준
 
-- 스킬 설명과 사용서에서 `Brief → Execute → Verify`가 기본 경로다.
-- Brief reference가 기존 권위 원본 재사용과 로컬 fallback을 구분하고 문제·결과·판단 기준·제약·결정 기록을 필수로 검증한다.
+- 스킬 설명과 사용서가 기획 전용 `plan`과 구현용 `Brief → Execute → Verify`를 구분한다.
+- Brief template이 기존 권위 원본 재사용과 로컬 fallback을 구분하고 `AC-<번호>`를 실행·검증까지 연결한다.
+- Codex와 Claude Code가 공통 결과 계약과 각자의 검증 참조 하나만 사용한다.
+- 같은 eval 사례와 결과 스키마가 두 공급자의 행동과 비용을 비교할 수 있다.
 - 감사형 CLI와 기존 회귀 테스트가 계속 통과한다.
 - 구조 테스트가 lean 기본값과 audited 호환 경로를 모두 확인한다.
 - README와 레지스트리가 같은 라우팅을 설명한다.
@@ -163,6 +188,7 @@ BRIEF                         EXECUTE                       VERIFY
 
 - [OpenAI GPT-5.6 model guidance](https://developers.openai.com/api/docs/guides/latest-model?model=gpt-5.6#prompting-best-practices)
 - [Anthropic Claude Opus 5 prompting](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-opus-5)
-- [Anthropic Claude Fable 5 prompting](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5)
+- [Anthropic Claude prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices)
+- [Claude Code subagent context](https://code.claude.com/docs/en/sub-agents#what-loads-at-startup)
 
 초기 변경 전·후 행동 비교와 단일 실행 비용 신호는 [`docs/evals/product-development-workflow-model-behavior.md`](../evals/product-development-workflow-model-behavior.md)에 기록한다.

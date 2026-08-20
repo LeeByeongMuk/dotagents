@@ -22,8 +22,9 @@ required=(
   agents/skills/owned/README.md
   agents/skills/owned/product-development-workflow/SKILL.md
   agents/skills/owned/product-development-workflow/agents/openai.yaml
-  agents/skills/owned/product-development-workflow/references/brief.md
-  agents/skills/owned/product-development-workflow/references/model-verification.md
+  agents/skills/owned/product-development-workflow/references/brief-template.md
+  agents/skills/owned/product-development-workflow/references/codex.md
+  agents/skills/owned/product-development-workflow/references/claude.md
   agents/skills/owned/product-development-workflow/references/stages.md
   agents/skills/owned/product-development-workflow/references/artifacts.md
   agents/skills/owned/dotagents-promote/SKILL.md
@@ -43,7 +44,17 @@ required=(
   agents/templates/context-docs/README.md agents/templates/context-docs/domain-overview.md
   agents/templates/context-docs/interface-contract.md agents/templates/context-docs/integration-map.md
   tooling/tests/install_test.sh tooling/tests/structure_test.sh tooling/tests/workflow_test.sh
+  tooling/tests/eval_test.sh
   tooling/tests/sources_test.sh
+  tooling/evals/product-development/README.md
+  tooling/evals/product-development/case-contract.jq
+  tooling/evals/product-development/cases.json
+  tooling/evals/product-development/decision.schema.json
+  tooling/evals/product-development/routing-prompt.md
+  tooling/evals/product-development/run.sh
+  tooling/evals/product-development/score.sh
+  tooling/evals/product-development/fixtures/codex.jsonl
+  tooling/evals/product-development/fixtures/claude.jsonl
   tooling/README.md
   tooling/schemas/README.md
   docs/README.md
@@ -65,7 +76,7 @@ else
   ok "no broken symbolic links"
 fi
 
-for script in "$REPO_ROOT"/tooling/scripts/*.sh "$REPO_ROOT"/tooling/tests/*.sh; do
+for script in "$REPO_ROOT"/tooling/scripts/*.sh "$REPO_ROOT"/tooling/tests/*.sh "$REPO_ROOT"/tooling/evals/product-development/*.sh; do
   bash -n "$script" || bad "shell syntax failed: ${script#"$REPO_ROOT/"}"
 done
 ok "shell syntax"
@@ -80,6 +91,12 @@ if "$REPO_ROOT/tooling/tests/workflow_test.sh" >/dev/null; then
   ok "product workflow"
 else
   bad "product workflow failed"
+fi
+
+if "$REPO_ROOT/tooling/tests/eval_test.sh" >/dev/null; then
+  ok "cross-host workflow eval"
+else
+  bad "cross-host workflow eval failed"
 fi
 
 if "$REPO_ROOT/tooling/tests/sources_test.sh" >/dev/null; then
