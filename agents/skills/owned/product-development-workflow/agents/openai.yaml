@@ -1,4 +1,4 @@
 interface:
   display_name: "Product Development Workflow"
-  short_description: "Plan or build products across Codex and Claude"
-  default_prompt: "Use $product-development-workflow to route this product request to planning or verified implementation based on my requested action."
+  short_description: "Plan, fit, and build across Codex and Claude"
+  default_prompt: "Use $product-development-workflow to route this product request to planning or verified implementation, assess model fit when runnable candidates exist, and verify authorized work."

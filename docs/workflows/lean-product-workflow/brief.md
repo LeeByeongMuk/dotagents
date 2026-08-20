@@ -107,11 +107,11 @@ dotagents를 사용하는 개발자가 Codex와 Claude Code에서 제품을 기�
 | `AC-14`~`AC-16` 공통·호스트 분리 계약 | `tooling/tests/structure_test.sh`와 스킬 validator | 통과; 공통 스킬 하나와 활성 호스트 참조 하나만 사용 |
 | `AC-17` 교차 호스트 판정 | `tooling/evals/product-development/score.sh --require-all tooling/evals/product-development/fixtures/{codex,claude}.jsonl` | 두 공급자 13개 fixture 결과 통과 |
 | `AC-17` 실제 호스트 실행 | `score.sh /tmp/dotagents-codex-plan.jsonl /tmp/dotagents-claude-plan.jsonl` | GPT-5.6 Sol·Claude Opus 5의 `plan-only` 결과 모두 통과 |
-| 조건부 참조 문맥 | 이전·현재 파일에 `wc -w` | 2,093단어에서 Codex 1,348단어·Claude 1,403단어로 약 36%·33% 감소 |
+| 조건부 참조 문맥 | 이전·현재 파일에 `wc -w` | 2,093단어에서 Codex 1,634단어·Claude 1,689단어로 약 22%·19% 감소; Model Fit 참조 1,449단어는 후보가 둘 이상이거나 모델 선택 요청이 있을 때만 추가 |
 | `AC-18` 전체 회귀 | `./tooling/scripts/check.sh` | 필수 파일, 셸 문법, 구조, audited 15개 시나리오, 교차 호스트 eval, 설치 dry-run 등 모두 통과 |
 | `AC-19` 채점기 공격 회귀 | `tooling/tests/eval_test.sh` | 빈·단일 공급자·중복·미등록·잘못된 스키마/effort/사용량/출처/증거를 모두 실패 처리 |
 | `AC-20` 실행기 안전성 | 모의 Codex·Claude 정상/실패·경쟁 테스트 | CLI 옵션과 사용량 파싱 통과; 실패 시 기존 결과 보존; 변경된 입력은 스냅샷 고정; 대상 심볼릭 링크를 따라가지 않음 |
-| `AC-21`~`AC-22` 경계·실제 호스트 | `score.sh --require-all /tmp/dotagents-live-final-v3-{codex,claude}-20260820.jsonl` | 13개×2=26개 통과; Codex 104초, Claude 152초·$0.467199 |
+| `AC-21`~`AC-22` 경계·실제 호스트 | `score.sh --require-all /tmp/dotagents-live-pr11-merged-{codex,claude}-20260820.jsonl` | Model Fit 통합 후 13개×2=26개 통과; Codex 99초, Claude 146초·$0.907175 |
 | 실제 증거 의미 표본 | 26개 결과의 첫 수용 조건·검사·질문을 사례 문맥과 수동 대조 | 제품/기능 명칭과 기대 동작이 사례에 대응했고, 차단 결정 사례만 두 호스트 모두 질문 1개 포함 |
 | fresh-context 전방 테스트 | 사실 조사, 제품 탐색, 고위험 기획 전용 요청 | 각각 `direct`, `plan`, `plan`; 구현·파일 변경 없음 |
 | `AC-23` 최종 검증 | metadata 생성기, skill validator, `./tooling/scripts/check.sh`, `tooling/tests/install_test.sh`, `git diff --check` | `Skill is valid!`; 전체 검사와 설치 9개 시나리오 통과; 패치 형식 통과 |

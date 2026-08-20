@@ -25,6 +25,7 @@ required=(
   agents/skills/owned/product-development-workflow/references/brief-template.md
   agents/skills/owned/product-development-workflow/references/codex.md
   agents/skills/owned/product-development-workflow/references/claude.md
+  agents/skills/owned/product-development-workflow/references/model-fit.md
   agents/skills/owned/product-development-workflow/references/stages.md
   agents/skills/owned/product-development-workflow/references/artifacts.md
   agents/skills/owned/dotagents-promote/SKILL.md
@@ -45,6 +46,7 @@ required=(
   agents/templates/context-docs/interface-contract.md agents/templates/context-docs/integration-map.md
   tooling/tests/install_test.sh tooling/tests/structure_test.sh tooling/tests/workflow_test.sh
   tooling/tests/eval_test.sh
+  tooling/tests/model_fit_test.sh
   tooling/tests/sources_test.sh
   tooling/evals/product-development/README.md
   tooling/evals/product-development/case-contract.jq
@@ -61,6 +63,7 @@ required=(
   docs/decisions/README.md
   docs/designs/product-development-workflow.md
   docs/evals/product-development-workflow-model-behavior.md
+  docs/evals/product-development-workflow-model-fit.md
   docs/decisions/0001-living-context-docs.md
   dist/README.md
 )
@@ -97,6 +100,12 @@ if "$REPO_ROOT/tooling/tests/eval_test.sh" >/dev/null; then
   ok "cross-host workflow eval"
 else
   bad "cross-host workflow eval failed"
+fi
+
+if "$REPO_ROOT/tooling/tests/model_fit_test.sh" >/dev/null; then
+  ok "model fit contract"
+else
+  bad "model fit contract failed"
 fi
 
 if "$REPO_ROOT/tooling/tests/sources_test.sh" >/dev/null; then

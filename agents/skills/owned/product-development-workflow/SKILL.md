@@ -30,6 +30,7 @@ Words such as “research” or “explore” do not choose the route by themsel
 
 ## Run the lean path
 
+Read `references/model-fit.md` only when its trigger below applies. Do not load `references/stages.md`, `references/artifacts.md`, or the machine contract on the lean path.
 ### Brief
 
 1. Inspect the repository and supplied material before asking questions.
@@ -40,6 +41,18 @@ Words such as “research” or “explore” do not choose the route by themsel
 6. Surface material assumptions, consequential alternatives, and user-owned open decisions together before Execute only when they could change the result. This is not an approval gate. Wait only when an open product decision blocks the direction.
 
 The adopted product document is the authority for product facts. Keep it and at most one local run record current. Use their history or Git history instead of correction documents.
+
+### Model Fit
+
+After the Brief is current and before Execute, read and apply `references/model-fit.md` when the host exposes at least two runnable model candidates or the user explicitly requests model selection.
+
+1. Compare only host-reported or user-supplied candidates. Use one provider-neutral inventory for Claude, Codex, and future local runtimes.
+2. Apply hard constraints before capability, representative eval evidence, context continuity, cost, and latency. Do not create a weighted score or map keywords directly to models.
+3. Preserve the active model when the user pinned it, only one candidate is runnable, candidates are close, or evidence is too weak to repay a handoff, but only after the active model passes every non-negotiable hard constraint. A pinned model that conflicts with authorization, security, data policy, required capabilities, or budget must not run; record the conflict and stop for user direction.
+4. Separate the recommendation from execution. Never claim to switch models, start another provider, or run a paid benchmark unless the host can perform that action and current authority permits it.
+5. Record the exact candidate, effort, confidence, evidence, rejected alternatives, execution status, and re-evaluation trigger in the product authority's run record or local Brief checkpoint.
+
+Model Fit is a bounded pre-execution recommendation, not a new approval stage or a fixed multi-model chain. If the active model still satisfies every acceptance criterion but the host cannot apply a recommended switch, continue the run and record it as a next-run recommendation.
 
 ### Execute
 

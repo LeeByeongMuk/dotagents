@@ -2,6 +2,8 @@
 
 Read this reference only on Codex. The shared workflow owns routing, authorization, acceptance criteria, and deterministic verification; this file contains only Codex-specific model-generated review guidance.
 
+This policy starts after model selection. `model-fit.md` decides which candidate and effort fit the run. A Model Fit recommendation must not be presented as verification evidence.
+
 ## GPT-5.6 Sol
 
 - Keep the prompt lean and do not add a generic self-review pass.

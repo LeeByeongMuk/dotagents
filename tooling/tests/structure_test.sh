@@ -69,6 +69,9 @@ grep -Fq "project's living-context documentation rule" "$workflow_skill" || fail
 grep -Fq 'Do not auto-inject similarity-based memories' "$workflow_skill" || fail "workflow skill must reject automatic similarity-memory injection"
 grep -Fq 'references/codex.md' "$workflow_skill" && grep -Fq 'references/claude.md' "$workflow_skill" || fail "workflow skill must route Codex and Claude to host guidance"
 grep -Fq 'Never load an unrelated host reference' "$workflow_skill" || fail "workflow skill must keep host references mutually exclusive"
+grep -Fq 'references/model-fit.md' "$workflow_skill" || fail "workflow skill must route eligible runs to Model Fit guidance"
+grep -Fq 'at least two runnable model candidates' "$workflow_skill" || fail "workflow Model Fit trigger must require runnable candidates or an explicit request"
+grep -Fq 'Separate the recommendation from execution' "$workflow_skill" || fail "workflow Model Fit must not imply model-switch authority"
 grep -Fq 'Do not require a fixed model-generated review pass' "$workflow_skill" || fail "workflow skill must not force a generic review pass"
 grep -Fq 'dotagents promotion candidate' "$workflow_skill" || fail "workflow skill must propose promotion candidates at completion"
 
@@ -130,6 +133,28 @@ jq -e 'length == 13 and (map(.id) | index("product-discovery") != null and index
 jq -e '.additionalProperties == false and (.required | sort) == (.properties | keys | sort) and .properties.route.enum == ["direct", "plan", "lean", "audited"] and .properties.file_changes_authorized.type == "boolean"' "$eval_root/decision.schema.json" >/dev/null || fail "cross-host eval schema is inconsistent"
 grep -Fq 'model_reasoning_effort' "$eval_root/run.sh" && grep -Fq 'output already exists' "$eval_root/run.sh" || fail "cross-host eval runner must preserve effort and output safety"
 grep -Fq -- '--strict-config' "$eval_root/run.sh" && grep -Fq -- '--disable shell_tool' "$eval_root/run.sh" && grep -Fq -- '--tools ""' "$eval_root/run.sh" && grep -Fq 'harness_sha256' "$eval_root/run.sh" || fail "cross-host eval runner must reject config drift, disable model tools, and record provenance"
+
+model_fit="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/model-fit.md"
+[[ -f "$model_fit" ]] || fail "Model Fit reference is missing"
+for candidate_field in '`provider`' '`model`' '`runnable`' '`source`' '`source_checked_at`' '`role`' '`effort_modes`' '`requirements`' '`economics`' '`eval_evidence`'; do
+  grep -Fq "$candidate_field" "$model_fit" || fail "Model Fit candidate inventory is missing: $candidate_field"
+done
+grep -Fq 'Apply hard filters' "$model_fit" || fail "Model Fit must apply hard constraints before preferences"
+grep -Fq 'A representative eval on the current model version and real project prompt outranks provider positioning.' "$model_fit" || fail "Model Fit must prefer representative project evals"
+grep -Fq 'Prefer staying in the current context.' "$model_fit" || fail "Model Fit must account for context continuity"
+grep -Fq 'Never combine uncertain inputs into a precise weighted score.' "$model_fit" || fail "Model Fit must reject false-precision scoring"
+grep -Fq 'separate the recommendation from execution' "$model_fit" || fail "Model Fit must separate advice from host execution"
+grep -Fq 'Initial policy coverage is Claude and Codex/OpenAI model families.' "$model_fit" || fail "Model Fit must declare its initial provider coverage"
+grep -Fq 'a local candidate may participate later' "$model_fit" || fail "Model Fit must keep a provider-neutral local extension point"
+for output_field in 'Decision:' 'Primary:' 'Next-run recommendation:' 'Effort:' 'Optional secondary:' 'Confidence:' 'Hard filters:' 'Evidence:' 'Tradeoff:' 'Execution:' 'Re-evaluate when:'; do
+  grep -Fq "$output_field" "$model_fit" || fail "Model Fit result contract is missing: $output_field"
+done
+
+model_fit_eval="$REPO_ROOT/docs/evals/product-development-workflow-model-fit.md"
+[[ -f "$model_fit_eval" ]] || fail "Model Fit representative scenario eval is missing"
+for scenario in 'MF-1' 'MF-2' 'MF-3' 'MF-4' 'MF-5' 'MF-6'; do
+  grep -Fq "$scenario" "$model_fit_eval" || fail "Model Fit eval is missing representative scenario: $scenario"
+done
 
 workflow_contract="$REPO_ROOT/agents/workflows/product-development/workflow.toml"
 grep -Fq 'Audited compatibility contract' "$workflow_contract" || fail "ten-stage contract must be labeled audited"

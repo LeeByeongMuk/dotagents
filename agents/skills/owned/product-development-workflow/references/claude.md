@@ -2,6 +2,8 @@
 
 Read this reference only on Claude Code. The shared workflow owns routing, authorization, acceptance criteria, and deterministic verification; this file contains only Claude-specific thinking, review, and delegation guidance.
 
+This policy starts after model selection. `model-fit.md` decides which candidate and effort fit the run. A Model Fit recommendation must not be presented as verification evidence.
+
 ## Claude Opus 5
 
 - Do not add a final self-review, re-check, or verifier subagent merely because the task is non-trivial.

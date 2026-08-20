@@ -2,7 +2,7 @@
 
 Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 단일 원본입니다. 공통 규칙, 워크플로우, 직접 만든 스킬, 프롬프트, 훅, 외부 연동 규격과 도구별 어댑터를 한 저장소에서 관리하고 여러 프로젝트에 재사용합니다.
 
-현재는 구조와 설치 기반뿐 아니라 기획 전용 `Plan`과 구현용 `Brief → Execute → Verify`를 구분하는 제품 개발 워크플로우를 제공합니다. Claude Code와 Codex는 같은 제품 결과 계약을 공유하고 각자의 검증 참조만 읽습니다. 기존 10단계 계약은 감사·고위험 작업의 선택 경로로 보존합니다.
+현재는 구조와 설치 기반뿐 아니라 기획 전용 `Plan`과 구현용 `Brief → Execute → Verify`를 구분하는 제품 개발 워크플로우를 제공합니다. 구현 경로에서 여러 모델을 실행할 수 있으면 Brief 이후 Claude·Codex 후보의 Model Fit을 판단하고, 두 호스트는 같은 제품 결과 계약을 공유하면서 각자의 검증 참조만 읽습니다. 기존 10단계 계약은 감사·고위험 작업의 선택 경로로 보존합니다. 실제 훅·MCP 설정 생성, 외부 스킬 자동 동기화와 프로필 합성은 후속 범위입니다.
 
 ## 원칙과 우선순위
 
@@ -123,6 +123,7 @@ agents/ 원본
 - 저장소 이동과 내부 경로 변경 후 재설치 복구
 - 구조, 비밀 패턴, 셸 문법과 설치 시나리오 검증
 - 하나의 살아 있는 제품 Brief와 자율 실행, 결정론적 검증을 잇는 기본 제품 개발 워크플로우
+- 호스트가 제공하는 Claude·Codex 후보를 하드 제약, 프로젝트 eval, 문맥 연속성, 비용·지연 순으로 비교하는 조건부 Model Fit 권고
 - 감사·고위험 작업을 위한 단계별 한국어 산출물, 명시적 승인, 중단 후 재개의 10단계 호환 경로
 - Claude Code, Codex, Gemini의 공통 스킬 발견과 전역·프로젝트 워크플로우 CLI
 - 세션에서 발견한 공통 관례를 격리 브랜치로 승격 제안·반영하는 `dotagents-promote` 스킬
@@ -225,7 +226,9 @@ $product-development-workflow 로 이 Next.js 스타터 킷에 인증 기능을 
 Brief → Execute → Verify
 ```
 
-주 에이전트가 전체 문맥에서 계획과 도구를 자율적으로 선택하고, 외부 스킬·멀티에이전트·RAG는 실제 필요가 있을 때만 사용합니다. `AC-<번호>` 수용 조건을 구현과 검증 증거까지 연결하고, Codex는 Codex 검증 참조만, Claude Code는 Claude 검증 참조만 읽습니다.
+주 에이전트가 전체 문맥에서 계획과 도구를 자율적으로 선택하고, 외부 스킬·멀티에이전트·RAG는 실제 필요가 있을 때만 사용합니다. 실행 가능한 모델 후보가 둘 이상이면 Brief를 바탕으로 Model Fit을 한 번 판단합니다. 현재 모델을 기본값으로 두고, 하드 제약이나 대표 eval처럼 문맥 이전 비용을 상쇄할 근거가 있을 때만 정확한 모델·effort 전환을 권고합니다. 호스트가 전환을 지원하지 않으면 현재 실행을 계속하고 다음 실행 권고로 기록하며, 유료 benchmark나 다른 공급자 호출을 자동 시작하지 않습니다.
+
+초기 Model Fit 정책은 Claude와 Codex/OpenAI 모델 계열을 지원합니다. 후보 형식은 공급자 중립이므로 로컬 LLM도 같은 가용성·도구·데이터 경계·비용·eval 필드를 제공하면 이후 추가할 수 있습니다. `AC-<번호>` 수용 조건은 구현과 검증 증거까지 연결하고, Codex는 Codex 검증 참조만, Claude Code는 Claude 검증 참조만 읽습니다. 검증은 프로젝트 테스트·정적 검사·빌드처럼 판정 가능한 증거를 우선하며, 모델이 생성하는 추가 검토는 실제 활성 모델과 작업 길이에 맞춰 조건부로 적용합니다.
 
 규제, 민감한 보안 경계, 비가역 마이그레이션, 공식 팀 승인처럼 단계 증거가 필요하면 `audited` 경로를 명시적으로 요청합니다.
 
@@ -268,6 +271,7 @@ bash -n tooling/scripts/workflow.sh
 ./tooling/scripts/check.sh
 ./tooling/scripts/check-sources.sh
 ./tooling/tests/install_test.sh
+./tooling/tests/model_fit_test.sh
 ./tooling/tests/structure_test.sh
 ./tooling/tests/workflow_test.sh
 ./tooling/tests/sources_test.sh

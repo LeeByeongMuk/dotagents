@@ -27,6 +27,7 @@
 5. Claude Code, Codex, Gemini가 같은 원본을 사용한다.
 6. 기획 요청은 구현 없이 끝나고, 사용자가 구현을 요청한 경우에만 실행 경로로 넘어간다.
 7. Claude Code와 Codex는 같은 결과 계약을 사용하되 호스트별 검증 지침은 서로 로드하지 않는다.
+8. 여러 모델을 실행할 수 있는 호스트에서는 작업 성공 가능성, 문맥 연속성, 비용과 지연을 근거로 실행 모델을 권고한다.
 
 ## 비목표
 
@@ -34,6 +35,8 @@
 - 모든 작업을 단일 호출로 제한하지 않는다.
 - 감사형 기존 실행과 상태 파일의 호환성을 깨지 않는다.
 - 모델의 주관적 자체 평가만으로 테스트·보안·형식 검사를 대체하지 않는다.
+- Claude Code나 Codex 호스트 자체의 모델 전환 API를 구현하지 않는다.
+- 모델 카탈로그와 가격표를 저장소 안에 고정하지 않는다.
 
 ## 판단 원칙
 
@@ -43,6 +46,8 @@
 - 포괄적 자체 검토보다 결정론적 검증을 선택한다. 종료 조건과 성공 기준이 분명하기 때문이다.
 - 역할 분리보다 문맥 연속성을 선택한다. 실제 병렬성이나 독립성이 없으면 인수인계 비용만 생기기 때문이다.
 - 기본 경로 단순화보다 형식적 증거가 중요한 위험에서는 `audited`를 선택한다.
+- 추정상 더 강한 모델보다 현재 문맥을 기본값으로 선택한다. 하드 제약이나 대표 eval처럼 이전 비용을 상쇄하는 근거가 있을 때만 전환하기 때문이다.
+- 공급자별 고정 표보다 공통 후보 계약을 선택한다. Claude·Codex를 먼저 지원하면서 로컬 LLM을 같은 인터페이스로 확장할 수 있기 때문이다.
 
 ## 경로
 
@@ -59,9 +64,9 @@
 ### lean: 기본
 
 ```text
-BRIEF                         EXECUTE                       VERIFY
-문제·목적·판단 기준       →   계획·순서·도구를 자율 선택   →   수용 조건과 검사 증거
-제약·결정 기록·수용 조건       단일 주 에이전트 문맥 유지       실패 수정과 재검증
+BRIEF                    MODEL FIT(조건부)              EXECUTE                    VERIFY
+문제·목적·판단 기준   →   후보·제약·eval 비교       →   계획·순서·도구를 자율 선택   →   수용 조건과 검사 증거
+제약·결정·수용 조건       유지·전환 권고와 근거 기록       단일 주 에이전트 문맥 유지       실패 수정과 재검증
 ```
 
 현재 PRD·이슈·스펙이 제품 결정을 소유하고 계속 갱신할 수 있으면 그것을 Brief로 채택하고 fallback 템플릿을 읽지 않는다. 적합한 원본이 없거나 외부·읽기 전용 원본에 실행 기록을 보완해야 할 때만 `references/brief-template.md`를 읽고 `docs/workflows/<run-id>/brief.md`를 만든다.
@@ -126,13 +131,33 @@ BRIEF                         EXECUTE                       VERIFY
 - Gemini와 그 밖의 호스트는 공통 검증 정책만 사용한다.
 - 모델이 갱신되면 현재 하네스와 축소 하네스를 대표 작업에서 비교하고, 측정된 이득이 없는 모델 전용 지시는 제거한다.
 
+### Model Fit
+
+Brief가 현재 상태가 된 뒤, 호스트가 실행 가능한 후보를 둘 이상 제공하거나 사용자가 모델 선택을 요청할 때만 Model Fit을 판단한다. 모델 선택을 별도 단계 승인이나 공급자 호출 체인으로 만들지 않는다.
+
+후보는 공급자에 관계없이 다음 사실을 제공한다.
+
+- 공급자와 호스트가 인식하는 정확한 모델 ID
+- 현재 실행 가능 여부와 근거가 된 호스트 인벤토리
+- 최신 공식 문서가 설명하는 역할과 확인 날짜
+- 지원 effort, 문맥, 모달리티, 도구와 데이터 경계
+- 상대 비용·지연 등급과 현재 프로젝트의 대표 eval 증거
+
+현재 지원 범위는 Claude와 Codex/OpenAI 계열이다. 로컬 LLM은 같은 사실과 실제 프로젝트 eval을 제공할 때 같은 후보로 추가할 수 있다. 로컬·비공개·저비용이라는 속성만으로 품질 기준을 만족했다고 보지 않는다.
+
+판단에는 가중 합산 점수를 사용하지 않는다. 먼저 가용성, 권한, 보안·데이터, 도구·모달리티, 문맥, 예산 제약을 통과시킨다. 남은 후보는 작업의 판단 난도, 실행 길이, 실패 영향, 도구 적합성을 기준으로 성공 가능성을 비교하고, 같은 모델 버전과 실제 프로젝트 작업을 사용한 eval을 공급자 설명보다 우선한다. 후보가 비슷하거나 근거가 약하면 현재 문맥을 유지한다. 비용과 지연은 품질 기준을 통과한 후보 사이에서만 최적화한다.
+
+모델 권고와 실제 전환은 분리한다. 호스트가 전환을 지원하고 현재 권한 안에서 상태를 보존할 수 있을 때만 적용한다. 그렇지 않으면 현재 모델이 수용 조건을 만족할 수 있는 한 실행을 계속하고 다음 실행 권고로 기록한다. 다른 공급자 프로세스, 유료 benchmark, 새 원격 세션은 자동 시작하지 않는다.
+
+모델별 검증은 Model Fit 이후 실제 활성 모델에 적용한다. 선택 권고나 공급자 설명은 수용 조건·테스트·빌드 증거를 대체하지 않는다.
+
 ### 교차 호스트 결과 계약
 
 Codex와 Claude Code에 같은 내부 도구 순서를 강제하지 않는다. 다음 결과만 동일하게 평가한다.
 
 - 요청 의도에 맞는 `direct / plan / lean / audited` 경로
 - 제품 원본 재사용과 Brief 생성 결정
-- 구현 권한 준수
+- 구현 권한과 파일 변경 권한 준수
 - 질문, 수용 조건, 결정, 남은 위험
 - 서브에이전트 사용 근거와 결정론적 검증 증거
 
@@ -180,12 +205,16 @@ Codex와 Claude Code에 같은 내부 도구 순서를 강제하지 않는다. �
 - Brief template이 기존 권위 원본 재사용과 로컬 fallback을 구분하고 `AC-<번호>`를 실행·검증까지 연결한다.
 - Codex와 Claude Code가 공통 결과 계약과 각자의 검증 참조 하나만 사용한다.
 - 같은 eval 사례와 결과 스키마가 두 공급자의 행동과 비용을 비교할 수 있다.
+- Model Fit reference가 다중 후보 실행에서 하드 제약, 대표 eval, 문맥 연속성, 품질 기준 후 비용·지연 최적화를 같은 순서로 적용한다.
+- Model Fit 권고와 호스트의 실제 전환 권한이 분리되고, Claude·Codex 우선 지원과 로컬 후보 확장점이 문서화된다.
 - 감사형 CLI와 기존 회귀 테스트가 계속 통과한다.
 - 구조 테스트가 lean 기본값과 audited 호환 경로를 모두 확인한다.
 - README와 레지스트리가 같은 라우팅을 설명한다.
 
 ## 모델 가이드 근거
 
+- [OpenAI Models](https://developers.openai.com/api/docs/models)
+- [Anthropic Choosing the right model](https://platform.claude.com/docs/en/about-claude/models/choosing-a-model)
 - [OpenAI GPT-5.6 model guidance](https://developers.openai.com/api/docs/guides/latest-model?model=gpt-5.6#prompting-best-practices)
 - [Anthropic Claude Opus 5 prompting](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-opus-5)
 - [Anthropic Claude prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices)
