@@ -5,7 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 POLICY="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/model-fit.md"
 EVAL="$REPO_ROOT/docs/evals/product-development-workflow-model-fit.md"
-VERIFICATION="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/model-verification.md"
+CODEX_VERIFICATION="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/codex.md"
+CLAUDE_VERIFICATION="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/claude.md"
 README="$REPO_ROOT/README.md"
 WORKFLOW="$REPO_ROOT/agents/workflows/product-development/WORKFLOW.md"
 DESIGN="$REPO_ROOT/docs/designs/product-development-workflow.md"
@@ -94,8 +95,10 @@ grep -Fq 'Status: `CONTRACT PASS / CROSS-PROVIDER NOT RUN`' "$EVAL" || fail "Mod
 grep -Fq '구조·계약 검사' "$EVAL" || fail "Model Fit eval must distinguish local contract evidence"
 grep -Fq '외부 실행' "$EVAL" || fail "Model Fit eval must disclose cross-provider execution status"
 
-grep -Fq 'This policy starts after model selection.' "$VERIFICATION" || fail "model verification must start after Model Fit selection"
-grep -Fq 'A Model Fit recommendation must not be presented as verification evidence.' "$VERIFICATION" || fail "model recommendation must not count as verification evidence"
+for verification in "$CODEX_VERIFICATION" "$CLAUDE_VERIFICATION"; do
+  grep -Fq 'This policy starts after model selection.' "$verification" || fail "host verification must start after Model Fit selection"
+  grep -Fq 'A Model Fit recommendation must not be presented as verification evidence.' "$verification" || fail "model recommendation must not count as verification evidence"
+done
 
 for doc in "$README" "$WORKFLOW" "$DESIGN"; do
   grep -Fq 'Model Fit' "$doc" || fail "Model Fit is missing from ${doc#$REPO_ROOT/}"

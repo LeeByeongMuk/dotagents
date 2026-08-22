@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "route",
+    "implementation_authorized",
+    "file_changes_authorized",
+    "authority_action",
+    "questions",
+    "subagents",
+    "acceptance_criteria",
+    "deterministic_checks"
+  ],
+  "properties": {
+    "route": {
+      "type": "string",
+      "enum": ["direct", "plan", "lean", "audited"]
+    },
+    "implementation_authorized": {
+      "type": "boolean"
+    },
+    "file_changes_authorized": {
+      "type": "boolean"
+    },
+    "authority_action": {
+      "type": "string",
+      "enum": ["none", "reuse", "create", "link"]
+    },
+    "questions": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "\\S"}
+    },
+    "subagents": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "\\S"}
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^AC-[0-9]+ +\\S"}
+    },
+    "deterministic_checks": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "\\S"}
+    }
+  }
+}

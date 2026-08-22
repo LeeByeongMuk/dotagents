@@ -1,40 +1,46 @@
 ---
 name: product-development-workflow
-description: Run a planning-harness-first product workflow for new products or meaningful features with unresolved what/why decisions. Default to one authoritative Brief source, autonomous Execute, and deterministic Verify; reuse a current product document before creating a workflow Brief. Use the audited ten-stage path only when explicitly requested or when compliance, irreversible changes, formal handoffs, or high-risk security work require stage evidence. Do not use for small edits, isolated bugs, explanations, or research-only tasks.
+description: Use for product planning, product discovery, new products, or meaningful features with unresolved what/why decisions. Route planning-only requests to a non-mutating Plan, implementation requests to Brief → Execute → Verify, and formal high-risk work to audited. Reuse a current PRD, issue, or specification. Do not use for small edits, isolated bugs, explanations, or fact-finding that does not require a product decision.
 ---
 
 # Product Development Workflow
 
-Keep the planning harness mandatory and the execution harness light. Preserve what the user is building, why it matters, how tradeoffs should be decided, and which constraints cannot move. Let the capable model choose the execution order, tools, and local plan.
+Keep one shared product-decision contract across hosts. Preserve what the user is building, why it matters, how tradeoffs should be decided, and which constraints cannot move. Let the active model choose execution details inside the user's authorization boundary.
 
 ## Route the request
 
-Choose one path before creating artifacts:
+Choose one path before creating artifacts or changing files:
 
-- `direct`: a small edit, isolated bug, explanation, or research-only task. Do not use this workflow; follow the project's normal edit-and-verify path.
-- `lean`: any product task routed to this skill. This is the default, including substantial features.
-- `audited`: use only when the user explicitly requests the ten-stage workflow or when formal evidence is required for compliance, sensitive security boundaries, irreversible data migration, cross-team approval, or a long-lived handoff.
+- `direct`: a small edit, isolated bug, explanation, or factual lookup that does not make a product decision. Do not use this workflow; follow the project's normal path.
+- `plan`: the user asks to discover a product problem, define requirements, compare product alternatives, design, or plan without authorizing implementation. Inspect relevant material and return or update the requested planning artifact, then stop before Execute.
+- `lean`: the user authorizes building or changing a product or meaningful feature. This is the default implementation path: Brief → Execute → Verify.
+- `audited`: the user explicitly requests the ten-stage workflow, or formal evidence is required for compliance, sensitive security boundaries, irreversible data migration, cross-team approval, or a long-lived handoff.
 
-Do not choose `audited` from file count, task size, or model distrust alone. Explain the concrete risk that requires it. If no such risk exists, use `lean`.
+Do not choose `audited` from file count, task size, or model distrust alone. Explain the concrete evidence requirement. If none exists, use `plan` or `lean` according to the user's requested action.
 
-If a `lean` run must escalate to `audited` mid-run, keep the Brief as source material. The audited CLI refuses `start` when the run's artifact directory already exists, so either start a new run ID or author the canonical stage artifacts in the same directory and use `adopt` after the user reviews them.
+Words such as “research” or “explore” do not choose the route by themselves: use `plan` when the result makes product decisions and `direct` for factual lookup. If planning and implementation are requested together, use `lean` unless the implementation needs audited evidence. A high-risk subject alone does not authorize implementation; remain on `plan` until the user requests implementation or an audited artifact.
+
+## Run the plan path
+
+1. Inspect the repository and all material the user supplied before asking questions.
+2. Reuse the current PRD, issue, or specification when it owns the product decisions. Do not create a workflow Brief or change files unless the user requested a durable artifact.
+3. Return a compact plan that covers the problem, desired outcome and success signal, decision principles with reasons, hard constraints and non-goals, `AC-<number>` acceptance criteria, explicit decisions and rejected alternatives, and open product decisions.
+4. Ask only when two plausible answers would materially change scope, behavior, risk acceptance, or a hard constraint. Otherwise state the assumption and recommendation.
+5. Do not Execute, Verify an implementation, or reinterpret a planning request as authorization to build.
 
 ## Run the lean path
 
-Read `references/brief.md` completely. Read `references/model-fit.md` only when its trigger below applies. Do not load `references/stages.md`, `references/artifacts.md`, or the machine contract on the lean path.
-
+Read `references/model-fit.md` only when its trigger below applies. Do not load `references/stages.md`, `references/artifacts.md`, or the machine contract on the lean path.
 ### Brief
 
-1. Inspect the repository and all material the user supplied before asking questions.
-2. Reuse a current, authoritative project PRD, issue, or specification as the Brief when it can stay current and owns the product decisions. Otherwise create one Korean living document at `docs/workflows/<run-id>/brief.md`, using a lowercase hyphenated run ID.
-3. When the authority is external or read-only, create a small local Brief that links to it and records only missing decisions, execution checkpoints, verification evidence, and remaining risks. Do not duplicate product facts.
-4. Ensure the authority and any local run record together cover the problem, desired outcome, success signal, decision principles with reasons, hard constraints, non-goals, acceptance criteria, explicit decisions, rejected alternatives, and open product decisions.
-5. Use the full source material when it fits the available context. Retrieve or chunk only when the corpus is too large, and preserve surrounding rules, exceptions, and document relationships.
-6. Ask only about missing product information that would materially change the result. Do not repeat a ceremonial interview when the current request already establishes what, why, and the decision criteria.
-7. Surface material assumptions, consequential alternatives, and user-owned open decisions together before Execute only when they could change the result. This is not an approval gate. Wait only when an open product decision blocks the direction.
-8. Treat the user's explicit request as direction. Do not add a separate approval gate merely to confirm a faithful summary.
+1. Inspect the repository and supplied material before asking questions.
+2. Reuse a current, authoritative project PRD, issue, or specification as the Brief when it can stay current and owns the product decisions.
+3. Only when no suitable authority exists, read `references/brief-template.md` completely and create one Korean living document at `docs/workflows/<run-id>/brief.md`, using a lowercase hyphenated run ID.
+4. When the authority is external or read-only, read the template and create a small local run record that links to it and owns only missing decisions, checkpoints, verification evidence, and remaining risks.
+5. Ensure the authority and any local run record together cover the same product fields required by the plan path, plus execution checkpoints and verification evidence. Use stable `AC-<number>` identifiers from planning through verification.
+6. Surface material assumptions, consequential alternatives, and user-owned open decisions together before Execute only when they could change the result. This is not an approval gate. Wait only when an open product decision blocks the direction.
 
-The adopted product document is the authority for product facts. A local Brief, when needed, owns only the run-specific decisions and evidence that the authority cannot hold. Keep each current and use Git history or the authority's history instead of correction documents.
+The adopted product document is the authority for product facts. Keep it and at most one local run record current. Use their history or Git history instead of correction documents.
 
 ### Model Fit
 
@@ -51,51 +57,51 @@ Model Fit is a bounded pre-execution recommendation, not a new approval stage or
 ### Execute
 
 1. Work from the Brief and current repository state in one continuous primary-agent context.
-2. Plan internally, choose the task order, and select tools from uncertainty and risk rather than keyword rules.
-3. Use an installed provider skill only when its specialized capability directly helps the current task. Do not invoke a fixed chain of providers or inherit unrelated provider gates.
-4. Use subagents only for genuine parallel work, context isolation, specialized tools, or an independent high-risk opinion. Do not split planner, writer, implementer, and reviewer roles for work one agent can own end to end.
-5. Avoid multi-call prompt chains that pass summaries between stages when the complete task fits one context.
+2. Plan internally and choose the task order and tools from uncertainty and risk rather than keyword rules.
+3. Use an installed provider skill only when its specialized capability directly helps the current task. Do not invoke a fixed provider chain.
+4. Use subagents only for genuine parallel work, context isolation, specialized tools, or an independent high-risk opinion. Do not split roles that one agent can own end to end.
+5. Give every subagent a self-contained task, scope or file boundary, material constraints, expected evidence, and verification command. Do not assume it inherited the parent conversation or project instructions.
 6. Do not auto-inject similarity-based memories. Read explicit project decisions and the living Brief instead.
-7. Update the product authority or local Brief when the user makes a durable decision, rejects an alternative, changes a constraint, or when work pauses and needs a checkpoint.
+7. Update the product authority or local run record when a durable decision, constraint, checkpoint, or remaining risk changes.
 8. Apply the project's living-context documentation rule before completion.
-9. Escalate only product choices not settled by the Brief; follow the project's authority rules for side effects and irreversible actions.
+9. Escalate only product choices not settled by the Brief; follow project authority rules for side effects and irreversible actions.
 
 ### Verify
 
-1. Check every acceptance criterion in the Brief and its authoritative sources against the implementation.
+1. Check every `AC-<number>` acceptance criterion against the implementation and record exact evidence.
 2. Run the project's deterministic checks: relevant tests, static analysis, build, schema or format validators, and critical user-flow checks.
-3. Add targeted review only when the diff or risk profile justifies it. Prefer exact validators over open-ended requests to find problems.
-4. If a check fails, fix the in-scope cause and rerun the affected checks. Never weaken a check to obtain a pass.
-5. Record commands, exit results, observed behavior, remaining risks, and final status in the local Brief or the adopted authority's run record.
-6. Report implementation correctness separately from checks that prove only structure or formatting.
-7. When the active model is GPT-5.6 Sol, Claude Opus 5, or Claude Fable 5, read `references/model-verification.md` and apply only the matching model section.
+3. Add targeted review only when a concrete diff risk or acceptance criterion justifies it. Prefer exact validators over open-ended review.
+4. Read exactly one host reference when it exists: `references/codex.md` on Codex or `references/claude.md` on Claude Code. On other hosts, use only this common policy. Never load an unrelated host reference.
+5. If a check fails, fix the in-scope cause and rerun affected checks. Never weaken a check to obtain a pass.
+6. Record commands, exit results, observed behavior, remaining risks, and final status in the local run record or adopted authority.
+7. Report implementation correctness separately from checks that prove only structure or formatting.
 
-Do not require a fixed model-generated review pass or run generic self-review loops. Deterministic project checks remain mandatory; add targeted review only under step 3 or the matching model guidance.
+Do not require a fixed model-generated review pass or generic self-review loop. Deterministic project checks remain mandatory.
 
 ## Resume a lean run
 
-Read the adopted product authority, any local Brief, project rules, Git status, diff, and recent commits. Continue from the recorded checkpoint and current repository truth. Do not replay completed discovery or reconstruct a chain of intermediate summaries.
+Read the adopted product authority, any local run record, project rules, Git status, diff, and recent commits. Continue from the recorded checkpoint and current repository truth without replaying completed discovery.
 
 ## Run the audited path
 
-The audited path is the preserved ten-stage compatibility workflow.
+The audited path preserves the ten-stage compatibility workflow.
 
 1. Read `references/stages.md` and `references/artifacts.md` completely.
-2. Treat `agents/workflows/product-development/workflow.toml` as authoritative for its ten stages and artifacts.
+2. Treat `agents/workflows/product-development/workflow.toml` as authoritative for its stages and artifacts.
 3. Find the state command in this order: `dotagents-workflow` on `PATH`, `<project>/.dotagents/bin/dotagents-workflow`, then `./tooling/scripts/workflow.sh` inside dotagents.
 4. Follow the stage, approval, resume, adopt, and verification contracts in those references.
 
-The audited CLI verifies stage order, artifact safety, approval continuity, and hashes. It does not prove implementation correctness; stages 7-9 must contain real test and QA evidence.
+The audited CLI proves stage order, artifact safety, approval continuity, and hashes. It does not prove implementation correctness; stages 7–9 must contain real test and QA evidence.
 
 ## Complete the work
 
-For `lean`, finish after the run record is updated with verification evidence, affected living context documents are current, and the user-requested delivery action is complete. For `audited`, finish only after the CLI `verify` command succeeds. In both paths, report unresolved risks and do not treat shipping as implicit unless the user requested it.
+For `lean`, finish after acceptance criteria have evidence, the run record and affected living context documents are current, and the requested delivery action is complete. For `audited`, finish only after the CLI `verify` command succeeds. Report unresolved risks and do not treat shipping as implicit.
 
-When the run surfaced a convention, rule, or template worth reusing beyond this project, list it in the completion report as a dotagents promotion candidate with a proposed destination. Do not modify dotagents in the same run; apply accepted candidates through the `dotagents-promote` skill under separate approval.
+When the run surfaces a portable convention, list it as a dotagents promotion candidate with a proposed destination. Apply it only through the separately authorized `dotagents-promote` skill.
 
 ## Safety
 
-- Preserve project-specific rules, user changes, package managers, test commands, and release policy.
-- Never store secrets or hidden memory payloads in the Brief.
+- Preserve project rules, user changes, package managers, test commands, and release policy.
+- Never store secrets or hidden memory payloads in planning artifacts.
 - Never modify an external provider as a side effect of this workflow.
 - Use separate branches or worktrees for truly concurrent implementation.

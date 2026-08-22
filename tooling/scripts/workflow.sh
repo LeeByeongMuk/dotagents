@@ -49,7 +49,7 @@ trap 'exit 143' TERM
 
 usage() {
   cat <<'EOF'
-Audited compatibility workflow. The default product workflow is Brief -> Execute -> Verify.
+Audited compatibility workflow. Planning uses Plan; authorized implementation uses Brief -> Execute -> Verify.
 
 Usage:
   dotagents-workflow start --project PATH --run RUN_ID --scope standard|substantial [--skip-skill-refactor]
