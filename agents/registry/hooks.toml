@@ -1,3 +1,14 @@
 schema_version = 1
 
 # Hook entries will use [[hooks]].
+
+[[hooks]]
+id = "commit-message-check"
+source = "agents/hooks/commit-message"
+event = "pre-commit-message"
+hosts = ["claude", "git"]
+entrypoints = { claude = "claude-pre-tool-use.sh", git = "commit-msg" }
+side_effects = "none; reads the commit message and the repository's git config"
+failure_policy = "block the commit and print the violated rule"
+optional = false
+enabled_by_default = true

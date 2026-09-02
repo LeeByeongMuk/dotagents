@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# git commit-msg hook wrapper. Install by copying or linking into .git/hooks/commit-msg
+# or by pointing core.hooksPath at a directory that contains this file as commit-msg.
+set -euo pipefail
+here="$(cd "$(dirname "$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")" && pwd -P)"
+DOTAGENTS_REPO_DIR="$PWD" exec "$here/check.sh" "$1"

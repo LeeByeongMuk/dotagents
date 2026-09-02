@@ -18,6 +18,9 @@ required=(
   agents/workflows/product-development/WORKFLOW.md
   agents/workflows/product-development/workflow.toml
   agents/hooks/README.md
+  agents/hooks/commit-message/check.sh
+  agents/hooks/commit-message/claude-pre-tool-use.sh
+  agents/hooks/commit-message/commit-msg
   agents/skills/README.md
   agents/skills/owned/README.md
   agents/skills/owned/product-development-workflow/SKILL.md
@@ -48,6 +51,7 @@ required=(
   tooling/tests/eval_test.sh
   tooling/tests/model_fit_test.sh
   tooling/tests/sources_test.sh
+  tooling/tests/hooks_test.sh
   tooling/evals/product-development/README.md
   tooling/evals/product-development/case-contract.jq
   tooling/evals/product-development/cases.json
@@ -106,6 +110,12 @@ if "$REPO_ROOT/tooling/tests/model_fit_test.sh" >/dev/null; then
   ok "model fit contract"
 else
   bad "model fit contract failed"
+fi
+
+if "$REPO_ROOT/tooling/tests/hooks_test.sh" >/dev/null; then
+  ok "commit message hooks"
+else
+  bad "commit message hooks failed"
 fi
 
 if "$REPO_ROOT/tooling/tests/sources_test.sh" >/dev/null; then
