@@ -78,4 +78,43 @@ expect_cmd 2 $'git commit -m "$(cat <<\'EOF\'\nAdd thing\nEOF\n)"'
 expect_cmd 2 'git commit'
 expect_cmd 2 'git commit -F missing.txt'
 
+SEARCH_HOOK="$REPO_ROOT/agents/hooks/search-guard/claude-pre-tool-use.sh"
+[[ -x "$SEARCH_HOOK" ]] || fail "search-guard hook is missing or not executable"
+grep -Fq 'id = "search-guard"' "$REPO_ROOT/agents/registry/hooks.toml" || fail "search-guard hook is not registered"
+grep -Fq 'search-guard/claude-pre-tool-use.sh' "$REPO_ROOT/agents/adapters/claude/settings.example.json" || fail "claude settings example does not register search-guard"
+grep -Fq 'search-guard/claude-pre-tool-use.sh' "$REPO_ROOT/agents/adapters/claude/settings.json" || fail "claude settings does not register search-guard"
+
+expect_search() {
+  local want="$1" cmd="$2" got
+  set +e
+  jq -cn --arg c "$cmd" --arg d "$repo" '{tool_name:"Bash",tool_input:{command:$c},cwd:$d}' \
+    | "$SEARCH_HOOK" >/dev/null 2>&1
+  got=$?
+  set -e
+  [[ "$got" -eq "$want" ]] || fail "search-guard expected $want got $got for: $cmd"
+}
+
+expect_search 0 'grep -n foo file.txt'
+expect_search 0 'grep -n "a -r b" file.txt'
+expect_search 0 'git grep -n foo'
+expect_search 0 'cat README.md | grep -i foo'
+expect_search 0 'grep --color=auto -A3 foo file'
+expect_search 0 'git status && ls -R'
+expect_search 0 $'git commit -m "$(cat <<\'EOF\'\nfeat: use rg\nEOF\n)"'
+expect_search 0 $'git commit -m "$(cat <<\'EOF\'\nfix: stop grep -r prompts\n\n(grep -r, rg) walk the tree.\nEOF\n)"'
+expect_search 0 $'cat > body.md <<\'EOF\'\n- `grep -r`, `rg` 같은 검색\nEOF\ngh pr create --body-file body.md'
+expect_search 2 $'cat <<\'EOF\' > note.txt\nnote\nEOF\ngrep -rn foo .'
+expect_search 2 $'ls\ngrep -rn foo .'
+expect_search 2 'grep -rn foo .'
+expect_search 2 'grep -Rl foo src'
+expect_search 2 'grep --recursive foo .'
+expect_search 2 'grep -d recurse foo .'
+expect_search 2 'cd ~/repo && grep -rn foo .'
+expect_search 2 'rg -l foo'
+expect_search 2 'for f in $(rg -l foo); do echo "$f"; done'
+expect_search 2 'find . -name "*.ts" | xargs grep -r foo'
+expect_search 2 'egrep -r foo .'
+expect_search 2 'ag foo'
+expect_search 2 'FOO=1 rg bar'
+
 echo "hooks test passed"
