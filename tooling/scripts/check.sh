@@ -25,6 +25,7 @@ required=(
   agents/hooks/commit-message/check.sh
   agents/hooks/commit-message/claude-pre-tool-use.sh
   agents/hooks/commit-message/commit-msg
+  agents/hooks/search-guard/claude-pre-tool-use.sh
   agents/skills/README.md
   agents/skills/owned/README.md
   agents/skills/owned/product-development-workflow/SKILL.md
@@ -118,9 +119,9 @@ else
 fi
 
 if "$REPO_ROOT/tooling/tests/hooks_test.sh" >/dev/null; then
-  ok "commit message hooks"
+  ok "hooks"
 else
-  bad "commit message hooks failed"
+  bad "hooks failed"
 fi
 
 if "$REPO_ROOT/tooling/tests/sources_test.sh" >/dev/null; then

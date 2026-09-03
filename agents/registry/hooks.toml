@@ -12,3 +12,14 @@ side_effects = "none; reads the commit message and the repository's git config"
 failure_policy = "block the commit and print the violated rule"
 optional = false
 enabled_by_default = true
+
+[[hooks]]
+id = "search-guard"
+source = "agents/hooks/search-guard"
+event = "pre-tool-use"
+hosts = ["claude"]
+entrypoints = { claude = "claude-pre-tool-use.sh" }
+side_effects = "none; reads the Bash command text"
+failure_policy = "block the command and tell the model to use the Grep tool"
+optional = false
+enabled_by_default = true
