@@ -117,4 +117,30 @@ expect_search 2 'egrep -r foo .'
 expect_search 2 'ag foo'
 expect_search 2 'FOO=1 rg bar'
 
+mkdir -p "$repo/sub"
+expect_search 0 "cd $repo && grep -n foo file.txt"
+expect_search 0 "cd \"$repo\" && cat file.txt"
+expect_search 0 'cd . && grep -n foo file.txt'
+expect_search 0 'cd /tmp && grep -n foo /tmp/file.txt'
+expect_search 0 'cd /tmp && grep -e foo /tmp/file.txt'
+expect_search 0 'cd /tmp && grep -n "foo bar" "/tmp/file.txt"'
+expect_search 0 'cd /tmp && sed -n 5p /tmp/file.txt'
+expect_search 0 'cd /tmp && npm test'
+expect_search 0 'cd /tmp && git log --oneline -5'
+expect_search 0 'cd /tmp && npm run build 2>&1 | tail -20'
+expect_search 0 'grep -n foo file.txt && cd /tmp'
+expect_search 2 'cd /tmp && grep -n foo file.txt'
+expect_search 2 'cd /tmp; grep -n foo file.txt | head -60'
+expect_search 2 'cd /tmp && grep -e foo file.txt'
+expect_search 2 'cd /tmp && grep -n "foo bar" file.txt'
+expect_search 2 'cd /tmp && cat sub/a.txt'
+expect_search 2 'cd /tmp && head -n 20 README.md'
+expect_search 2 'cd /tmp && sed -n 5p file.txt'
+expect_search 2 'cd "/tmp" && cat file.txt'
+expect_search 0 'cd sub && cat a.txt'
+expect_search 2 'cd .. && cat file.txt'
+expect_search 2 'cd ~ && cat .zshrc'
+expect_search 2 'cd $DIR && cat file.txt'
+expect_search 2 '(cd /tmp && cat file.txt)'
+
 echo "hooks test passed"

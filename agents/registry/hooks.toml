@@ -20,6 +20,6 @@ event = "pre-tool-use"
 hosts = ["claude"]
 entrypoints = { claude = "claude-pre-tool-use.sh" }
 side_effects = "none; reads the Bash command text"
-failure_policy = "block the command and tell the model to use the Grep tool"
+failure_policy = "block the command and tell the model to use the Grep or Read tool or absolute paths"
 optional = false
 enabled_by_default = true
