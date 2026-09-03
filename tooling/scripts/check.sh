@@ -37,7 +37,7 @@ required=(
   agents/prompts/README.md
   agents/profiles/README.md
   agents/integrations/README.md
-  agents/adapters/claude/CLAUDE.md agents/adapters/codex/AGENTS.md
+  agents/adapters/claude/CLAUDE.md agents/adapters/claude/settings.json agents/adapters/codex/AGENTS.md
   agents/adapters/gemini/GEMINI.md agents/registry/README.md
   agents/registry/skills.toml agents/registry/mcp.toml agents/registry/hooks.toml
   agents/registry/plugins.toml agents/registry/sources.lock
