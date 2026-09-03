@@ -23,7 +23,7 @@
   "effortLevel": "high",
   "modelSettings": {
     "claude-fable-5-1": {
-      "effortLevel": "low"
+      "effortLevel": "xhigh"
     }
   },
   "tui": "fullscreen",
