@@ -35,7 +35,7 @@ no_heredoc="$(printf '%s\n' "$command" | awk -v q="'" '
   }
 ')"
 stripped="$(printf '%s' "$no_heredoc" | sed -E "s/'[^']*'//g; s/\"[^\"]*\"//g")"
-simple_commands="$(printf '%s' "$stripped" | tr '\n' ' ' | sed -E 's/(\|\||&&|;|\||\(|\)|`|\$\()/\
+simple_commands="$(printf '%s' "$stripped" | sed -E 's/(\|\||&&|;|\||\(|\)|`|\$\()/\
 /g')"
 
 while IFS= read -r line; do
