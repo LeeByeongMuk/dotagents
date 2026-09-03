@@ -139,6 +139,19 @@ agents/ 원본
 
 ## 설치
 
+### 필수 도구
+
+이 저장소의 스크립트는 `git`, `bash`, `jq`, `ripgrep`(`rg`)을 사용합니다. `gh`는 소스 검증과 PR 작업에만 필요합니다. `rg`가 없으면 `check.sh`의 비밀 값 검사가 동작하지 않으므로 검사기가 바로 실패합니다.
+
+```bash
+make deps     # macOS Homebrew로 설치
+make doctor   # 설치 상태 진단
+```
+
+`make help`로 나머지 타깃(`check`, `test`, `install`, `uninstall`)을 볼 수 있습니다.
+
+### 전역 설치
+
 먼저 저장소를 원하는 위치에 clone한 뒤 반드시 dry-run을 확인합니다.
 
 ```bash
@@ -151,6 +164,7 @@ cd /path/to/dotagents
 
 - `~/.agents` → 이 저장소의 `agents/`
 - `~/.claude/CLAUDE.md` → `agents/adapters/claude/CLAUDE.md`
+- `~/.claude/settings.json` → `agents/adapters/claude/settings.json`
 - `~/.claude/skills/product-development-workflow` → owned 워크플로우 스킬
 - `~/.codex/AGENTS.md` → `agents/adapters/codex/AGENTS.md`
 - `~/.gemini/GEMINI.md` → `agents/adapters/gemini/GEMINI.md`
@@ -262,6 +276,7 @@ dotagents-workflow status --project /path/to/project --run feature-name
 ## 검증
 
 ```bash
+make doctor
 bash -n tooling/scripts/install.sh
 bash -n tooling/scripts/uninstall.sh
 bash -n tooling/scripts/check.sh
@@ -275,6 +290,7 @@ bash -n tooling/scripts/workflow.sh
 ./tooling/tests/structure_test.sh
 ./tooling/tests/workflow_test.sh
 ./tooling/tests/sources_test.sh
+./tooling/tests/hooks_test.sh
 ```
 
 `check.sh`는 필수 구조, 스킬 규격, 깨진 링크, 셸 문법, 저장소 경로 하드코딩, 의심되는 비밀 패턴·파일명, 어댑터의 공통 규칙 중복, 레지스트리 기본 형식, 워크플로우 계약과 설치 dry-run을 검사합니다. `check-sources.sh`는 별도의 네트워크 검사이며 GitHub CLI 인증이 필요합니다. 탐지 시 비밀 값은 출력하지 않습니다.
