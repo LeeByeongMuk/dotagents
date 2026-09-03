@@ -42,6 +42,7 @@ if [[ "$MODE" == "global" ]]; then
   entries=(
     "$target_root/.agents|$REPO_ROOT/agents"
     "$target_root/.claude/CLAUDE.md|$REPO_ROOT/agents/adapters/claude/CLAUDE.md"
+    "$target_root/.claude/settings.json|$REPO_ROOT/agents/adapters/claude/settings.json"
     "$target_root/.claude/skills/product-development-workflow|$REPO_ROOT/agents/skills/owned/product-development-workflow"
     "$target_root/.claude/skills/dotagents-promote|$REPO_ROOT/agents/skills/owned/dotagents-promote"
     "$target_root/.codex/AGENTS.md|$REPO_ROOT/agents/adapters/codex/AGENTS.md"
