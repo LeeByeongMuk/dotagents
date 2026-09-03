@@ -8,8 +8,12 @@ failures=0
 ok() { echo "ok: $*"; }
 bad() { echo "error: $*" >&2; failures=$((failures + 1)); }
 
+for tool in rg jq; do
+  command -v "$tool" >/dev/null 2>&1 || { echo "error: $tool is required; run ./tooling/scripts/doctor.sh or make deps" >&2; exit 1; }
+done
+
 required=(
-  AGENTS.md README.md LICENSE .gitignore dotagents.toml
+  AGENTS.md README.md LICENSE .gitignore dotagents.toml Makefile
   agents/README.md
   agents/rules/communication.md agents/rules/coding.md agents/rules/git.md
   agents/rules/security.md agents/rules/workflow.md agents/rules/documentation.md
@@ -43,6 +47,7 @@ required=(
   agents/registry/plugins.toml agents/registry/sources.lock
   tooling/scripts/install.sh tooling/scripts/uninstall.sh tooling/scripts/check.sh
   tooling/scripts/check-sources.sh
+  tooling/scripts/doctor.sh
   tooling/scripts/workflow.sh
   agents/templates/generic/AGENTS.md agents/templates/nextjs/AGENTS.md
   agents/templates/context-docs/README.md agents/templates/context-docs/domain-overview.md
