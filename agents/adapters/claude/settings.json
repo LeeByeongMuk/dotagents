@@ -39,10 +39,6 @@
           {
             "type": "command",
             "command": "\"$HOME\"/.agents/hooks/commit-message/claude-pre-tool-use.sh"
-          },
-          {
-            "type": "command",
-            "command": "\"$HOME\"/.agents/hooks/search-guard/claude-pre-tool-use.sh"
           }
         ]
       }
