@@ -6,8 +6,8 @@ CASES_FILE="$SCRIPT_DIR/cases.json"
 CASE_CONTRACT_FILE="$SCRIPT_DIR/case-contract.jq"
 SCHEMA_FILE="$SCRIPT_DIR/decision.schema.json"
 PROMPT_CONTRACT_FILE="$SCRIPT_DIR/routing-prompt.md"
-CODEX_REFERENCE_FILE="$SCRIPT_DIR/../../../agents/skills/owned/product-development-workflow/references/codex.md"
-CLAUDE_REFERENCE_FILE="$SCRIPT_DIR/../../../agents/skills/owned/product-development-workflow/references/claude.md"
+CODEX_REFERENCE_FILE="$SCRIPT_DIR/../../../agents/skills/owned/product-development-workflow/references/codex-cli.md"
+CLAUDE_REFERENCE_FILE="$SCRIPT_DIR/../../../agents/skills/owned/product-development-workflow/references/claude-code.md"
 ADAPTER_REVISION="2"
 
 REQUIRE_ALL=0

@@ -42,6 +42,29 @@ tooling/evals/product-development/score.sh \
 
 두 호스트 모두 모델 도구를 끈 분류 실행으로 맞춥니다. Claude는 `--tools ""`를 사용하고, Codex는 shell·unified exec·앱·웹 검색·이미지 읽기·subagent를 비활성화합니다. 실행 시작 시 harness·사례·스키마·라우팅 프롬프트·두 호스트 참조를 임시 디렉터리에 복사하고, 모든 사례가 이 고정 스냅샷만 읽습니다. `--harness`와 저장소의 사례 파일은 프롬프트 본문이므로 신뢰하는 로컬 입력만 사용합니다.
 
+## 모델 행동 eval
+
+`behavior.sh`는 라우팅이 아니라 실행 결정을 잰다. 같은 공통 스킬과 지정한 호스트 참조를 모델에 주고, `behavior/scenarios.json`의 `routine`·`long_run` 두 상황에서 권위 원본 재사용, 실행 전 중단, 서브에이전트, 모델 생성 검토 종류를 `behavior/decision.schema.json` 구조로 받는다. 채점기는 없고, 호스트 참조 변형(`--host-reference`)과 모델 사이의 결과를 `jq`로 비교한다. 호스트 참조나 모델별 지시를 바꿀 때 변경 전후를 같은 모델·effort로 실행해 `docs/evals/product-development-workflow-model-behavior.md`에 기록한다.
+
+```bash
+tooling/evals/product-development/behavior.sh \
+  --provider claude \
+  --model claude-fable-5-1 \
+  --effort medium \
+  --label current \
+  --output /tmp/behavior.jsonl
+
+tooling/evals/product-development/behavior.sh \
+  --provider claude \
+  --model claude-fable-5-1 \
+  --effort medium \
+  --host-reference /tmp/claude-code.candidate.md \
+  --label candidate \
+  --output /tmp/behavior.jsonl
+```
+
+Claude 실행은 Claude Code 세션 안에서도 동작하도록 `CLAUDECODE` 환경 변수를 지우고 호출한다. 출력 경로는 `run.sh`와 같이 저장소 밖 절대 경로여야 한다.
+
 ## 비교 원칙
 
 결과 계약을 통과한 실행끼리 토큰·지연·비용을 비교합니다. 더 적은 호출이나 토큰을 품질 개선으로 단독 판정하지 않습니다. 모델·effort·스킬 변경은 한 묶음씩 바꾸고 같은 사례를 다시 실행합니다.

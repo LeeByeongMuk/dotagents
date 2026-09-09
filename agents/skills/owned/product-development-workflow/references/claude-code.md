@@ -9,7 +9,7 @@ This policy starts after model selection. `model-fit.md` decides which candidate
 - Do not add a final self-review, re-check, or verifier subagent merely because the task is non-trivial.
 - Use an independent opinion only when product risk requires one, not to duplicate the model's normal verification.
 
-## Claude Fable 5
+## Claude Fable 5 and 5.1
 
 - For short or routine work, use the shared policy without extra verifier scaffolding.
 - For long-running work, ground progress and completion claims in tool results.

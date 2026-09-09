@@ -30,8 +30,8 @@ required=(
   agents/skills/owned/product-development-workflow/SKILL.md
   agents/skills/owned/product-development-workflow/agents/openai.yaml
   agents/skills/owned/product-development-workflow/references/brief-template.md
-  agents/skills/owned/product-development-workflow/references/codex.md
-  agents/skills/owned/product-development-workflow/references/claude.md
+  agents/skills/owned/product-development-workflow/references/codex-cli.md
+  agents/skills/owned/product-development-workflow/references/claude-code.md
   agents/skills/owned/product-development-workflow/references/model-fit.md
   agents/skills/owned/product-development-workflow/references/stages.md
   agents/skills/owned/product-development-workflow/references/artifacts.md
@@ -64,6 +64,10 @@ required=(
   tooling/evals/product-development/routing-prompt.md
   tooling/evals/product-development/run.sh
   tooling/evals/product-development/score.sh
+  tooling/evals/product-development/behavior.sh
+  tooling/evals/product-development/behavior/scenarios.json
+  tooling/evals/product-development/behavior/decision.schema.json
+  tooling/evals/product-development/behavior/prompt.md
   tooling/evals/product-development/fixtures/codex.jsonl
   tooling/evals/product-development/fixtures/claude.jsonl
   tooling/README.md
