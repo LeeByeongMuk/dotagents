@@ -126,8 +126,8 @@ BRIEF                    MODEL FIT(조건부)              EXECUTE              
 
 결정론적 프로젝트 검사와 제품 결과 계약은 모델과 무관하게 유지한다. 공통 스킬은 활성 호스트의 참조 하나만 읽으며, 모델이 생성하는 자기검토와 검증 위임만 다음처럼 구분한다.
 
-- Codex는 `references/codex.md`만 읽는다. GPT-5.6 Sol에는 구체적 diff 위험이 없는 일반 자기검토를 추가하지 않는다.
-- Claude Code는 `references/claude.md`만 읽는다. Claude Opus 5에는 중복 최종 검증자를 추가하지 않고, Claude Fable 5는 장기 고위험 체크포인트에서만 fresh-context 검증자를 사용할 수 있다.
+- Codex는 `references/codex-cli.md`만 읽는다. GPT-5.6 Sol에는 구체적 diff 위험이 없는 일반 자기검토를 추가하지 않는다.
+- Claude Code는 `references/claude-code.md`만 읽는다. Claude Opus 5에는 중복 최종 검증자를 추가하지 않고, Claude Fable 5는 장기 고위험 체크포인트에서만 fresh-context 검증자를 사용할 수 있다.
 - Gemini와 그 밖의 호스트는 공통 검증 정책만 사용한다.
 - 모델이 갱신되면 현재 하네스와 축소 하네스를 대표 작업에서 비교하고, 측정된 이득이 없는 모델 전용 지시는 제거한다.
 

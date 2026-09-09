@@ -82,7 +82,7 @@ Brief의 모든 수용 조건과 프로젝트가 정한 검사를 실제로 실�
 
 “전체적으로 잘됐는지 반복 검토”처럼 종료 조건이 모호한 루프나 고정된 모델 자기검토 단계를 사용하지 않습니다. 빈칸, 형식, 계산, 테스트, 수용 조건처럼 참·거짓을 판별할 수 있는 증거를 우선합니다. 결과와 남은 위험은 채택한 원본의 실행 기록 또는 로컬 Brief에 기록합니다.
 
-모델이 생성하는 검토는 공통 결정론적 검사 위에 호스트별로 최소 적용합니다. Codex는 `references/codex.md`, Claude Code는 `references/claude.md`만 읽고 다른 호스트 참조는 읽지 않습니다. GPT-5.6 Sol은 구체적 diff 위험만 표적 검토하고, Claude Opus 5에는 별도 최종 검증자를 기본 추가하지 않으며, Claude Fable 5는 장기 고위험 체크포인트에서만 fresh-context 검증자를 선택할 수 있습니다.
+모델이 생성하는 검토는 공통 결정론적 검사 위에 호스트별로 최소 적용합니다. Codex는 `references/codex-cli.md`, Claude Code는 `references/claude-code.md`만 읽고 다른 호스트 참조는 읽지 않습니다. GPT-5.6 Sol은 구체적 diff 위험만 표적 검토하고, Claude Opus 5에는 별도 최종 검증자를 기본 추가하지 않으며, Claude Fable 5는 장기 고위험 체크포인트에서만 fresh-context 검증자를 선택할 수 있습니다.
 
 Model Fit은 실행 모델을 고르는 정책이고 모델별 검증은 실제 활성 모델로 검증하는 정책입니다. 모델 권고 자체를 구현 정확성의 증거로 사용하지 않습니다.
 

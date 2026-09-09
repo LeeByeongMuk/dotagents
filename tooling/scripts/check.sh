@@ -30,8 +30,8 @@ required=(
   agents/skills/owned/product-development-workflow/SKILL.md
   agents/skills/owned/product-development-workflow/agents/openai.yaml
   agents/skills/owned/product-development-workflow/references/brief-template.md
-  agents/skills/owned/product-development-workflow/references/codex.md
-  agents/skills/owned/product-development-workflow/references/claude.md
+  agents/skills/owned/product-development-workflow/references/codex-cli.md
+  agents/skills/owned/product-development-workflow/references/claude-code.md
   agents/skills/owned/product-development-workflow/references/model-fit.md
   agents/skills/owned/product-development-workflow/references/stages.md
   agents/skills/owned/product-development-workflow/references/artifacts.md

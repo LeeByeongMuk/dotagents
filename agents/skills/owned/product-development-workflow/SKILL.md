@@ -62,7 +62,7 @@ Separate the recommendation from execution. Model Fit is a bounded pre-execution
 1. Check every `AC-<number>` acceptance criterion against the implementation and record exact evidence.
 2. Run the project's deterministic checks: relevant tests, static analysis, build, schema or format validators, and critical user-flow checks.
 3. Add targeted review only when a concrete diff risk or acceptance criterion justifies it. Prefer exact validators over open-ended review.
-4. Read exactly one host reference when it exists: `references/codex.md` on Codex or `references/claude.md` on Claude Code. On other hosts, use only this common policy. Never load an unrelated host reference.
+4. Read exactly one host reference when it exists: `references/codex-cli.md` on Codex or `references/claude-code.md` on Claude Code. On other hosts, use only this common policy. Never load an unrelated host reference.
 5. If a check fails, fix the in-scope cause and rerun affected checks. Never weaken a check to obtain a pass.
 6. Record commands, exit results, observed behavior, remaining risks, and final status in the local run record or adopted authority.
 7. Report implementation correctness separately from checks that prove only structure or formatting.
