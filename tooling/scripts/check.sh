@@ -15,7 +15,7 @@ done
 required=(
   AGENTS.md README.md LICENSE .gitignore dotagents.toml Makefile
   agents/README.md
-  agents/rules/communication.md agents/rules/coding.md agents/rules/git.md
+  agents/rules/coding.md agents/rules/git.md
   agents/rules/security.md agents/rules/workflow.md agents/rules/documentation.md
   agents/routing/README.md
   agents/workflows/README.md
