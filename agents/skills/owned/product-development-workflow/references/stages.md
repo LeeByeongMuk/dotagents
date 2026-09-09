@@ -17,10 +17,9 @@ Preferred provider: `grilling` or its compatibility entry `grill-me`.
 Built-in procedure:
 
 1. Inspect the repository and supplied material before asking factual questions.
-2. Ask one question at a time.
-3. Cover the target user, current behavior, painful moment, desired outcome, non-goals, constraints, evidence, and success signal.
-4. Challenge vague answers with a concrete example.
-5. Stop only when both sides share the same problem statement.
+2. Cover the target user, current behavior, painful moment, desired outcome, non-goals, constraints, evidence, and success signal.
+3. Challenge vague answers with a concrete example.
+4. Stop only when both sides share the same problem statement.
 
 Do not implement anything in this stage.
 
@@ -43,8 +42,8 @@ Preferred provider: gstack `office-hours`.
 Built-in procedure:
 
 1. Restate the problem and constraints from stages 1–2.
-2. Challenge at least three load-bearing premises.
-3. Present two or three materially different approaches.
+2. Challenge the load-bearing premises.
+3. Present materially different approaches; `artifacts.md` sets the minimum the design must record.
 4. Give an opinionated recommendation with user impact and tradeoffs.
 5. Obtain explicit approach selection and write the design.
 
@@ -91,11 +90,10 @@ Built-in procedure:
 
 1. Reconcile `04-spec`, `05-plan`, and `06-plan-review`; the newest explicit approval wins conflicts.
 2. Use a subagent only for a sizeable task that is genuinely independent and parallelizable, needs context isolation or a specialized tool, or requires an independent high-risk opinion. Keep small or dependent tasks in the primary context. Give every subagent a file boundary and verification command.
-3. After each task, review specification compliance before code quality.
-4. Keep dependent tasks sequential. Use separate worktrees for parallel code changes.
-5. Follow the repository's test-first or regression-test rules and commit discipline.
-6. Record the actual files, commits, commands, failures, and deviations from plan.
-7. Update the module's living context documents in the same stage when the implementation changes domain rules, public interfaces, or integration points.
+3. Keep dependent tasks sequential. Use separate worktrees for parallel code changes.
+4. Follow the repository's test-first or regression-test rules and commit discipline.
+5. Record the actual files, commits, commands, failures, and deviations from plan.
+6. Update the module's living context documents in the same stage when the implementation changes domain rules, public interfaces, or integration points.
 
 ## 8. Code and test review
 

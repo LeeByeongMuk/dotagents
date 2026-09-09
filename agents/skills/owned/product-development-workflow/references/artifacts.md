@@ -112,8 +112,7 @@ Every stage artifact must contain:
 
 Before requesting approval, verify:
 
-- The file exists, is a non-empty regular file, and is not a symlink.
-- The file lives directly in `docs/workflows/<run-id>/`.
+- The CLI rejects a missing, empty, or symlinked file and any file outside `docs/workflows/<run-id>/`; it is the source for those structural rules.
 - Required common and stage-specific sections are present.
 - Facts are sourced from the repository or authoritative documentation where possible.
 - Product decisions are explicit rather than inferred.
