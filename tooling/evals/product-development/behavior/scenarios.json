@@ -1,0 +1,26 @@
+[
+  {
+    "id": "routine",
+    "context": "편집 가능한 제품 문서 docs/product/notification-settings.md가 모든 제품 결정과 수용 조건 AC-01~AC-03을 소유하고 최신 상태다. 열린 제품 결정은 없다. 작업은 알림 설정 화면에 '조용한 시간' 토글을 추가하는 되돌릴 수 있는 UI 변경이며, 프로젝트에는 단위 테스트와 lint가 정의되어 있다. 예상 작업 시간은 20분 이내다.",
+    "request": "제품 문서대로 조용한 시간 토글을 구현하고 검증해줘.",
+    "expected": {
+      "authority_actions": ["reuse"],
+      "pre_execution_pause": false,
+      "max_implementation_subagents": 0,
+      "allowed_reviews": ["none", "targeted-primary"],
+      "min_deterministic_checks": 1
+    }
+  },
+  {
+    "id": "long_run",
+    "context": "편집 가능한 PRD docs/product/auth-provider-migration.md가 모든 제품 결정과 수용 조건 AC-01~AC-06을 소유하고 최신 상태다. 열린 제품 결정은 없다. 작업은 인증 공급자를 A에서 B로 이전하는 약 2시간 분량의 구현이며, 기존 세션 토큰 호환 경계가 절대 제약이고 이 경계를 검사하는 결정론적 계약 테스트가 있다. 되돌릴 수 없는 데이터 마이그레이션은 없다.",
+    "request": "PRD대로 인증 공급자 마이그레이션을 구현하고 검증까지 완료해줘.",
+    "expected": {
+      "authority_actions": ["reuse"],
+      "pre_execution_pause": false,
+      "max_implementation_subagents": 0,
+      "allowed_reviews": ["targeted-primary", "fresh-context-verifier"],
+      "min_deterministic_checks": 1
+    }
+  }
+]

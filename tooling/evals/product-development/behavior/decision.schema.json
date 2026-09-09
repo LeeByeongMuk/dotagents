@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["authority_action", "pre_execution_pause", "questions", "subagents", "model_generated_review", "review_trigger", "deterministic_checks", "rationale"],
+  "properties": {
+    "authority_action": { "type": "string", "enum": ["none", "reuse", "create", "link"] },
+    "pre_execution_pause": { "type": "boolean", "description": "true only when you would wait for a user answer before starting Execute" },
+    "questions": { "type": "array", "items": { "type": "string" } },
+    "subagents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["purpose", "blocking"],
+        "properties": {
+          "purpose": { "type": "string", "enum": ["implementation", "exploration", "verification", "other"] },
+          "blocking": { "type": "boolean", "description": "true when the primary agent stops and waits for this subagent" }
+        }
+      }
+    },
+    "model_generated_review": { "type": "string", "enum": ["none", "targeted-primary", "fresh-context-verifier", "multiple"] },
+    "review_trigger": { "type": "string", "description": "the concrete risk or checkpoint that justifies the review, or empty" },
+    "deterministic_checks": { "type": "array", "items": { "type": "string" } },
+    "rationale": { "type": "string" }
+  }
+}

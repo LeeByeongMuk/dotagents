@@ -64,6 +64,10 @@ required=(
   tooling/evals/product-development/routing-prompt.md
   tooling/evals/product-development/run.sh
   tooling/evals/product-development/score.sh
+  tooling/evals/product-development/behavior.sh
+  tooling/evals/product-development/behavior/scenarios.json
+  tooling/evals/product-development/behavior/decision.schema.json
+  tooling/evals/product-development/behavior/prompt.md
   tooling/evals/product-development/fixtures/codex.jsonl
   tooling/evals/product-development/fixtures/claude.jsonl
   tooling/README.md
