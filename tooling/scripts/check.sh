@@ -15,7 +15,7 @@ done
 required=(
   AGENTS.md README.md LICENSE .gitignore dotagents.toml Makefile
   agents/README.md
-  agents/rules/communication.md agents/rules/coding.md agents/rules/git.md
+  agents/rules/coding.md agents/rules/git.md
   agents/rules/security.md agents/rules/workflow.md agents/rules/documentation.md
   agents/routing/README.md
   agents/workflows/README.md
@@ -74,6 +74,7 @@ required=(
   docs/evals/product-development-workflow-model-behavior.md
   docs/evals/product-development-workflow-model-fit.md
   docs/decisions/0001-living-context-docs.md
+  docs/decisions/0002-rule-authoring-criterion.md
   dist/README.md
 )
 for path in "${required[@]}"; do
