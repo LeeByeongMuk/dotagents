@@ -41,8 +41,6 @@ Assess the current Brief and repository on these dimensions without turning them
 - **Efficiency pressure:** latency target, budget, expected volume, and whether the work is repetitive or mechanically specified.
 - **Continuity cost:** how much Brief, repository, tool state, and reasoning would need to be transferred and re-verified after a switch.
 
-Use the actual task shape rather than keyword rules, file count, or a generic belief that a frontier model is always safer.
-
 ## Decide in evidence order
 
 1. **Apply hard filters.** Remove candidates that cannot satisfy availability, authorization, data policy, required tools or modalities, context, budget ceilings, or a user-pinned constraint.
