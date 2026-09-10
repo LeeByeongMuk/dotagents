@@ -41,12 +41,12 @@ if [[ "$MODE" == "global" ]]; then
   manifest="$state_root/dotagents/install.tsv"
   entries=(
     "$target_root/.agents|$REPO_ROOT/agents"
-    "$target_root/.claude/CLAUDE.md|$REPO_ROOT/agents/adapters/claude/CLAUDE.md"
+    "$target_root/.claude/CLAUDE.md|$REPO_ROOT/dist/claude/CLAUDE.md"
     "$target_root/.claude/settings.json|$REPO_ROOT/agents/adapters/claude/settings.json"
     "$target_root/.claude/skills/product-development-workflow|$REPO_ROOT/agents/skills/owned/product-development-workflow"
     "$target_root/.claude/skills/dotagents-promote|$REPO_ROOT/agents/skills/owned/dotagents-promote"
-    "$target_root/.codex/AGENTS.md|$REPO_ROOT/agents/adapters/codex/AGENTS.md"
-    "$target_root/.gemini/GEMINI.md|$REPO_ROOT/agents/adapters/gemini/GEMINI.md"
+    "$target_root/.codex/AGENTS.md|$REPO_ROOT/dist/codex/AGENTS.md"
+    "$target_root/.gemini/GEMINI.md|$REPO_ROOT/dist/gemini/GEMINI.md"
     "$target_root/.local/bin/dotagents-workflow|$REPO_ROOT/tooling/scripts/workflow.sh"
   )
 else
@@ -57,11 +57,11 @@ else
   manifest="$target_root/.dotagents-install.tsv"
   entries=(
     "$target_root/.agents|$REPO_ROOT/agents"
-    "$target_root/AGENTS.md|$REPO_ROOT/agents/adapters/codex/AGENTS.md"
-    "$target_root/CLAUDE.md|$REPO_ROOT/agents/adapters/claude/CLAUDE.md"
+    "$target_root/AGENTS.md|$REPO_ROOT/dist/codex/AGENTS.md"
+    "$target_root/CLAUDE.md|$REPO_ROOT/dist/claude/CLAUDE.md"
     "$target_root/.claude/skills/product-development-workflow|$REPO_ROOT/agents/skills/owned/product-development-workflow"
     "$target_root/.claude/skills/dotagents-promote|$REPO_ROOT/agents/skills/owned/dotagents-promote"
-    "$target_root/GEMINI.md|$REPO_ROOT/agents/adapters/gemini/GEMINI.md"
+    "$target_root/GEMINI.md|$REPO_ROOT/dist/gemini/GEMINI.md"
     "$target_root/.dotagents/bin/dotagents-workflow|$REPO_ROOT/tooling/scripts/workflow.sh"
   )
 fi

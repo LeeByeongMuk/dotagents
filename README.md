@@ -62,6 +62,7 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 
 - 범용 규칙은 `agents/rules/<topic>.md`에 작고 독립적인 문서로 둡니다.
 - 규칙에는 모델이 스스로 알 수 없는 정보만 적습니다. 판정 기준은 `docs/decisions/0002-rule-authoring-criterion.md`에 있습니다.
+- 호스트 진입점은 `tooling/scripts/build.sh`가 어댑터와 규칙을 합쳐 `dist/`에 생성하고 설치는 그 결과를 링크합니다. 규칙을 고치면 `make build`를 실행합니다.
 - 라우팅은 요청의 종류, 제품 결정의 필요성, 위험과 증거 요구에 따라 워크플로우 또는 단일 스킬을 선택합니다.
 - 워크플로우는 `agents/workflows/<name>/` 아래에 사람용 `WORKFLOW.md`와 기계 판독용 `workflow.toml`을 함께 둘 수 있습니다.
 - 워크플로우는 진입 조건, 단계, 입력·출력 산출물, 사용자 승인 지점, 실패·복구 방법, 선택 단계를 명시합니다.

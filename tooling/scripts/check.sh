@@ -46,6 +46,7 @@ required=(
   agents/registry/skills.toml agents/registry/mcp.toml agents/registry/hooks.toml
   agents/registry/plugins.toml agents/registry/sources.lock
   tooling/scripts/install.sh tooling/scripts/uninstall.sh tooling/scripts/check.sh
+  tooling/scripts/build.sh
   tooling/scripts/check-sources.sh
   tooling/scripts/doctor.sh
   tooling/scripts/workflow.sh
@@ -57,6 +58,7 @@ required=(
   tooling/tests/model_fit_test.sh
   tooling/tests/sources_test.sh
   tooling/tests/hooks_test.sh
+  tooling/tests/build_test.sh
   tooling/evals/product-development/README.md
   tooling/evals/product-development/case-contract.jq
   tooling/evals/product-development/cases.json
@@ -79,7 +81,9 @@ required=(
   docs/evals/product-development-workflow-model-fit.md
   docs/decisions/0001-living-context-docs.md
   docs/decisions/0002-rule-authoring-criterion.md
+  docs/decisions/0003-generated-host-entry-points.md
   dist/README.md
+  dist/claude/CLAUDE.md dist/codex/AGENTS.md dist/gemini/GEMINI.md
 )
 for path in "${required[@]}"; do
   [[ -f "$REPO_ROOT/$path" ]] || bad "missing required file: $path"
@@ -126,6 +130,18 @@ if "$REPO_ROOT/tooling/tests/hooks_test.sh" >/dev/null; then
   ok "commit message hooks"
 else
   bad "commit message hooks failed"
+fi
+
+if "$REPO_ROOT/tooling/scripts/build.sh" --check >/dev/null 2>&1; then
+  ok "generated host files are current"
+else
+  bad "generated host files are out of date; run make build"
+fi
+
+if "$REPO_ROOT/tooling/tests/build_test.sh" >/dev/null; then
+  ok "host file composition"
+else
+  bad "host file composition failed"
 fi
 
 if "$REPO_ROOT/tooling/tests/sources_test.sh" >/dev/null; then
