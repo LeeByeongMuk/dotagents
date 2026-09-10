@@ -78,4 +78,16 @@ expect_cmd 2 $'git commit -m "$(cat <<\'EOF\'\nAdd thing\nEOF\n)"'
 expect_cmd 2 'git commit'
 expect_cmd 2 'git commit -F missing.txt'
 
+# A heredoc that writes an unrelated file must not supply the commit message.
+expect_cmd 0 $'cat > a.js <<\'EOF\'\nvar x = 1;\nEOF\ngit commit -m "fix: correct a typo"'
+expect_cmd 0 $'python3 - <<\'PY\'\nprint("hello")\nPY\ngit commit -m "chore: regenerate output"'
+expect_cmd 0 $'cat > a.md <<\'EOF\'\nAdd thing\nEOF\ngit add -A && git commit -m "docs: add a note"'
+# The message itself is still validated when it arrives after a heredoc.
+expect_cmd 2 $'cat > a.js <<\'EOF\'\nvar x = 1;\nEOF\ngit commit -m "Add thing"'
+# A commit written inside a heredoc body is not the command being run.
+expect_cmd 0 $'cat > release.sh <<\'EOF\'\ngit commit -m "Add thing"\nEOF\necho done'
+# A commit that reads its message from stdin still resolves the heredoc.
+expect_cmd 0 $'git commit -F - <<\'EOF\'\nfeat: add thing\nEOF'
+expect_cmd 2 $'git commit -F - <<\'EOF\'\nAdd thing\nEOF'
+
 echo "hooks test passed"
