@@ -81,6 +81,7 @@ required=(
   docs/evals/product-development-workflow-model-fit.md
   docs/decisions/0001-living-context-docs.md
   docs/decisions/0002-rule-authoring-criterion.md
+  docs/decisions/0003-generated-host-entry-points.md
   dist/README.md
   dist/claude/CLAUDE.md dist/codex/AGENTS.md dist/gemini/GEMINI.md
 )
