@@ -3,7 +3,7 @@
 .DEFAULT_GOAL := help
 BREW ?= brew
 
-.PHONY: help deps doctor check test install install-dry uninstall
+.PHONY: help deps doctor build check test install install-dry uninstall
 
 help: ## 타깃 목록
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{ printf "  %-14s %s\n", $$1, $$2 }'
@@ -13,6 +13,9 @@ deps: ## 필수 도구 설치 (macOS Homebrew)
 
 doctor: ## 필수 도구가 설치되어 있는지 진단
 	./tooling/scripts/doctor.sh
+
+build: ## 어댑터와 공통 규칙을 합쳐 dist 최종본 생성
+	./tooling/scripts/build.sh
 
 check: ## 저장소 전체 검사
 	./tooling/scripts/check.sh
