@@ -9,8 +9,37 @@ command="$(printf '%s' "$input" | jq -r '.tool_input.command // empty')"
 cwd="$(printf '%s' "$input" | jq -r '.cwd // empty')"
 [[ -n "$command" ]] || exit 0
 
-# Only act on git commit invocations.
-printf '%s' "$command" | grep -Eq '(^|[[:space:];&|(])git([[:space:]]+-[A-Za-z-]+([[:space:]=][^[:space:]]+)?)*[[:space:]]+commit([[:space:]]|$)' || exit 0
+git_commit_re='(^|[[:space:];&|(])git([[:space:]]+-[A-Za-z-]+([[:space:]=][^[:space:]]+)?)*[[:space:]]+commit([[:space:]]|$)'
+
+# A heredoc body is data, not command text. Blank those lines out, keeping line
+# numbers, so a `git commit` or an -m flag written inside a heredoc body is not
+# mistaken for the command being run.
+code_only="$(printf '%s\n' "$command" | awk '
+  {
+    if (in_body) {
+      probe = $0
+      sub(/^[[:space:]]+/, "", probe)
+      sub(/[[:space:]]+$/, "", probe)
+      if (probe == marker) { in_body = 0 }
+      print ""
+      next
+    }
+    print
+    if (match($0, /<<-?['"'"'"]?[A-Za-z_][A-Za-z0-9_]*['"'"'"]?/)) {
+      marker = substr($0, RSTART, RLENGTH)
+      sub(/^<<-?/, "", marker)
+      gsub(/['"'"'"]/, "", marker)
+      in_body = 1
+    }
+  }')"
+
+# Only act on git commit invocations that are actually run.
+start_line="$(printf '%s\n' "$code_only" | grep -nE "$git_commit_re" | head -1 | cut -d: -f1 || true)"
+[[ -n "$start_line" ]] || exit 0
+
+# Everything from the commit onwards, so an earlier heredoc that wrote a file
+# cannot supply the message.
+segment="$(printf '%s\n' "$command" | sed -n "${start_line},\$p")"
 
 block() {
   echo "$*" >&2
@@ -18,40 +47,67 @@ block() {
 }
 
 # Commits that reuse an existing message are not checked.
-if printf '%s' "$command" | grep -Eq -- '--no-edit|--reuse-message|--reedit-message|--fixup|--squash|(^|[[:space:]])-[cC][[:space:]]'; then
+if printf '%s' "$segment" | grep -Eq -- '--no-edit|--reuse-message|--reedit-message|--fixup|--squash|(^|[[:space:]])-[cC][[:space:]]'; then
   exit 0
 fi
 
 tmp="$(mktemp "${TMPDIR:-/tmp}/dotagents-commit.XXXXXX")"
 trap 'rm -f "$tmp"' EXIT
 
-if [[ "$command" =~ \<\<-?[\'\"]?([A-Za-z_][A-Za-z0-9_]*)[\'\"]? ]]; then
+read_heredoc_body() {
+  local text="$1" marker
+  [[ "$text" =~ \<\<-?[\'\"]?([A-Za-z_][A-Za-z0-9_]*)[\'\"]? ]] || return 1
   marker="${BASH_REMATCH[1]}"
-  printf '%s\n' "$command" | awk -v m="$marker" '
+  printf '%s\n' "$text" | awk -v m="$marker" '
     body && $0 ~ "^[[:space:]]*" m "[[:space:]]*$" { exit }
     body { print }
     !body && index($0, "<<") { body = 1 }
   ' > "$tmp"
-elif [[ "$command" =~ (^|[[:space:]])(-[a-zA-Z]*m|--message)([[:space:]]|=) ]]; then
-  rest="$command"
+}
+
+message_source=""
+if [[ "$segment" =~ (^|[[:space:]])(-[a-zA-Z]*m|--message)([[:space:]]|=) ]]; then
+  rest="$segment"
   count=0
+  literal=1
   m_re="(^|[[:space:]])(-[a-zA-Z]*m|--message)[[:space:]]*=?[[:space:]]*(\"(([^\"\\\\]|\\\\.)*)\"|'([^']*)'|([^[:space:]\"']+))"
   while [[ "$rest" =~ $m_re ]]; do
     part="${BASH_REMATCH[4]:-${BASH_REMATCH[6]:-${BASH_REMATCH[7]}}}"
+    # A substitution such as -m "$(cat <<'EOF' ... EOF)" carries the message in
+    # its heredoc, not in the flag argument.
+    if [[ "$part" == *'<<'* ]]; then
+      literal=0
+      break
+    fi
     [[ $count -gt 0 ]] && printf '\n' >> "$tmp"
     printf '%s\n' "$part" >> "$tmp"
     count=$((count + 1))
     rest="${rest#*"${BASH_REMATCH[0]}"}"
   done
-  [[ $count -gt 0 ]] || block "could not parse the -m message; use -m \"...\" or a heredoc."
-elif [[ "$command" =~ (-F|--file)[[:space:]]*=?[[:space:]]*([^[:space:]\"\']+) ]]; then
-  file="${BASH_REMATCH[2]}"
-  [[ "$file" == /* ]] || file="${cwd:-$PWD}/$file"
-  [[ -f "$file" ]] || block "commit message file is not readable before the command runs: $file. Pass the message with -m or a heredoc."
-  cp "$file" "$tmp"
-else
-  block "could not find the commit message in the command. Pass it with -m \"...\" or -m \"\$(cat <<'EOF' ... EOF)\" so it can be validated against agents/rules/git.md."
+  if [[ "$literal" -eq 1 && $count -gt 0 ]]; then
+    message_source="flag"
+  else
+    : > "$tmp"
+  fi
 fi
+
+if [[ -z "$message_source" ]] && [[ "$segment" =~ (-F|--file)[[:space:]]*=?[[:space:]]*([^[:space:]\"\']+) ]]; then
+  file="${BASH_REMATCH[2]}"
+  if [[ "$file" == "-" ]]; then
+    read_heredoc_body "$segment" && message_source="heredoc"
+  else
+    [[ "$file" == /* ]] || file="${cwd:-$PWD}/$file"
+    [[ -f "$file" ]] || block "commit message file is not readable before the command runs: $file. Pass the message with -m or a heredoc."
+    cp "$file" "$tmp"
+    message_source="file"
+  fi
+fi
+
+if [[ -z "$message_source" ]] && read_heredoc_body "$segment"; then
+  message_source="heredoc"
+fi
+
+[[ -n "$message_source" ]] || block "could not find the commit message in the command. Pass it with -m \"...\" or -m \"\$(cat <<'EOF' ... EOF)\" so it can be validated against agents/rules/git.md."
 
 if ! DOTAGENTS_REPO_DIR="${cwd:-$PWD}" "$here/check.sh" "$tmp" 2> "$tmp.err"; then
   block "$(cat "$tmp.err")"
