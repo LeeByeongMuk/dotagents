@@ -98,17 +98,15 @@ API 키, 토큰, 쿠키, 실제 endpoint 인증값은 레지스트리에 넣지 
 
 프로필은 `minimal`, `default`, `full`, `nextjs`처럼 규칙·스킬·훅·연동 묶음을 선택하는 단위입니다. 프로젝트는 프로필을 선택한 뒤 로컬 규칙으로 필요한 차이만 덮어씁니다.
 
-어댑터는 공통 원본을 Claude Code, Codex, Gemini의 진입 형식으로 연결합니다. 현재 설치기는 `agents/adapters/`의 얇은 어댑터를 직접 링크합니다. 향후 생성기가 도입되면 `profile + project override + adapter`를 조합한 검토 완료 최종본을 `dist/`에 만듭니다.
+어댑터는 공통 원본을 Claude Code, Codex, Gemini의 진입 형식으로 연결합니다. `tooling/scripts/build.sh`가 얇은 어댑터와 `agents/rules/`의 공통 규칙을 합쳐 `dist/<호스트>/`에 최종본을 만들고, 설치기는 그 최종본을 호스트 진입점에 링크합니다. 호스트가 규칙 문서를 따로 읽지 않아도 규칙이 적용되도록 하기 위해서입니다. 프로필과 프로젝트 override 합성은 아직 생성기에 들어 있지 않습니다.
 
 ```text
-agents/ 원본
-  + profile
-  + project override
+agents/rules/ 공통 규칙
   + host adapter
         |
-        +--> dist/claude
-        +--> dist/codex
-        +--> dist/gemini
+        +--> dist/claude/CLAUDE.md
+        +--> dist/codex/AGENTS.md
+        +--> dist/gemini/GEMINI.md
 ```
 
 `dist/` 파일은 직접 편집하지 않고 원본을 수정한 뒤 다시 생성합니다.
@@ -118,6 +116,7 @@ agents/ 원본
 현재 저장소가 제공하는 것은 다음과 같습니다.
 
 - 공통 규칙과 도구별 얇은 어댑터
+- 어댑터와 공통 규칙을 합쳐 호스트 진입점을 만드는 `dist/` 생성기와 최신 여부 검사
 - 범용 및 Next.js 프로젝트 템플릿
 - 모듈의 현재 상태를 기술하는 살아있는 컨텍스트 문서 규약과 템플릿(`agents/templates/context-docs/`)
 - 전역·프로젝트 심볼릭 링크 설치와 안전한 제거
@@ -136,7 +135,7 @@ agents/ 원본
 - 외부 스킬·플러그인 다운로드와 버전 갱신
 - MCP 설정 생성과 health check
 - 호스트별 훅 설치와 실행
-- 프로필 합성 및 `dist/` 생성
+- 프로필과 프로젝트 override 합성
 - 스킬 라우팅 및 행동 eval
 
 ## 설치
@@ -150,7 +149,7 @@ make deps     # macOS Homebrew로 설치
 make doctor   # 설치 상태 진단
 ```
 
-`make help`로 나머지 타깃(`check`, `test`, `install`, `uninstall`)을 볼 수 있습니다.
+`make help`로 나머지 타깃(`build`, `check`, `test`, `install`, `uninstall`)을 볼 수 있습니다. 규칙이나 어댑터를 고친 뒤에는 `make build`로 `dist/`를 다시 만듭니다. 잊으면 `make check`가 잡습니다.
 
 ### 전역 설치
 
@@ -165,11 +164,11 @@ cd /path/to/dotagents
 전역 모드는 다음 링크를 만듭니다.
 
 - `~/.agents` → 이 저장소의 `agents/`
-- `~/.claude/CLAUDE.md` → `agents/adapters/claude/CLAUDE.md`
+- `~/.claude/CLAUDE.md` → `dist/claude/CLAUDE.md`
 - `~/.claude/settings.json` → `agents/adapters/claude/settings.json`
 - `~/.claude/skills/product-development-workflow` → owned 워크플로우 스킬
-- `~/.codex/AGENTS.md` → `agents/adapters/codex/AGENTS.md`
-- `~/.gemini/GEMINI.md` → `agents/adapters/gemini/GEMINI.md`
+- `~/.codex/AGENTS.md` → `dist/codex/AGENTS.md`
+- `~/.gemini/GEMINI.md` → `dist/gemini/GEMINI.md`
 - `~/.local/bin/dotagents-workflow` → 워크플로우 상태 명령
 
 Codex와 Gemini는 `~/.agents/skills/product-development-workflow` 별칭에서 같은 owned 스킬을 발견합니다. `~/.local/bin`이 `PATH`에 없으면 설치기가 경고하며 전체 경로로 실행할 수 있습니다.
@@ -331,11 +330,11 @@ clone 위치나 저장소 내부 어댑터 경로가 바뀌면 기존 절대 심
 
 ## 알려진 제한 사항
 
-- 도구가 Markdown의 다른 파일을 자동 include하는 방식이 서로 달라 얇은 어댑터가 규칙 경로를 안내합니다. 에이전트가 링크된 규칙을 읽지 않는 경우 명시적으로 읽도록 요청해야 할 수 있습니다.
+- 도구가 Markdown의 다른 파일을 자동 include하는 방식이 서로 다릅니다. 그래서 규칙 본문을 호스트 진입점에 함께 넣어 생성합니다. 규칙을 고친 뒤 `make build`를 실행하지 않으면 설치된 진입점이 낡은 채로 남습니다.
 - 기존 설정 파일과 구조적으로 병합하지 않습니다. 충돌을 중단하거나 `--force` 백업으로 처리합니다.
 - Windows는 지원하지 않습니다.
 - 설정 예제는 자동 설치하지 않습니다. 실제 설정과 비밀을 안전하게 병합하는 작업은 사용자 책임입니다.
-- 스킬 레지스트리는 검토 목록과 잠금 기록이며 외부 자산 자동 설치에는 아직 사용하지 않습니다. 프로필, 훅, MCP와 `dist/`도 아직 설치기에서 합성하지 않습니다.
+- 스킬 레지스트리는 검토 목록과 잠금 기록이며 외부 자산 자동 설치에는 아직 사용하지 않습니다. 프로필, 훅, MCP는 아직 설치기에서 합성하지 않습니다.
 
 ## 라이선스
 
