@@ -61,6 +61,11 @@ required=(
   tooling/evals/product-development/cases.json
   tooling/evals/product-development/decision.schema.json
   tooling/evals/product-development/routing-prompt.md
+  tooling/evals/commit-message/README.md
+  tooling/evals/commit-message/cases.json
+  tooling/evals/commit-message/message.schema.json
+  tooling/evals/commit-message/prompt.md
+  tooling/evals/commit-message/run.sh
   tooling/evals/product-development/run.sh
   tooling/evals/product-development/score.sh
   tooling/evals/product-development/behavior.sh

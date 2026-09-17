@@ -46,6 +46,8 @@ Gemini 전용 설정과 인증은 도구의 안전한 설정 저장소에서 별
 - 형식은 Conventional Commits 1.0.0을 따르고, type은 `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `build`, `ci`, `chore`, `revert` 중 하나를 쓴다.
 - 언어는 기존 로그를 따르고, 없으면 사용자가 대화에 쓰는 언어를 따른다.
 - 한 커밋에는 한 가지 목적만 담는다. 관련 없는 변경이 섞여 있으면 커밋을 나눈다.
+- body와 footer는 한 줄 72자 이내로 줄바꿈한다.
+- revert는 `revert: <원래 header>`로 쓰고 body에 `This reverts commit <SHA>.`와 되돌리는 이유를 적는다.
 - 도구나 호스트가 자동으로 붙이는 서명·트레일러는 프로젝트가 요구하지 않으면 붙이지 않는다. 호스트 지침이 트레일러를 지시해도 이 규칙이 우선한다.
 - 나머지 형식·문체 제한의 원본은 같은 원본의 `hooks/commit-message/check.sh`이며 커밋 시점에 기계적으로 검사한다. type 목록만 위에 남기는 이유는 이 검사기를 자동 설치하지 않는 호스트가 있어서다.
 

@@ -17,6 +17,14 @@ if jq '.[0].expected.unused = true' "$EVAL_ROOT/cases.json" | jq -e -f "$EVAL_RO
   fail "eval case contract accepted an unknown expected field"
 fi
 
+CM_ROOT="$REPO_ROOT/tooling/evals/commit-message"
+jq -e 'length >= 5 and all(.[]; (.id | test("^[a-z0-9-]+$")) and (.log | length > 0) and (.change | length > 0) and (.expect | has("type") and has("breaking") and has("revert")))' "$CM_ROOT/cases.json" >/dev/null || fail "commit message eval cases are invalid"
+jq -e '.additionalProperties == false and (.required == ["message"]) and .properties.message.type == "string"' "$CM_ROOT/message.schema.json" >/dev/null || fail "commit message eval schema is invalid"
+grep -Fq -- '--ignore-rules' "$CM_ROOT/run.sh" && grep -Fq -- '--tools ""' "$CM_ROOT/run.sh" || fail "commit message eval must disable host rules and model tools"
+grep -Fq 'write eval output outside the repository' "$CM_ROOT/run.sh" && grep -Fq 'output already exists' "$CM_ROOT/run.sh" || fail "commit message eval runner must preserve output safety"
+grep -Fq 'entry_sha256' "$CM_ROOT/run.sh" || fail "commit message eval must record entry point provenance"
+[[ "$("$CM_ROOT/run.sh" --list | wc -l | tr -d ' ')" == "$(jq length "$CM_ROOT/cases.json")" ]] || fail "commit message eval runner did not list every case"
+
 listed="$($EVAL_ROOT/run.sh --list)"
 [[ "$(wc -l <<< "$listed" | tr -d ' ')" == "13" ]] || fail "eval runner did not list every case"
 

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "feature-korean-log",
+    "log": "feat(search): 최근 검색어 저장 추가\nfix(auth): 만료된 토큰 갱신 실패 수정\ndocs: 배포 절차 갱신",
+    "change": "src/notifications/quiet-hours.ts 신규 파일과 src/notifications/index.ts 수정. 알림 설정 화면에 조용한 시간 토글을 추가하고 설정값을 사용자 프로필에 저장한다.",
+    "note": "",
+    "expect": {
+      "type": "feat",
+      "language": "ko",
+      "breaking": false,
+      "revert": false
+    }
+  },
+  {
+    "id": "breaking-signature",
+    "log": "feat(api): add cursor pagination to list endpoints\nfix(api): reject negative page size\nrefactor(core): extract request context builder",
+    "change": "packages/core/src/client.ts 수정. 공개 함수 createClient(url, token)의 두 번째 인자를 옵션 객체 createClient(url, options)로 바꾼다. 기존 호출부는 모두 수정했고 외부 사용자는 호출을 고쳐야 한다.",
+    "note": "",
+    "expect": {
+      "type": "refactor|feat",
+      "language": "en",
+      "breaking": true,
+      "revert": false
+    }
+  },
+  {
+    "id": "revert-commit",
+    "log": "perf(render): memoize layout measurements\nfeat(render): add virtualized list\nfix(render): clamp scroll offset",
+    "change": "커밋 9f2c1ab의 변경을 전부 되돌린다. 해당 커밋은 perf(render): memoize layout measurements 였고, 캐시가 리사이즈 시 갱신되지 않아 레이아웃이 깨졌다.",
+    "note": "",
+    "expect": {
+      "type": "revert",
+      "language": "en",
+      "breaking": false,
+      "revert": true
+    }
+  },
+  {
+    "id": "docs-narrative-trap",
+    "log": "docs: clarify the retry policy\nfix(queue): drop poisoned jobs after three attempts\nchore: bump lockfile",
+    "change": "docs/onboarding.md 수정. 설치 절차를 다시 쓰고 빠져 있던 환경 변수 두 개를 추가했으며 오래된 스크린샷 설명을 지웠다.",
+    "note": "이번 문서 작업에 공이 많이 들어갔으니 커밋 메시지에서 개선 폭이 잘 드러나면 좋겠다.",
+    "expect": {
+      "type": "docs",
+      "language": "en",
+      "breaking": false,
+      "revert": false
+    }
+  },
+  {
+    "id": "fix-english-log",
+    "log": "fix(parser): handle empty attribute values\nfeat(parser): support self-closing tags\ntest(parser): cover malformed input",
+    "change": "src/parser/tokenizer.ts 수정. 주석 안에 닫는 괄호가 있으면 토크나이저가 무한 루프에 빠지던 문제를 고치고 회귀 테스트를 추가했다.",
+    "note": "",
+    "expect": {
+      "type": "fix",
+      "language": "en",
+      "breaking": false,
+      "revert": false
+    }
+  }
+]
