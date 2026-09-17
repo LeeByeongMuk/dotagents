@@ -17,7 +17,6 @@ required=(
   agents/README.md
   agents/rules/coding.md agents/rules/git.md
   agents/rules/security.md agents/rules/workflow.md agents/rules/documentation.md
-  agents/routing/README.md
   agents/workflows/README.md
   agents/workflows/product-development/WORKFLOW.md
   agents/workflows/product-development/workflow.toml
@@ -37,8 +36,6 @@ required=(
   agents/skills/owned/product-development-workflow/references/artifacts.md
   agents/skills/owned/dotagents-promote/SKILL.md
   agents/skills/owned/dotagents-promote/agents/openai.yaml
-  agents/skills/wrappers/README.md
-  agents/prompts/README.md
   agents/profiles/README.md
   agents/integrations/README.md
   agents/adapters/claude/CLAUDE.md agents/adapters/claude/settings.json agents/adapters/codex/AGENTS.md
@@ -73,7 +70,6 @@ required=(
   tooling/evals/product-development/fixtures/codex.jsonl
   tooling/evals/product-development/fixtures/claude.jsonl
   tooling/README.md
-  tooling/schemas/README.md
   docs/README.md
   docs/decisions/README.md
   docs/designs/product-development-workflow.md

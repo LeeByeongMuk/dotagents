@@ -1,6 +1,6 @@
 # dotagents repository guide
 
-이 저장소의 공통 규칙 원본은 `agents/rules/`이며 재사용 가능한 스킬과 프롬프트의 원본은 각각 `agents/skills/`, `agents/prompts/`다.
+이 저장소의 공통 규칙 원본은 `agents/rules/`이며 재사용 가능한 스킬의 원본은 `agents/skills/`다.
 
 작업 시 다음 우선순위를 지킨다.
 

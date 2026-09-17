@@ -6,13 +6,13 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 
 fail() { echo "test failed: $*" >&2; exit 1; }
 
+# Only directories that hold real assets today. A directory is added together
+# with its first asset, so an empty placeholder never becomes required.
 required_dirs=(
-  agents/rules agents/routing agents/workflows agents/skills/owned
-  agents/skills/wrappers agents/prompts agents/hooks agents/profiles
-  agents/integrations/skills agents/integrations/mcp
-  agents/integrations/plugins agents/integrations/tools
+  agents/rules agents/workflows agents/skills/owned
+  agents/hooks agents/profiles agents/integrations
   agents/adapters/claude agents/adapters/codex agents/adapters/gemini
-  agents/registry agents/templates tooling/scripts tooling/schemas tooling/tests
+  agents/registry agents/templates tooling/scripts tooling/tests
   tooling/evals tooling/evals/product-development
   docs/decisions docs/designs dist
 )
@@ -53,16 +53,10 @@ workflow_skill="$REPO_ROOT/agents/skills/owned/product-development-workflow/SKIL
 [[ "$(grep -c '^---$' "$workflow_skill")" -ge 2 ]] || fail "workflow skill is missing closing frontmatter"
 grep -Fqx 'name: product-development-workflow' "$workflow_skill" || fail "workflow skill name is invalid"
 grep -Eq '^description: .+' "$workflow_skill" || fail "workflow skill description is missing"
-grep -Fq 'Brief' "$workflow_skill" || fail "workflow skill must define the lean Brief path"
-grep -Fq 'audited' "$workflow_skill" || fail "workflow skill must preserve the audited path"
-grep -Fq -- '- `direct`:' "$workflow_skill" && grep -Fq 'factual lookup' "$workflow_skill" || fail "workflow skill must keep factual non-product work on the direct path"
-grep -Fq -- '- `plan`:' "$workflow_skill" && grep -Fq 'stop before Execute' "$workflow_skill" || fail "workflow skill must stop planning-only work before implementation"
-grep -Fq -- '- `lean`:' "$workflow_skill" && grep -Fq 'This is the default' "$workflow_skill" || fail "workflow skill must route product work to lean by default"
-grep -Fq -- '- `audited`:' "$workflow_skill" && grep -Fq 'formal evidence is required' "$workflow_skill" || fail "workflow skill must keep audited routing risk-based"
-grep -Fq 'model distrust alone' "$workflow_skill" && grep -Fq 'according to the user' "$workflow_skill" || fail "workflow skill must route by evidence and user authorization"
-grep -Fq 'Words such as “research” or “explore” do not choose the route' "$workflow_skill" && grep -Fq 'A high-risk subject alone does not authorize implementation' "$workflow_skill" || fail "workflow skill must disambiguate research and authorization"
-grep -Fq 'Reuse a current, authoritative project PRD, issue, or specification' "$workflow_skill" || fail "workflow skill must reuse an authoritative product source"
-grep -Fq 'before Execute only when they could change the result' "$workflow_skill" && grep -Fq 'not an approval gate' "$workflow_skill" || fail "workflow skill must make pre-execution elicitation conditional"
+# Route selection, implementation authorization, authority action and question
+# bounds are behavior, not wording: tooling/evals/product-development/cases.json
+# measures them across all four routes. Assertions below pin only decisions that
+# no eval case observes, so rewording the skill does not break this test.
 grep -Fq 'Only when no suitable authority exists, read `references/brief-template.md` completely' "$workflow_skill" || fail "workflow skill must load the Brief template conditionally"
 grep -Fq 'Use stable `AC-<number>` identifiers' "$workflow_skill" || fail "workflow skill must keep acceptance criteria traceable"
 grep -Fq "project's living-context documentation rule" "$workflow_skill" || fail "workflow skill must require living context document updates"
@@ -107,7 +101,6 @@ grep -Fq 'every acceptance criterion is checked or explicitly rejected by the us
 grep -Fq 'verification rows contain actual results rather than planned commands;' "$workflow_brief" || fail "workflow Brief must gate completion on actual evidence"
 grep -Fq 'remaining risks are explicit;' "$workflow_brief" || fail "workflow Brief must gate completion on explicit remaining risks"
 grep -Fq 'the requested delivery action, if any, is complete.' "$workflow_brief" || fail "workflow Brief must gate completion on requested delivery"
-grep -Fq 'Ask only when an answer changes scope, behavior, risk acceptance, or a hard constraint.' "$workflow_brief" || fail "workflow Brief must limit questions to material decisions"
 grep -Fq 'living context documents affected by the change are updated, or the Brief records that none were affected;' "$workflow_brief" || fail "workflow Brief must gate completion on living context documents"
 grep -Fq '같은 변경 단위에서 영향받은 컨텍스트 문서를 함께 갱신한다' "$REPO_ROOT/agents/rules/documentation.md" || fail "documentation rule must require update-with-the-change"
 
@@ -134,27 +127,8 @@ jq -e '.additionalProperties == false and (.required | sort) == (.properties | k
 grep -Fq 'model_reasoning_effort' "$eval_root/run.sh" && grep -Fq 'output already exists' "$eval_root/run.sh" || fail "cross-host eval runner must preserve effort and output safety"
 grep -Fq -- '--strict-config' "$eval_root/run.sh" && grep -Fq -- '--disable shell_tool' "$eval_root/run.sh" && grep -Fq -- '--tools ""' "$eval_root/run.sh" && grep -Fq 'harness_sha256' "$eval_root/run.sh" || fail "cross-host eval runner must reject config drift, disable model tools, and record provenance"
 
-model_fit="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/model-fit.md"
-[[ -f "$model_fit" ]] || fail "Model Fit reference is missing"
-for candidate_field in '`provider`' '`model`' '`runnable`' '`source`' '`source_checked_at`' '`role`' '`effort_modes`' '`requirements`' '`economics`' '`eval_evidence`'; do
-  grep -Fq "$candidate_field" "$model_fit" || fail "Model Fit candidate inventory is missing: $candidate_field"
-done
-grep -Fq 'Apply hard filters' "$model_fit" || fail "Model Fit must apply hard constraints before preferences"
-grep -Fq 'A representative eval on the current model version and real project prompt outranks provider positioning.' "$model_fit" || fail "Model Fit must prefer representative project evals"
-grep -Fq 'Prefer staying in the current context.' "$model_fit" || fail "Model Fit must account for context continuity"
-grep -Fq 'Never combine uncertain inputs into a precise weighted score.' "$model_fit" || fail "Model Fit must reject false-precision scoring"
-grep -Fq 'separate the recommendation from execution' "$model_fit" || fail "Model Fit must separate advice from host execution"
-grep -Fq 'Initial policy coverage is Claude and Codex/OpenAI model families.' "$model_fit" || fail "Model Fit must declare its initial provider coverage"
-grep -Fq 'a local candidate may participate later' "$model_fit" || fail "Model Fit must keep a provider-neutral local extension point"
-for output_field in 'Decision:' 'Primary:' 'Next-run recommendation:' 'Effort:' 'Optional secondary:' 'Confidence:' 'Hard filters:' 'Evidence:' 'Tradeoff:' 'Execution:' 'Re-evaluate when:'; do
-  grep -Fq "$output_field" "$model_fit" || fail "Model Fit result contract is missing: $output_field"
-done
-
-model_fit_eval="$REPO_ROOT/docs/evals/product-development-workflow-model-fit.md"
-[[ -f "$model_fit_eval" ]] || fail "Model Fit representative scenario eval is missing"
-for scenario in 'MF-1' 'MF-2' 'MF-3' 'MF-4' 'MF-5' 'MF-6'; do
-  grep -Fq "$scenario" "$model_fit_eval" || fail "Model Fit eval is missing representative scenario: $scenario"
-done
+# The Model Fit policy and its representative scenarios are owned by
+# tooling/tests/model_fit_test.sh. Do not restate those clauses here.
 
 workflow_contract="$REPO_ROOT/agents/workflows/product-development/workflow.toml"
 grep -Fq 'Audited compatibility contract' "$workflow_contract" || fail "ten-stage contract must be labeled audited"

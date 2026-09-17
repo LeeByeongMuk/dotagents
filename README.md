@@ -26,19 +26,12 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 ├── dotagents.toml                 # 저장소 레이아웃 메타데이터
 ├── agents/                        # 모든 공통 AI 자산의 원본
 │   ├── rules/                     # 행동·코딩·Git·보안 규칙
-│   ├── routing/                   # 요청을 워크플로우와 스킬로 연결하는 규격
 │   ├── workflows/                 # 여러 스킬을 조합한 개발 절차와 실행 계약
 │   ├── skills/
-│   │   ├── owned/                 # 직접 만든 스킬(제품 개발 오케스트레이터 포함)
-│   │   └── wrappers/              # 외부 스킬의 로컬 보정 계층
-│   ├── prompts/                   # 재사용 프롬프트
+│   │   └── owned/                 # 직접 만든 스킬(제품 개발 오케스트레이터 포함)
 │   ├── hooks/                     # 세션·도구·출하 수명주기 훅 규격
 │   ├── profiles/                  # 프로젝트 유형별 구성 조합
-│   ├── integrations/
-│   │   ├── skills/                # gstack, Superpowers 등 외부 스킬 연동
-│   │   ├── mcp/                   # 외부 MCP 연동
-│   │   ├── plugins/               # 외부 플러그인 연동
-│   │   └── tools/                 # 브라우저·CLI 등 외부 도구 연동
+│   ├── integrations/              # 외부 스킬·MCP·플러그인·도구 연동 규격
 │   ├── adapters/
 │   │   ├── claude/                # Claude Code 진입 파일과 설정 예제
 │   │   ├── codex/                 # Codex 진입 파일과 설정 예제
@@ -47,34 +40,32 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 │   └── templates/                 # 범용·스택별 프로젝트 템플릿
 ├── tooling/
 │   ├── scripts/                   # 설치·제거·검증 명령
-│   ├── schemas/                   # 향후 TOML/JSON 스키마
 │   └── tests/                     # 격리 설치·구조·회귀 테스트
 ├── docs/
 │   └── decisions/                 # 장기 설계 결정 기록
 └── dist/                          # 생성된 Claude/Codex/Gemini 최종본
 ```
 
-`tooling/schemas/`는 첫 기계 판독 설정 소비자와 함께 추가합니다. 소비자 없이 스키마만 미리 고정하지 않습니다.
+빈 자리표시자 디렉터리는 두지 않습니다. 레지스트리 스키마나 프로필 조합처럼 소비자가 아직 없는 영역은 첫 소비자와 함께 디렉터리를 만들고, 그전까지는 규격만 문서에 적습니다. 라우팅 규격의 원본은 `agents/skills/owned/product-development-workflow/SKILL.md`의 description과 라우팅 절입니다.
 
 ## 영역별 규격
 
-### Rules, routing, workflows
+### Rules and workflows
 
 - 범용 규칙은 `agents/rules/<topic>.md`에 작고 독립적인 문서로 둡니다.
 - 규칙에는 모델이 스스로 알 수 없는 정보만 적습니다. 판정 기준은 `docs/decisions/0002-rule-authoring-criterion.md`에 있습니다.
 - 호스트 진입점은 `tooling/scripts/build.sh`가 어댑터와 규칙을 합쳐 `dist/`에 생성하고 설치는 그 결과를 링크합니다. 규칙을 고치면 `make build`를 실행합니다.
-- 라우팅은 요청의 종류, 제품 결정의 필요성, 위험과 증거 요구에 따라 워크플로우 또는 단일 스킬을 선택합니다.
+- 라우팅 규격은 별도 디렉터리가 아니라 스킬의 description과 라우팅 절이 원본입니다. 요청의 종류, 제품 결정의 필요성, 위험과 증거 요구에 따라 워크플로우 또는 단일 스킬을 선택합니다.
 - 워크플로우는 `agents/workflows/<name>/` 아래에 사람용 `WORKFLOW.md`와 기계 판독용 `workflow.toml`을 함께 둘 수 있습니다.
 - 워크플로우는 진입 조건, 단계, 입력·출력 산출물, 사용자 승인 지점, 실패·복구 방법, 선택 단계를 명시합니다.
 
 간단한 수정에 전체 프로세스를 강제하지 않습니다. 예를 들어 오타 수정은 구현과 검증만, 버그는 조사와 회귀 테스트를, 큰 기능은 문제 정의부터 계획·구현·QA·회고까지 실행할 수 있어야 합니다.
 
-### Skills and prompts
+### Skills
 
 - 직접 만든 스킬은 `agents/skills/owned/<name>/SKILL.md`에 둡니다.
-- 외부 스킬을 수정하지 않고 보정할 때는 `agents/skills/wrappers/<name>/SKILL.md`를 사용합니다.
+- 외부 스킬을 수정하지 않고 보정해야 하면 그때 `agents/skills/wrappers/<name>/SKILL.md`를 만듭니다.
 - 외부 원본 자체는 복사하지 않고 `agents/registry/skills.toml`과 `sources.lock`에 출처와 고정 버전을 기록합니다.
-- 프롬프트는 목적, 입력, 출력, 사용 조건, 안전 제한을 문서화합니다.
 
 ### Hooks
 
@@ -302,7 +293,6 @@ bash -n tooling/scripts/workflow.sh
 - 워크플로우: `agents/workflows/<name>/WORKFLOW.md`, `workflow.toml`
 - 직접 만든 스킬: `agents/skills/owned/<name>/SKILL.md`
 - 외부 스킬 wrapper: `agents/skills/wrappers/<name>/SKILL.md`
-- 프롬프트: `agents/prompts/<name>.md`
 - 훅: `agents/hooks/<name>/`
 - 외부 연동: `agents/integrations/<kind>/<name>/`
 - 도구별 동작: `agents/adapters/<host>/`
