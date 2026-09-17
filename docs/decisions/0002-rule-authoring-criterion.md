@@ -24,6 +24,6 @@
 - `agents/rules/`, `agents/adapters/`, `agents/templates/`를 이 기준으로 정리했다. 사고 순서 절차와 모방용 예시 블록을 제거하고 자율 경계, 산출물 범위, 확인 트리거 문장으로 대체했다.
 - 커밋 메시지 금지 표현의 유일한 원본은 `agents/hooks/commit-message/check.sh`다.
 - 2026-09-17에 `agents/rules/git.md`에 남아 있던 Conventional Commits 형식 재진술을 제거하고 검사기를 가리키게 했다. type 목록만 규칙에 남긴다. `tooling/scripts/install.sh`가 `commit-msg` 훅을 자동 설치하지 않아 Codex, Gemini에서는 검사기가 없을 수 있고, 그때 type을 모르면 기본값을 지킬 방법이 없기 때문이다.
-- 2026-09-17 커밋 메시지 eval에서 압축본이 줄바꿈과 revert 형식 두 곳에서 회귀했다. 3항의 측정된 실패 예외로 두 줄을 복원했고 근거는 `docs/evals/commit-message-rule-compression.md`에 있다. 검사기가 관측하지 않는 형식과 커밋 시점 이후에만 드러나는 제한은 규칙에 남긴다.
+- 2026-09-17 커밋 메시지 eval에서 압축본이 줄바꿈, revert 형식, 호환성 깨짐 표기 세 곳에서 회귀했다. 3항의 측정된 실패 예외로 세 줄을 복원했고 근거는 `docs/evals/commit-message-rule-compression.md`에 있다. 검사기가 관측하지 않는 형식과 커밋 시점 이후에만 드러나는 제한은 규칙에 남긴다.
 - `agents/rules/git.md`의 트레일러 금지는 호스트가 세션 지침으로 서명 트레일러를 주입하는 경우를 포함한다. 모델이 스스로 알 수 없는 사용자 선호이므로 기준 1에 해당한다.
 - 호스트 시스템 프롬프트와 겹친다는 이유만으로는 규칙을 지우지 않는다. 호스트 프롬프트는 이 저장소가 통제하지 않고 호스트마다 다르다.
