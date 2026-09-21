@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["message"],
+  "properties": {
+    "message": {
+      "type": "string",
+      "description": "The complete commit message, header and any body or footer, exactly as it would be committed."
+    }
+  }
+}
