@@ -4,6 +4,8 @@ Read this reference only on Claude Code. The shared workflow owns routing, autho
 
 This policy starts after model selection. `model-fit.md` decides which candidate and effort fit the run. A Model Fit recommendation must not be presented as verification evidence.
 
+A model without its own section below uses the shared policy and the Claude Code guidance after the model sections. A model section exists only where a representative eval showed that the shared policy alone gives that model a different review decision.
+
 ## Claude Opus 5
 
 - Do not add a final self-review, re-check, or verifier subagent merely because the task is non-trivial.

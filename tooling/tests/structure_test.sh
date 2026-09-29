@@ -114,7 +114,7 @@ codex_verification="$REPO_ROOT/agents/skills/owned/product-development-workflow/
 claude_verification="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/claude-code.md"
 [[ -f "$codex_verification" && -f "$claude_verification" ]] || fail "host-specific verification references are missing"
 grep -Fq '## GPT-5.6 Sol' "$codex_verification" || fail "Codex verification guidance is incomplete"
-grep -Fq '## Claude Opus 5' "$claude_verification" && grep -Fq '## Claude Fable 5' "$claude_verification" || fail "Claude verification guidance is incomplete"
+grep -Fq 'without its own section below uses the shared policy' "$claude_verification" || fail "Claude verification guidance must default unlisted models to the shared policy"
 grep -Fiq 'shared workflow owns' "$codex_verification" && grep -Fiq 'shared workflow owns' "$claude_verification" || fail "host guidance must preserve the shared workflow contract"
 
 eval_root="$REPO_ROOT/tooling/evals/product-development"
