@@ -1,8 +1,24 @@
 {
+  "syncClaudeAiSkills": false,
+  "syncClaudeAiPlugins": false,
   "permissions": {
     "defaultMode": "bypassPermissions"
   },
-  "model": "claude-fable-5-1[1m]",
+  "disableClaudeAiConnectors": true,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME\"/.agents/hooks/commit-message/claude-pre-tool-use.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "disableRemoteControl": true,
   "statusLine": {
     "type": "command",
     "command": "bash -c '\"/opt/homebrew/bin/node\" \"$(ls -td ~/.claude/plugins/cache/claude-hud/claude-hud/*/ 2>/dev/null | head -1)dist/index.js\"'"
@@ -30,19 +46,5 @@
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
   "remoteControlAtStartup": false,
-  "skipAutoPermissionPrompt": true,
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$HOME\"/.agents/hooks/commit-message/claude-pre-tool-use.sh"
-          }
-        ]
-      }
-    ]
-  },
-  "disableRemoteControl": true
+  "skipAutoPermissionPrompt": true
 }
