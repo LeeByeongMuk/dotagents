@@ -46,13 +46,23 @@ block() {
   exit 2
 }
 
-# Commits that reuse an existing message are not checked.
-if printf '%s' "$segment" | grep -Eq -- '--no-edit|--reuse-message|--reedit-message|--fixup|--squash|(^|[[:space:]])-[cC][[:space:]]'; then
+# Commits that reuse an existing message are not checked. Only the commit's own
+# arguments decide this: its line, with backslash continuations joined, after
+# `git ... commit`, without quoted text, up to the next command separator. Git
+# options before `commit` such as -c or -C and flags of later commands do not.
+commit_line="$(printf '%s\n' "$code_only" | sed -n "${start_line},\$p" | awk '!done { if (sub(/\\$/, "")) { printf "%s ", $0 } else { print; done = 1 } }')"
+commit_args=""
+if [[ "$commit_line" =~ $git_commit_re ]]; then
+  commit_args="${commit_line#*"${BASH_REMATCH[0]}"}"
+fi
+commit_args="$(printf '%s' "$commit_args" | sed -E -e 's/"([^"\\]|\\.)*"//g' -e "s/'[^']*'//g")"
+commit_args="${commit_args%%[;&|]*}"
+if printf '%s' "$commit_args" | grep -Eq -- '(^|[[:space:]])(--no-edit|--reuse-message|--reedit-message|--fixup|--squash|-[cC])([[:space:]=]|$)'; then
   exit 0
 fi
 
 tmp="$(mktemp "${TMPDIR:-/tmp}/dotagents-commit.XXXXXX")"
-trap 'rm -f "$tmp"' EXIT
+trap 'rm -f "$tmp" "$tmp.err"' EXIT
 
 read_heredoc_body() {
   local text="$1" marker
@@ -112,5 +122,4 @@ fi
 if ! DOTAGENTS_REPO_DIR="${cwd:-$PWD}" "$here/check.sh" "$tmp" 2> "$tmp.err"; then
   block "$(cat "$tmp.err")"
 fi
-rm -f "$tmp.err"
 exit 0

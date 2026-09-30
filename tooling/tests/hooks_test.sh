@@ -62,6 +62,15 @@ touch "$repo/.gitlint"
 expect_msg 0 'project linter wins'
 rm "$repo/.gitlint"
 
+# Installed as the repository's own commit-msg hook, the wrapper still checks.
+ln -s "$HOOK_DIR/commit-msg" "$repo/.git/hooks/commit-msg"
+if git -C "$repo" -c user.name=t -c user.email=t@example.com commit -q --allow-empty -m 'Add thing' >/dev/null 2>&1; then
+  fail "commit-msg hook accepted an invalid message"
+fi
+git -C "$repo" -c user.name=t -c user.email=t@example.com commit -q --allow-empty -m 'chore: verify the commit hook' >/dev/null 2>&1 \
+  || fail "commit-msg hook rejected a valid message"
+rm "$repo/.git/hooks/commit-msg"
+
 expect_cmd 0 'git status'
 expect_cmd 0 'git commit -m "feat: add thing"'
 expect_cmd 0 'git commit -am "fix: handle empty input"'
@@ -77,6 +86,22 @@ expect_cmd 2 'git commit -m "feat: x" -m "This commit introduces things"'
 expect_cmd 2 $'git commit -m "$(cat <<\'EOF\'\nAdd thing\nEOF\n)"'
 expect_cmd 2 'git commit'
 expect_cmd 2 'git commit -F missing.txt'
+
+# Only the commit's own arguments can skip the check.
+expect_cmd 2 'git -c commit.gpgsign=false commit -m "Add thing"'
+expect_cmd 2 'git -C sub commit -m "Add thing"'
+expect_cmd 2 'git commit -m "Add thing" && git merge --no-edit topic'
+expect_cmd 2 'git commit -m "Add -c flag support"'
+expect_cmd 0 'git commit -C HEAD --amend'
+expect_cmd 0 'git commit --fixup=HEAD'
+expect_cmd 0 $'git commit --amend \\\n  --no-edit'
+
+# A rejected commit leaves no temporary files behind.
+leak_dir="$work/tmp"
+mkdir -p "$leak_dir"
+jq -cn --arg c 'git commit -m "Add thing"' --arg d "$repo" '{tool_name:"Bash",tool_input:{command:$c},cwd:$d}' \
+  | TMPDIR="$leak_dir" "$HOOK_DIR/claude-pre-tool-use.sh" >/dev/null 2>&1 || true
+[[ -z "$(ls -A "$leak_dir")" ]] || fail "rejected commit left temporary files"
 
 # A heredoc that writes an unrelated file must not supply the commit message.
 expect_cmd 0 $'cat > a.js <<\'EOF\'\nvar x = 1;\nEOF\ngit commit -m "fix: correct a typo"'
