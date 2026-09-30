@@ -104,53 +104,20 @@ for script in "$REPO_ROOT"/tooling/scripts/*.sh "$REPO_ROOT"/tooling/tests/*.sh 
 done
 ok "shell syntax"
 
-if "$REPO_ROOT/tooling/tests/structure_test.sh" >/dev/null; then
-  ok "repository structure"
-else
-  bad "repository structure failed"
-fi
-
-if "$REPO_ROOT/tooling/tests/workflow_test.sh" >/dev/null; then
-  ok "product workflow"
-else
-  bad "product workflow failed"
-fi
-
-if "$REPO_ROOT/tooling/tests/eval_test.sh" >/dev/null; then
-  ok "cross-host workflow eval"
-else
-  bad "cross-host workflow eval failed"
-fi
-
-if "$REPO_ROOT/tooling/tests/model_fit_test.sh" >/dev/null; then
-  ok "model fit contract"
-else
-  bad "model fit contract failed"
-fi
-
-if "$REPO_ROOT/tooling/tests/hooks_test.sh" >/dev/null; then
-  ok "commit message hooks"
-else
-  bad "commit message hooks failed"
-fi
-
 if "$REPO_ROOT/tooling/scripts/build.sh" --check >/dev/null 2>&1; then
   ok "generated host files are current"
 else
   bad "generated host files are out of date; run make build"
 fi
 
-if "$REPO_ROOT/tooling/tests/build_test.sh" >/dev/null; then
-  ok "host file composition"
-else
-  bad "host file composition failed"
-fi
-
-if "$REPO_ROOT/tooling/tests/sources_test.sh" >/dev/null; then
-  ok "external source registry"
-else
-  bad "external source registry failed"
-fi
+for test_script in "$REPO_ROOT"/tooling/tests/*_test.sh; do
+  test_name="$(basename "$test_script" _test.sh)"
+  if "$test_script" >/dev/null; then
+    ok "test: $test_name"
+  else
+    bad "test failed: $test_name"
+  fi
+done
 
 hardcoded="$(rg -l --fixed-strings "$REPO_ROOT" "$REPO_ROOT" -g '!README.md' -g '!tooling/scripts/check.sh' -g '!.git/**' || true)"
 if [[ -n "$hardcoded" ]]; then

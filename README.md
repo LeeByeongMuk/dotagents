@@ -272,23 +272,11 @@ dotagents-workflow status --project /path/to/project --run feature-name
 
 ```bash
 make doctor
-bash -n tooling/scripts/install.sh
-bash -n tooling/scripts/uninstall.sh
-bash -n tooling/scripts/check.sh
-bash -n tooling/scripts/workflow.sh
-./tooling/scripts/install.sh --dry-run
-./tooling/scripts/uninstall.sh --dry-run
-./tooling/scripts/check.sh
+make check
 ./tooling/scripts/check-sources.sh
-./tooling/tests/install_test.sh
-./tooling/tests/model_fit_test.sh
-./tooling/tests/structure_test.sh
-./tooling/tests/workflow_test.sh
-./tooling/tests/sources_test.sh
-./tooling/tests/hooks_test.sh
 ```
 
-`check.sh`는 필수 구조, 스킬 규격, 깨진 링크, 셸 문법, 저장소 경로 하드코딩, 의심되는 비밀 패턴·파일명, 어댑터의 공통 규칙 중복, 레지스트리 기본 형식, 워크플로우 계약과 설치 dry-run을 검사합니다. `check-sources.sh`는 별도의 네트워크 검사이며 GitHub CLI 인증이 필요합니다. 탐지 시 비밀 값은 출력하지 않습니다.
+`make check`(`tooling/scripts/check.sh`)는 필수 구조, 스킬 규격, 깨진 링크, 셸 문법, 생성 파일 최신 여부, 저장소 경로 하드코딩, 의심되는 비밀 패턴·파일명, 어댑터의 공통 규칙 중복, 설치 dry-run을 검사하고 `tooling/tests/`의 모든 테스트를 실행합니다. PR마다 GitHub Actions가 macOS에서 같은 `make check`를 실행합니다. `make test`는 테스트만 실행합니다. `check-sources.sh`는 별도의 네트워크 검사이며 GitHub CLI 인증이 필요합니다. 탐지 시 비밀 값은 출력하지 않습니다.
 
 ## 자산 추가
 
