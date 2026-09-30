@@ -2,7 +2,7 @@
 
 제품의 `무엇`과 `왜`를 한 장의 기획 하네스에 고정하고, 실행은 모델에 맡긴 뒤 결정론적 증거로 검증하는 공통 절차입니다. Claude Code와 Codex는 같은 결과 계약을 사용하며, 기획 전용 요청은 `Plan`, 구현 요청은 `Brief → Execute → Verify`로 처리합니다. Gemini는 같은 공통 계약을 사용하고 별도 호스트 검증 참조 없이 실행합니다.
 
-기존 10단계 상태 머신은 삭제하지 않고 감사·규제·고위험 작업을 위한 `audited` 호환 경로로 보존합니다.
+규제, 민감한 보안 경계, 비가역 데이터 변경처럼 공식 증거가 필요한 작업도 `lean`으로 진행하고, 필요한 승인과 증거를 Brief의 수용 조건으로 둡니다.
 
 ## 경로 선택
 
@@ -11,9 +11,8 @@
 | `direct` | 작은 수정, 단일 버그, 설명, 제품 결정을 만들지 않는 사실 조사 | 프로젝트 일반 절차 |
 | `plan` | 제품 문제 탐색·대안 비교·기획·설계 요청이며 구현 권한이 없음 | 저장소 조사 → 기획 결과, 구현 없이 종료 |
 | `lean` | 사용자가 구현을 요청한 일반 제품·기능 개발 | Brief → Execute → Verify |
-| `audited` | 명시적 요청, 규제, 민감한 보안 경계, 비가역 마이그레이션, 공식 팀 승인·인수인계 | 보존된 10단계 계약과 단계별 승인 |
 
-“조사”나 “탐색”이라는 단어만으로 경로를 고르지 않습니다. 제품의 무엇·왜·대안을 결정하면 `plan`, 이미 존재하는 사실을 찾아 설명하면 `direct`입니다. 기획과 구현을 함께 요청하면 일반적으로 `lean`, 구현에 형식적 증거가 필요하면 `audited`입니다. 고위험 주제라는 사실만으로 구현 권한이 생기지는 않으므로, 구현이나 audited 산출물을 요청하지 않았다면 `plan`에서 끝냅니다.
+“조사”나 “탐색”이라는 단어만으로 경로를 고르지 않습니다. 제품의 무엇·왜·대안을 결정하면 `plan`, 이미 존재하는 사실을 찾아 설명하면 `direct`입니다. 기획과 구현을 함께 요청하면 `lean`입니다. 고위험 주제라는 사실만으로 구현 권한이 생기지는 않으므로, 구현을 요청하지 않았다면 `plan`에서 끝냅니다.
 
 ## 기획 전용 경로
 
@@ -102,76 +101,14 @@ $product-development-workflow 로 이 제품 아이디어를 Brief부터 구현 
 
 두 경로 모두 별도 상태 CLI가 필요하지 않습니다. lean 중단 후에는 채택한 제품 원본, 로컬 Brief가 있으면 그 파일, Git 상태, diff, 최근 커밋을 읽고 체크포인트부터 이어갑니다.
 
-## 감사형 10단계 경로
-
-다음처럼 명시적으로 요청하거나 형식적 승인 증거가 필요할 때만 사용합니다.
-
-```text
-$product-development-workflow 의 audited 경로로 이 마이그레이션을 진행해줘.
-```
-
-`audited` 경로는 다음 순서를 유지합니다.
-
-```text
-인터뷰 → 도메인 → 설계 → 스펙 → 플랜 → 플랜 리뷰
-→ 구현 → 코드·테스트 리뷰 → 아키텍처 평가 → 스킬 회고(선택)
-```
-
-이 경로의 기계 계약은 [workflow.toml](workflow.toml), 상세 실행·산출물 규칙은 스킬의 `references/stages.md`와 `references/artifacts.md`입니다.
-
-### 시작과 상태
-
-```bash
-dotagents-workflow start \
-  --project /path/to/project \
-  --run checkout-redesign \
-  --scope substantial
-
-dotagents-workflow status \
-  --project /path/to/project \
-  --run checkout-redesign
-```
-
-감사 산출물은 `<project>/docs/workflows/<run-id>/01-interview.md`부터 단계별로 생성됩니다. 에이전트가 산출물을 보여주고 사용자의 명시적 승인을 받은 뒤에만 승인 명령을 호출합니다.
-
-```bash
-dotagents-workflow approve \
-  --project /path/to/project \
-  --run checkout-redesign \
-  --stage 1 \
-  --user-approved
-```
-
-승인된 감사 산출물은 SHA-256으로 고정됩니다. 일반 `lean` Brief에는 이 불변 정책을 적용하지 않습니다.
-
-### 가져오기와 완료 검증
-
-```bash
-dotagents-workflow adopt \
-  --project /path/to/project \
-  --run existing-plan \
-  --scope standard \
-  --through 5 \
-  --user-approved
-
-dotagents-workflow verify \
-  --project /path/to/project \
-  --run checkout-redesign
-```
-
-CLI 검증은 단계 순서, 파일 안전성, 승인과 해시의 연속성만 증명합니다. 구현 정확성은 7~9단계에 기록된 실제 테스트·QA 결과가 증명해야 합니다.
-
 ## 외부 스킬
 
-`grilling`, gstack, Superpowers는 선택 공급자입니다. `lean`에서는 필요한 능력만 개별 호출하고, `audited`에서는 지정 단계의 공급자로 사용할 수 있습니다. 설치되지 않았거나 현재 계약과 맞지 않으면 외부 스킬을 고치거나 설치하지 않고 내장 절차를 사용합니다.
+`grilling`, gstack, Superpowers는 선택 공급자입니다. `lean`에서는 필요한 능력만 개별 호출합니다. 설치되지 않았거나 현재 계약과 맞지 않으면 외부 스킬을 고치거나 설치하지 않고 내장 절차를 사용합니다.
 
 ## 실패와 복구
 
 - `lean` 중단: 같은 Brief와 Git 상태에서 재개합니다.
 - `lean` 결정 변경: Brief의 현재 결론을 수정하고 결정 기록에 이유를 남깁니다.
-- `lean`에서 `audited`로 전환: 같은 run-id의 산출물 디렉터리가 이미 있어 `start`가 거부됩니다. 새 run-id로 시작하거나, 같은 run-id를 유지하려면 Brief를 바탕으로 필요한 정규 단계 산출물을 작성하고 사용자 검토 후 `adopt`합니다.
-- `audited` 중단: `dotagents-workflow status`로 재개합니다.
-- `audited` 상태 손실: 기존 정규 산출물을 검토한 뒤 `adopt`합니다.
 - 외부 공급자 실패: 원인을 간단히 기록하고 내장 절차로 한 번 계속합니다.
 - 검증 실패: 원인을 해결하고 영향받은 검사를 다시 실행합니다.
 

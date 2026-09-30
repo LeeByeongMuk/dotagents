@@ -58,7 +58,7 @@ done
 
 command -v jq >/dev/null || fail "jq is required"
 jq -e -f "$CASE_CONTRACT_FILE" "$CASES_FILE" >/dev/null || fail "cases file is invalid"
-jq -e '.type == "object" and .additionalProperties == false and (.required | sort) == (.properties | keys | sort) and (.properties.route.enum == ["direct", "plan", "lean", "audited"]) and (.properties.implementation_authorized.type == "boolean") and (.properties.file_changes_authorized.type == "boolean") and (.properties.authority_action.enum == ["none", "reuse", "create", "link"])' "$SCHEMA_FILE" >/dev/null || fail "decision schema is invalid"
+jq -e '.type == "object" and .additionalProperties == false and (.required | sort) == (.properties | keys | sort) and (.properties.route.enum == ["direct", "plan", "lean"]) and (.properties.implementation_authorized.type == "boolean") and (.properties.file_changes_authorized.type == "boolean") and (.properties.authority_action.enum == ["none", "reuse", "create", "link"])' "$SCHEMA_FILE" >/dev/null || fail "decision schema is invalid"
 [[ -f "$PROMPT_CONTRACT_FILE" && -f "$CODEX_REFERENCE_FILE" && -f "$CLAUDE_REFERENCE_FILE" ]] || fail "eval prompt or host reference is missing"
 
 if [[ "$LIST_ONLY" -eq 1 ]]; then

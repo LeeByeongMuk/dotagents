@@ -19,7 +19,6 @@ required=(
   agents/rules/security.md agents/rules/workflow.md agents/rules/documentation.md
   agents/workflows/README.md
   agents/workflows/product-development/WORKFLOW.md
-  agents/workflows/product-development/workflow.toml
   agents/hooks/README.md
   agents/hooks/commit-message/check.sh
   agents/hooks/commit-message/pre-tool-use.sh
@@ -32,8 +31,6 @@ required=(
   agents/skills/owned/product-development-workflow/references/codex-cli.md
   agents/skills/owned/product-development-workflow/references/claude-code.md
   agents/skills/owned/product-development-workflow/references/model-fit.md
-  agents/skills/owned/product-development-workflow/references/stages.md
-  agents/skills/owned/product-development-workflow/references/artifacts.md
   agents/skills/owned/dotagents-promote/SKILL.md
   agents/skills/owned/dotagents-promote/agents/openai.yaml
   agents/profiles/README.md
@@ -47,11 +44,10 @@ required=(
   tooling/scripts/build.sh
   tooling/scripts/check-sources.sh
   tooling/scripts/doctor.sh
-  tooling/scripts/workflow.sh
   agents/templates/generic/AGENTS.md agents/templates/nextjs/AGENTS.md
   agents/templates/context-docs/README.md agents/templates/context-docs/domain-overview.md
   agents/templates/context-docs/interface-contract.md agents/templates/context-docs/integration-map.md
-  tooling/tests/install_test.sh tooling/tests/structure_test.sh tooling/tests/workflow_test.sh
+  tooling/tests/install_test.sh tooling/tests/structure_test.sh
   tooling/tests/eval_test.sh
   tooling/tests/model_fit_test.sh
   tooling/tests/sources_test.sh

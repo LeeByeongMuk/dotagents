@@ -27,3 +27,4 @@
 - `direct` 경로의 작은 수정을 포함해 항상 적용되는 `agents/rules/documentation.md` 규칙이 생긴다.
 - lean 경로는 영향받은 컨텍스트 문서 갱신을 COMPLETE 게이트로 요구하고, audited 경로는 7·9단계에서 같은 갱신을 요구한다.
 - 기본 구조는 `agents/templates/context-docs/`가 정의하며, 프로젝트별 위치 재정의는 프로젝트 `AGENTS.md`에 기록한다.
+- 2026-09-30에 ADR 0005로 audited 경로를 제거해, 컨텍스트 문서 갱신은 lean의 COMPLETE 게이트만 요구한다.

@@ -8,7 +8,7 @@ EVAL_ROOT="$REPO_ROOT/tooling/evals/product-development"
 fail() { echo "test failed: $*" >&2; exit 1; }
 
 jq -e -f "$EVAL_ROOT/case-contract.jq" "$EVAL_ROOT/cases.json" >/dev/null || fail "eval cases are invalid"
-jq -e '.type == "object" and .additionalProperties == false and (.required | sort) == (.properties | keys | sort) and (.properties.route.enum == ["direct", "plan", "lean", "audited"]) and (.properties.implementation_authorized.type == "boolean") and (.properties.file_changes_authorized.type == "boolean") and (.properties.authority_action.enum == ["none", "reuse", "create", "link"])' "$EVAL_ROOT/decision.schema.json" >/dev/null || fail "eval schema is invalid"
+jq -e '.type == "object" and .additionalProperties == false and (.required | sort) == (.properties | keys | sort) and (.properties.route.enum == ["direct", "plan", "lean"]) and (.properties.implementation_authorized.type == "boolean") and (.properties.file_changes_authorized.type == "boolean") and (.properties.authority_action.enum == ["none", "reuse", "create", "link"])' "$EVAL_ROOT/decision.schema.json" >/dev/null || fail "eval schema is invalid"
 
 if jq '.[0].id = "../../unsafe"' "$EVAL_ROOT/cases.json" | jq -e -f "$EVAL_ROOT/case-contract.jq" >/dev/null; then
   fail "eval case contract accepted an unsafe case id"
@@ -26,13 +26,13 @@ grep -Fq 'entry_sha256' "$CM_ROOT/run.sh" || fail "commit message eval must reco
 [[ "$("$CM_ROOT/run.sh" --list | wc -l | tr -d ' ')" == "$(jq length "$CM_ROOT/cases.json")" ]] || fail "commit message eval runner did not list every case"
 
 listed="$($EVAL_ROOT/run.sh --list)"
-[[ "$(wc -l <<< "$listed" | tr -d ' ')" == "13" ]] || fail "eval runner did not list every case"
+[[ "$(wc -l <<< "$listed" | tr -d ' ')" == "12" ]] || fail "eval runner did not list every case"
 
 fixture_score="$($EVAL_ROOT/score.sh --require-all \
   "$EVAL_ROOT/fixtures/codex.jsonl" \
   "$EVAL_ROOT/fixtures/claude.jsonl")" || fail "valid cross-host fixtures did not pass"
 grep -Fq $'provider\tmodel\teffort\tcase\tresult' <<< "$fixture_score" || fail "eval score output is missing its header"
-[[ "$(grep -Fc $'\tTOTAL(13)\tPASS\t' <<< "$fixture_score")" == "2" ]] || fail "eval score output is missing provider totals"
+[[ "$(grep -Fc $'\tTOTAL(12)\tPASS\t' <<< "$fixture_score")" == "2" ]] || fail "eval score output is missing provider totals"
 
 test_root="$(mktemp -d "${TMPDIR:-/tmp}/dotagents-eval-test.XXXXXX")"
 trap 'rm -r "$test_root"' EXIT

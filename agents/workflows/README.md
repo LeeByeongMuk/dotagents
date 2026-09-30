@@ -1,7 +1,7 @@
 # Workflows
 
-워크플로우는 `<name>/WORKFLOW.md`에 목적과 사람용 절차를, 필요하면 같은 디렉터리의 `workflow.toml`에 단계 그래프를 기록합니다. 진입 조건, 입력·출력, 승인 지점, 선택 단계, 실패·복구 정책을 포함해야 합니다.
+워크플로우는 `<name>/WORKFLOW.md`에 사람용 사용 안내를 둡니다. 실행 계약의 원본은 해당 스킬의 `SKILL.md`와 `references/`이며 안내 문서는 그 내용을 다시 적지 않습니다.
 
 현재 제공하는 워크플로우:
 
-- [`product-development`](product-development/WORKFLOW.md): 기획 전용 Plan, 구현용 Brief → Execute → Verify, 선택적 audited 10단계 증거 경로
+- [`product-development`](product-development/WORKFLOW.md): 기획 전용 Plan과 구현용 Brief → Execute → Verify

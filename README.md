@@ -2,7 +2,7 @@
 
 Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 단일 원본입니다. 공통 규칙, 워크플로우, 직접 만든 스킬, 훅, 외부 연동 규격과 도구별 어댑터를 한 저장소에서 관리하고 여러 프로젝트에 재사용합니다.
 
-현재는 구조와 설치 기반뿐 아니라 기획 전용 `Plan`과 구현용 `Brief → Execute → Verify`를 구분하는 제품 개발 워크플로우를 제공합니다. 사용자가 요청하면 Brief 이후 Claude·Codex 후보의 Model Fit을 판단하고, 두 호스트는 같은 제품 결과 계약을 공유하면서 각자의 검증 참조만 읽습니다. 기존 10단계 계약은 감사·고위험 작업의 선택 경로로 보존합니다. 실제 훅·MCP 설정 생성, 외부 스킬 자동 동기화와 프로필 합성은 후속 범위입니다.
+현재는 구조와 설치 기반뿐 아니라 기획 전용 `Plan`과 구현용 `Brief → Execute → Verify`를 구분하는 제품 개발 워크플로우를 제공합니다. 사용자가 요청하면 Brief 이후 Claude·Codex 후보의 Model Fit을 판단하고, 두 호스트는 같은 제품 결과 계약을 공유하면서 각자의 검증 참조만 읽습니다. 실제 훅·MCP 설정 생성, 외부 스킬 자동 동기화와 프로필 합성은 후속 범위입니다.
 
 ## 원칙과 우선순위
 
@@ -26,7 +26,7 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 ├── dotagents.toml                 # 저장소 레이아웃 메타데이터
 ├── agents/                        # 모든 공통 AI 자산의 원본
 │   ├── rules/                     # 행동·코딩·Git·보안 규칙
-│   ├── workflows/                 # 여러 스킬을 조합한 개발 절차와 실행 계약
+│   ├── workflows/                 # 워크플로우 사람용 사용 안내
 │   ├── skills/
 │   │   └── owned/                 # 직접 만든 스킬(제품 개발 오케스트레이터 포함)
 │   ├── hooks/                     # 세션·도구·출하 수명주기 훅 규격
@@ -56,10 +56,9 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 - 규칙에는 모델이 스스로 알 수 없는 정보만 적습니다. 판정 기준은 `docs/decisions/0002-rule-authoring-criterion.md`에 있습니다.
 - 호스트 진입점은 `tooling/scripts/build.sh`가 어댑터와 규칙을 합쳐 `dist/`에 생성하고 설치는 그 결과를 링크합니다. 규칙을 고치면 `make build`를 실행합니다.
 - 라우팅 규격은 별도 디렉터리가 아니라 스킬의 description과 라우팅 절이 원본입니다. 요청의 종류, 제품 결정의 필요성, 위험과 증거 요구에 따라 워크플로우 또는 단일 스킬을 선택합니다.
-- 워크플로우는 `agents/workflows/<name>/` 아래에 사람용 `WORKFLOW.md`와 기계 판독용 `workflow.toml`을 함께 둘 수 있습니다.
-- 워크플로우는 진입 조건, 단계, 입력·출력 산출물, 사용자 승인 지점, 실패·복구 방법, 선택 단계를 명시합니다.
+- 워크플로우는 `agents/workflows/<name>/WORKFLOW.md`에 사람용 사용 안내를 두고, 실행 계약은 해당 스킬이 소유합니다.
 
-간단한 수정에 전체 프로세스를 강제하지 않습니다. 예를 들어 오타 수정은 구현과 검증만, 버그는 조사와 회귀 테스트를, 큰 기능은 문제 정의부터 계획·구현·QA·회고까지 실행할 수 있어야 합니다.
+간단한 수정에 전체 프로세스를 강제하지 않습니다. 예를 들어 오타 수정은 구현과 검증만, 버그는 조사와 회귀 테스트를, 큰 기능은 Brief부터 구현·검증까지 실행할 수 있어야 합니다.
 
 ### Skills
 
@@ -116,8 +115,7 @@ agents/rules/ 공통 규칙
 - 구조, 비밀 패턴, 셸 문법과 설치 시나리오 검증
 - 하나의 살아 있는 제품 Brief와 자율 실행, 결정론적 검증을 잇는 기본 제품 개발 워크플로우
 - 사용자가 요청할 때 Claude·Codex 후보를 하드 제약, 프로젝트 eval, 문맥 연속성, 비용·지연 순으로 비교하는 Model Fit 권고
-- 감사·고위험 작업을 위한 단계별 한국어 산출물, 명시적 승인, 중단 후 재개의 10단계 호환 경로
-- Claude Code, Codex, Gemini의 공통 스킬 발견과 전역·프로젝트 워크플로우 CLI
+- Claude Code, Codex, Gemini의 공통 스킬 발견
 - 세션에서 발견한 공통 관례를 격리 브랜치로 승격 제안·반영하는 `dotagents-promote` 스킬
 - owned/external 스킬 목록과 검토한 외부 소스 커밋 잠금
 
@@ -161,9 +159,8 @@ cd /path/to/dotagents
 - `~/.codex/AGENTS.md` → `dist/codex/AGENTS.md`
 - `~/.codex/hooks.json` → `agents/adapters/codex/hooks.json`
 - `~/.gemini/GEMINI.md` → `dist/gemini/GEMINI.md`
-- `~/.local/bin/dotagents-workflow` → 워크플로우 상태 명령
 
-Codex와 Gemini는 `~/.agents/skills/` 별칭에서 같은 owned 스킬을 발견합니다. `~/.local/bin`이 `PATH`에 없으면 설치기가 경고하며 전체 경로로 실행할 수 있습니다.
+Codex와 Gemini는 `~/.agents/skills/` 별칭에서 같은 owned 스킬을 발견합니다.
 
 실제 홈에 설치하는 전역 설치는 주 체크아웃이 main일 때만 실행됩니다. linked worktree나 다른 브랜치에서 실행하면 링크를 바꾸지 않고 중단하며, `--dry-run`은 경고만 표시합니다.
 
@@ -180,7 +177,7 @@ Codex와 Gemini는 `~/.agents/skills/` 별칭에서 같은 owned 스킬을 발�
 ./tooling/scripts/install.sh --project /path/to/project
 ```
 
-프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/skills/product-development-workflow`, `.claude/skills/dotagents-promote`, `.dotagents/bin/dotagents-workflow` 링크를 설치합니다. Codex와 Gemini는 프로젝트의 `.agents/skills` 별칭을 사용합니다. 기존 프로젝트 파일이 있으면 중단하므로 그 파일을 유지하면서 공통 규칙 경로만 직접 참고하거나, 내용을 검토한 뒤 명시적으로 `--force`를 사용해야 합니다.
+프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/skills/product-development-workflow`, `.claude/skills/dotagents-promote` 링크를 설치합니다. Codex와 Gemini는 프로젝트의 `.agents/skills` 별칭을 사용합니다. 기존 프로젝트 파일이 있으면 중단하므로 그 파일을 유지하면서 공통 규칙 경로만 직접 참고하거나, 내용을 검토한 뒤 명시적으로 `--force`를 사용해야 합니다.
 
 프로젝트 고유 규칙을 새로 작성할 때는 템플릿을 복사해 실제 상황에 맞게 수정하세요.
 
@@ -239,20 +236,7 @@ Brief → Execute → Verify
 
 초기 Model Fit 정책은 Claude와 Codex/OpenAI 모델 계열을 지원합니다. 후보 형식은 공급자 중립이므로 로컬 LLM도 같은 가용성·도구·데이터 경계·비용·eval 필드를 제공하면 이후 추가할 수 있습니다. `AC-<번호>` 수용 조건은 구현과 검증 증거까지 연결하고, Codex는 Codex 검증 참조만, Claude Code는 Claude 검증 참조만 읽습니다. 검증은 프로젝트 테스트·정적 검사·빌드처럼 판정 가능한 증거를 우선하며, 모델이 생성하는 추가 검토는 실제 활성 모델과 작업 길이에 맞춰 조건부로 적용합니다.
 
-규제, 민감한 보안 경계, 비가역 마이그레이션, 공식 팀 승인처럼 단계 증거가 필요하면 `audited` 경로를 명시적으로 요청합니다.
-
-```text
-$product-development-workflow 의 audited 경로로 이 마이그레이션을 진행해줘.
-```
-
-이때만 기존 상태 CLI를 사용합니다.
-
-```bash
-dotagents-workflow start --project /path/to/project --run feature-name --scope substantial
-dotagents-workflow status --project /path/to/project --run feature-name
-```
-
-감사형 산출물은 `<project>/docs/workflows/<run-id>/`에 단계별 한국어 `.md`로 저장되며 사용자 승인 뒤 SHA-256으로 고정됩니다. 기본 living Brief에는 이 불변 정책을 적용하지 않습니다. 자세한 라우팅, 복구와 완료 검증은 [제품 개발 워크플로우 사용서](agents/workflows/product-development/WORKFLOW.md)를 참고하세요.
+규제, 민감한 보안 경계, 비가역 데이터 변경, 공식 팀 승인처럼 형식적 증거가 필요한 작업도 `lean`으로 진행하고, 필요한 승인과 증거를 Brief의 수용 조건으로 둡니다. 자세한 라우팅과 복구는 [제품 개발 워크플로우 사용서](agents/workflows/product-development/WORKFLOW.md)를 참고하세요.
 
 ## 제거
 
@@ -281,7 +265,7 @@ make check
 ## 자산 추가
 
 - 공통 규칙: `agents/rules/<topic>.md`
-- 워크플로우: `agents/workflows/<name>/WORKFLOW.md`, `workflow.toml`
+- 워크플로우 안내: `agents/workflows/<name>/WORKFLOW.md`
 - 직접 만든 스킬: `agents/skills/owned/<name>/SKILL.md`
 - 외부 스킬 wrapper: `agents/skills/wrappers/<name>/SKILL.md`
 - 훅: `agents/hooks/<name>/`

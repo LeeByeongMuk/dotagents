@@ -122,25 +122,13 @@ for eval_file in README.md case-contract.jq cases.json decision.schema.json rout
   [[ -f "$eval_root/$eval_file" ]] || fail "cross-host eval file is missing: $eval_file"
 done
 jq -e -f "$eval_root/case-contract.jq" "$eval_root/cases.json" >/dev/null || fail "cross-host eval cases violate their input contract"
-jq -e 'length == 13 and (map(.id) | index("product-discovery") != null and index("factual-research") != null and index("plan-and-implement") != null and index("high-risk-plan-only") != null and index("durable-plan-update") != null and index("lean-create-authority") != null and index("lean-link-authority") != null and index("blocked-implementation-decision") != null and index("formal-evidence-implementation") != null)' "$eval_root/cases.json" >/dev/null || fail "cross-host eval cases do not cover routing, authority, elicitation, and evidence boundaries"
-jq -e '.additionalProperties == false and (.required | sort) == (.properties | keys | sort) and .properties.route.enum == ["direct", "plan", "lean", "audited"] and .properties.file_changes_authorized.type == "boolean"' "$eval_root/decision.schema.json" >/dev/null || fail "cross-host eval schema is inconsistent"
+jq -e 'length == 12 and (map(.id) | index("product-discovery") != null and index("factual-research") != null and index("plan-and-implement") != null and index("high-risk-plan-only") != null and index("durable-plan-update") != null and index("lean-create-authority") != null and index("lean-link-authority") != null and index("blocked-implementation-decision") != null and index("formal-evidence-implementation") != null)' "$eval_root/cases.json" >/dev/null || fail "cross-host eval cases do not cover routing, authority, elicitation, and evidence boundaries"
+jq -e '.additionalProperties == false and (.required | sort) == (.properties | keys | sort) and .properties.route.enum == ["direct", "plan", "lean"] and .properties.file_changes_authorized.type == "boolean"' "$eval_root/decision.schema.json" >/dev/null || fail "cross-host eval schema is inconsistent"
 grep -Fq 'model_reasoning_effort' "$eval_root/run.sh" && grep -Fq 'output already exists' "$eval_root/run.sh" || fail "cross-host eval runner must preserve effort and output safety"
 grep -Fq -- '--strict-config' "$eval_root/run.sh" && grep -Fq -- '--disable shell_tool' "$eval_root/run.sh" && grep -Fq -- '--tools ""' "$eval_root/run.sh" && grep -Fq 'harness_sha256' "$eval_root/run.sh" || fail "cross-host eval runner must reject config drift, disable model tools, and record provenance"
 
 # The Model Fit policy and its representative scenarios are owned by
 # tooling/tests/model_fit_test.sh. Do not restate those clauses here.
-
-workflow_contract="$REPO_ROOT/agents/workflows/product-development/workflow.toml"
-grep -Fq 'Audited compatibility contract' "$workflow_contract" || fail "ten-stage contract must be labeled audited"
-[[ "$(grep -c '^\[\[stages\]\]$' "$workflow_contract")" -eq 10 ]] || fail "product workflow must define exactly ten stages"
-[[ "$(grep -c '^requires_approval = true$' "$workflow_contract")" -eq 10 ]] || fail "every audited workflow stage must require approval"
-[[ "$(grep -c '^optional = true$' "$workflow_contract")" -eq 1 ]] || fail "only one product workflow stage may be optional"
-grep -A7 '^number = 10$' "$workflow_contract" | grep -Fq 'optional = true' || fail "only stage 10 may be optional"
-grep -A7 '^number = 7$' "$workflow_contract" | grep -Fq 'title_ko = "구현 증거"' || fail "audited implementation must not require a subagent by title"
-grep -Fq 'Use a subagent only for a sizeable task' "$REPO_ROOT/agents/skills/owned/product-development-workflow/references/stages.md" || fail "audited subagent use must be conditional"
-
-workflow_cli="$REPO_ROOT/tooling/scripts/workflow.sh"
-grep -Fq 'Audited compatibility workflow. Planning uses Plan; authorized implementation uses Brief -> Execute -> Verify.' "$workflow_cli" || fail "workflow CLI help must identify plan and implementation paths"
 
 skills_registry="$REPO_ROOT/agents/registry/skills.toml"
 registry_skill_block() {
@@ -156,12 +144,12 @@ while IFS='|' read -r skill_id expected_workflows; do
   [[ -n "$skill_block" ]] || fail "missing skill registry entry: $skill_id"
   grep -Fqx "$expected_workflows" <<< "$skill_block" || fail "unexpected workflow mapping for skill: $skill_id"
 done <<'EOF'
-mattpocock-grilling|workflows = ["product-development:audited:1"]
-gstack-office-hours|workflows = ["product-development:audited:3"]
-superpowers-writing-plans|workflows = ["product-development:audited:5"]
-gstack-autoplan|workflows = ["product-development:audited:6"]
-gstack-review|workflows = ["product-development:verify", "product-development:audited:8"]
-gstack-qa|workflows = ["product-development:verify", "product-development:audited:8"]
+mattpocock-grilling|workflows = []
+gstack-office-hours|workflows = []
+superpowers-writing-plans|workflows = []
+gstack-autoplan|workflows = []
+gstack-review|workflows = ["product-development:verify"]
+gstack-qa|workflows = ["product-development:verify"]
 EOF
 
 for source_id in $(sed -n 's/^source_id = "\([^"]*\)"$/\1/p' "$skills_registry" | sort -u); do
