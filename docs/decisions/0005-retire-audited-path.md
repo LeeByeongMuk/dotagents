@@ -25,3 +25,4 @@
 - 라우팅 eval 사례는 12개다. audited 경로를 이름으로 요청하던 `audited-migration`을 삭제했고, `formal-evidence-implementation`은 `lean`을 기대한다.
 - 외부 공급자 스킬의 audited 단계 슬롯을 없앴다. 네 개는 워크플로우 연결 없이 검토 목록으로 남고, `gstack-review`와 `gstack-qa`는 lean 검증 후보로 남는다.
 - 기존 설치의 `~/.local/bin/dotagents-workflow` 링크는 다음 전역 설치 때 설치 목록에서 빠진 항목으로 제거된다.
+- 변경 뒤 라우팅 eval에서 Claude Opus 5.5와 GPT-5.6 Sol이 12개 사례를 모두 통과했다. 측정 기록은 `docs/evals/product-development-workflow-model-behavior.md`에 있다.
