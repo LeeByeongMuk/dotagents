@@ -113,7 +113,7 @@ grep -Fq 'default_prompt:' "$workflow_metadata" && grep -Fq '$product-developmen
 codex_verification="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/codex-cli.md"
 claude_verification="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/claude-code.md"
 [[ -f "$codex_verification" && -f "$claude_verification" ]] || fail "host-specific verification references are missing"
-grep -Fq '## GPT-5.6 Sol' "$codex_verification" || fail "Codex verification guidance is incomplete"
+grep -Fq 'For other Codex models, use the shared risk-triggered review policy' "$codex_verification" || fail "Codex verification guidance must default unlisted models to the shared policy"
 grep -Fq 'without its own section below uses the shared policy' "$claude_verification" || fail "Claude verification guidance must default unlisted models to the shared policy"
 grep -Fiq 'shared workflow owns' "$codex_verification" && grep -Fiq 'shared workflow owns' "$claude_verification" || fail "host guidance must preserve the shared workflow contract"
 
