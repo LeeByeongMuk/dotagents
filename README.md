@@ -165,6 +165,8 @@ cd /path/to/dotagents
 
 Codex와 Gemini는 `~/.agents/skills/` 별칭에서 같은 owned 스킬을 발견합니다. `~/.local/bin`이 `PATH`에 없으면 설치기가 경고하며 전체 경로로 실행할 수 있습니다.
 
+실제 홈에 설치하는 전역 설치는 주 체크아웃이 main일 때만 실행됩니다. linked worktree나 다른 브랜치에서 실행하면 링크를 바꾸지 않고 중단하며, `--dry-run`은 경고만 표시합니다.
+
 기존 대상이 있으면 기본 동작은 충돌을 표시하고 아무것도 변경하지 않는 것입니다. `--force`는 기존 항목을 타임스탬프가 붙은 형제 경로로 백업한 뒤 설치합니다. 실제 설정을 먼저 검토하지 않은 상태에서는 `--force`를 사용하지 마세요.
 
 ```bash
@@ -264,7 +266,7 @@ dotagents-workflow status --project /path/to/project --run feature-name
 ./tooling/scripts/uninstall.sh --project /path/to/project
 ```
 
-전역 매니페스트는 `${XDG_STATE_HOME:-$HOME/.local/state}/dotagents/install.tsv`, 프로젝트 매니페스트는 `<project>/.dotagents-install.tsv`입니다.
+전역 매니페스트는 `${XDG_STATE_HOME:-$HOME/.local/state}/dotagents/install.tsv`, 프로젝트 매니페스트는 `<project>/.dotagents-install.tsv`입니다. 설치 목록에서 빠진 항목은 다음 설치 때 제거와 같은 방식으로 링크를 지우고 기록된 백업을 되돌립니다.
 
 ## 검증
 
