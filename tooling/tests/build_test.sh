@@ -55,7 +55,8 @@ done
 
 # Staleness must be detected rather than silently accepted.
 work="$(mktemp -d "${TMPDIR:-/tmp}/dotagents-build.XXXXXX")"
-trap 'rm -rf "$work"' EXIT
+# dist/ may be the live entry point, so restore it even if the test is cut short.
+trap 'if [[ -f "$work/claude.bak" ]]; then cp "$work/claude.bak" "$REPO_ROOT/dist/claude/CLAUDE.md"; fi; rm -rf "$work"' EXIT
 cp "$REPO_ROOT/dist/claude/CLAUDE.md" "$work/claude.bak"
 printf '\n<!-- drift -->\n' >> "$REPO_ROOT/dist/claude/CLAUDE.md"
 if "$BUILD" --check >/dev/null 2>&1; then
