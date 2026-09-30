@@ -5,6 +5,11 @@
     "defaultMode": "bypassPermissions"
   },
   "disableClaudeAiConnectors": true,
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -35,16 +40,8 @@
       }
     }
   },
-  "alwaysThinkingEnabled": true,
-  "effortLevel": "high",
-  "modelSettings": {
-    "claude-fable-5-1": {
-      "effortLevel": "high"
-    }
-  },
   "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
-  "remoteControlAtStartup": false,
   "skipAutoPermissionPrompt": true
 }
