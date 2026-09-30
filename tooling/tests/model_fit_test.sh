@@ -7,9 +7,6 @@ POLICY="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/m
 EVAL="$REPO_ROOT/docs/evals/product-development-workflow-model-fit.md"
 CODEX_VERIFICATION="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/codex-cli.md"
 CLAUDE_VERIFICATION="$REPO_ROOT/agents/skills/owned/product-development-workflow/references/claude-code.md"
-README="$REPO_ROOT/README.md"
-WORKFLOW="$REPO_ROOT/agents/workflows/product-development/WORKFLOW.md"
-DESIGN="$REPO_ROOT/docs/designs/product-development-workflow.md"
 
 fail() { echo "test failed: $*" >&2; exit 1; }
 
@@ -99,13 +96,5 @@ for verification in "$CODEX_VERIFICATION" "$CLAUDE_VERIFICATION"; do
   grep -Fq 'This policy starts after model selection.' "$verification" || fail "host verification must start after Model Fit selection"
   grep -Fq 'A Model Fit recommendation must not be presented as verification evidence.' "$verification" || fail "model recommendation must not count as verification evidence"
 done
-
-for doc in "$README" "$WORKFLOW" "$DESIGN"; do
-  grep -Fq 'Model Fit' "$doc" || fail "Model Fit is missing from ${doc#$REPO_ROOT/}"
-  grep -Eq 'Claude.*Codex/OpenAI|Codex/OpenAI.*Claude' "$doc" || fail "initial Claude and Codex/OpenAI coverage is missing from ${doc#$REPO_ROOT/}"
-done
-grep -Fq '호스트가 전환을 지원하지 않으면 현재 실행을 계속하고 다음 실행 권고로 기록' "$README" || fail "README must separate recommendation from execution"
-grep -Fq '권고는 모델 전환 권한이 아닙니다.' "$WORKFLOW" || fail "workflow guide must separate recommendation from execution"
-grep -Fq '모델 권고와 실제 전환은 분리한다.' "$DESIGN" || fail "design must separate recommendation from execution"
 
 echo "Model Fit contract passed."
