@@ -22,7 +22,7 @@ required=(
   agents/workflows/product-development/workflow.toml
   agents/hooks/README.md
   agents/hooks/commit-message/check.sh
-  agents/hooks/commit-message/claude-pre-tool-use.sh
+  agents/hooks/commit-message/pre-tool-use.sh
   agents/hooks/commit-message/commit-msg
   agents/skills/README.md
   agents/skills/owned/README.md
@@ -39,6 +39,7 @@ required=(
   agents/profiles/README.md
   agents/integrations/README.md
   agents/adapters/claude/CLAUDE.md agents/adapters/claude/settings.json agents/adapters/codex/AGENTS.md
+  agents/adapters/codex/hooks.json
   agents/adapters/gemini/GEMINI.md agents/registry/README.md
   agents/registry/skills.toml agents/registry/mcp.toml agents/registry/hooks.toml
   agents/registry/plugins.toml agents/registry/sources.lock

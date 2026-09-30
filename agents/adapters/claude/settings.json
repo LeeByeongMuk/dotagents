@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$HOME\"/.agents/hooks/commit-message/claude-pre-tool-use.sh"
+            "command": "\"$HOME\"/.agents/hooks/commit-message/pre-tool-use.sh"
           }
         ]
       }

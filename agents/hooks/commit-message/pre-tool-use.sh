@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Claude Code PreToolUse hook (matcher: Bash). Blocks `git commit` whose message
-# violates agents/rules/git.md. Exit 2 blocks the tool call; exit 0 allows it.
+# PreToolUse hook for Claude Code and Codex (matcher: Bash). Both hosts send
+# tool_input.command and cwd on stdin and treat exit 2 as a block. Blocks a
+# `git commit` whose message violates agents/rules/git.md; exit 0 allows it.
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"

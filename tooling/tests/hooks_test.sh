@@ -8,11 +8,16 @@ HOOK_DIR="$REPO_ROOT/agents/hooks/commit-message"
 fail() { echo "test failed: $*" >&2; exit 1; }
 
 command -v jq >/dev/null || fail "jq is required"
-for f in check.sh claude-pre-tool-use.sh commit-msg; do
+for f in check.sh pre-tool-use.sh commit-msg; do
   [[ -x "$HOOK_DIR/$f" ]] || fail "hook is missing or not executable: $f"
 done
 grep -Fq 'id = "commit-message-check"' "$REPO_ROOT/agents/registry/hooks.toml" || fail "commit-message hook is not registered"
-grep -Fq 'claude-pre-tool-use.sh' "$REPO_ROOT/agents/adapters/claude/settings.example.json" || fail "claude settings example does not register the hook"
+for settings in settings.json settings.example.json; do
+  jq -e '.hooks.PreToolUse[] | select(.matcher == "Bash") | .hooks[] | select(.command | endswith("/commit-message/pre-tool-use.sh"))' \
+    "$REPO_ROOT/agents/adapters/claude/$settings" >/dev/null || fail "claude $settings does not register the hook"
+done
+jq -e '.hooks.PreToolUse[] | select(.matcher == "^Bash$") | .hooks[] | select(.command | endswith("/commit-message/pre-tool-use.sh"))' \
+  "$REPO_ROOT/agents/adapters/codex/hooks.json" >/dev/null || fail "codex hooks.json does not register the hook"
 grep -Fq 'rules/git.md' "$REPO_ROOT/agents/adapters/claude/CLAUDE.md" || fail "claude adapter does not point at git.md"
 grep -Fq 'rules/git.md' "$REPO_ROOT/agents/adapters/codex/AGENTS.md" || fail "codex adapter does not point at git.md"
 grep -Fq 'rules/git.md' "$REPO_ROOT/agents/adapters/gemini/GEMINI.md" || fail "gemini adapter does not point at git.md"
@@ -35,10 +40,10 @@ expect_cmd() {
   local want="$1" cmd="$2" got
   set +e
   jq -cn --arg c "$cmd" --arg d "$repo" '{tool_name:"Bash",tool_input:{command:$c},cwd:$d}' \
-    | "$HOOK_DIR/claude-pre-tool-use.sh" >/dev/null 2>&1
+    | "$HOOK_DIR/pre-tool-use.sh" >/dev/null 2>&1
   got=$?
   set -e
-  [[ "$got" -eq "$want" ]] || fail "claude hook expected $want got $got for: $cmd"
+  [[ "$got" -eq "$want" ]] || fail "pre-tool-use hook expected $want got $got for: $cmd"
 }
 
 expect_msg 0 'feat(auth): add refresh token rotation'
@@ -96,11 +101,20 @@ expect_cmd 0 'git commit -C HEAD --amend'
 expect_cmd 0 'git commit --fixup=HEAD'
 expect_cmd 0 $'git commit --amend \\\n  --no-edit'
 
+# Codex sends the same fields plus its own extensions.
+set +e
+jq -cn --arg c 'git commit -m "Add thing"' --arg d "$repo" \
+  '{session_id:"s",turn_id:"t",hook_event_name:"PreToolUse",model:"m",tool_name:"Bash",tool_use_id:"u",tool_input:{command:$c},cwd:$d}' \
+  | "$HOOK_DIR/pre-tool-use.sh" >/dev/null 2>&1
+got=$?
+set -e
+[[ "$got" -eq 2 ]] || fail "pre-tool-use hook did not block a Codex payload (got $got)"
+
 # A rejected commit leaves no temporary files behind.
 leak_dir="$work/tmp"
 mkdir -p "$leak_dir"
 jq -cn --arg c 'git commit -m "Add thing"' --arg d "$repo" '{tool_name:"Bash",tool_input:{command:$c},cwd:$d}' \
-  | TMPDIR="$leak_dir" "$HOOK_DIR/claude-pre-tool-use.sh" >/dev/null 2>&1 || true
+  | TMPDIR="$leak_dir" "$HOOK_DIR/pre-tool-use.sh" >/dev/null 2>&1 || true
 [[ -z "$(ls -A "$leak_dir")" ]] || fail "rejected commit left temporary files"
 
 # A heredoc that writes an unrelated file must not supply the commit message.
