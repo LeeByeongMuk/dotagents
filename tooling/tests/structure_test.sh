@@ -64,7 +64,7 @@ grep -Fq 'Do not auto-inject similarity-based memories' "$workflow_skill" || fai
 grep -Fq 'references/codex-cli.md' "$workflow_skill" && grep -Fq 'references/claude-code.md' "$workflow_skill" || fail "workflow skill must route Codex and Claude to host guidance"
 grep -Fq 'Never load an unrelated host reference' "$workflow_skill" || fail "workflow skill must keep host references mutually exclusive"
 grep -Fq 'references/model-fit.md' "$workflow_skill" || fail "workflow skill must route eligible runs to Model Fit guidance"
-grep -Fq 'at least two runnable model candidates' "$workflow_skill" || fail "workflow Model Fit trigger must require runnable candidates or an explicit request"
+grep -Fq 'only when the user explicitly asks to choose or compare models' "$workflow_skill" || fail "workflow Model Fit must run only on an explicit user request"
 grep -Fq 'Separate the recommendation from execution' "$workflow_skill" || fail "workflow Model Fit must not imply model-switch authority"
 grep -Fq 'Do not require a fixed model-generated review pass' "$workflow_skill" || fail "workflow skill must not force a generic review pass"
 grep -Fq 'dotagents promotion candidate' "$workflow_skill" || fail "workflow skill must propose promotion candidates at completion"

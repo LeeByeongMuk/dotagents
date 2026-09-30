@@ -17,7 +17,7 @@ fail() { echo "test failed: $*" >&2; exit 1; }
 [[ -f "$EVAL" ]] || fail "Model Fit eval is missing"
 
 policy_contract=(
-  'only when the host exposes at least two runnable model candidates or the user explicitly requests a model recommendation.'
+  'only when the user explicitly asks to choose or compare models.'
   'Skip current-run selection when the user pinned an exact model or project policy already fixes the model and that model passes every non-negotiable constraint.'
   'Treat a user-pinned model as a selection constraint, not permission to override authorization, availability, security, data policy, required tool or modality, context, or budget ceilings.'
   'if the pinned model conflicts, do not execute it, record the hard-filter reason, and stop for user direction.'

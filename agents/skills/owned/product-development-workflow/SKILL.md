@@ -42,7 +42,7 @@ The adopted product document is the authority for product facts. Keep it and at 
 
 ### Model Fit
 
-After the Brief is current and before Execute, read and apply `references/model-fit.md` when the host exposes at least two runnable model candidates or the user explicitly requests model selection. That reference owns the candidate inventory, decision order, and result record.
+After the Brief is current and before Execute, read and apply `references/model-fit.md` only when the user explicitly asks to choose or compare models. A host that merely offers several models is not a trigger. That reference owns the candidate inventory, decision order, and result record.
 
 Separate the recommendation from execution. Model Fit is a bounded pre-execution recommendation, not a new approval stage or a fixed multi-model chain. If the active model still satisfies every acceptance criterion but the host cannot apply a recommended switch, continue the run and record it as a next-run recommendation.
 
