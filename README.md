@@ -1,6 +1,6 @@
 # dotagents
 
-Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 단일 원본입니다. 공통 규칙, 워크플로우, 직접 만든 스킬, 프롬프트, 훅, 외부 연동 규격과 도구별 어댑터를 한 저장소에서 관리하고 여러 프로젝트에 재사용합니다.
+Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 단일 원본입니다. 공통 규칙, 워크플로우, 직접 만든 스킬, 훅, 외부 연동 규격과 도구별 어댑터를 한 저장소에서 관리하고 여러 프로젝트에 재사용합니다.
 
 현재는 구조와 설치 기반뿐 아니라 기획 전용 `Plan`과 구현용 `Brief → Execute → Verify`를 구분하는 제품 개발 워크플로우를 제공합니다. 구현 경로에서 여러 모델을 실행할 수 있으면 Brief 이후 Claude·Codex 후보의 Model Fit을 판단하고, 두 호스트는 같은 제품 결과 계약을 공유하면서 각자의 검증 참조만 읽습니다. 기존 10단계 계약은 감사·고위험 작업의 선택 경로로 보존합니다. 실제 훅·MCP 설정 생성, 외부 스킬 자동 동기화와 프로필 합성은 후속 범위입니다.
 
@@ -125,9 +125,8 @@ agents/rules/ 공통 규칙
 
 - 외부 스킬·플러그인 다운로드와 버전 갱신
 - MCP 설정 생성과 health check
-- 호스트별 훅 설치와 실행
+- Codex·Gemini 커밋 메시지 훅 연결
 - 프로필과 프로젝트 override 합성
-- 스킬 라우팅 및 행동 eval
 
 ## 설치
 
@@ -158,11 +157,12 @@ cd /path/to/dotagents
 - `~/.claude/CLAUDE.md` → `dist/claude/CLAUDE.md`
 - `~/.claude/settings.json` → `agents/adapters/claude/settings.json`
 - `~/.claude/skills/product-development-workflow` → owned 워크플로우 스킬
+- `~/.claude/skills/dotagents-promote` → owned 승격 스킬
 - `~/.codex/AGENTS.md` → `dist/codex/AGENTS.md`
 - `~/.gemini/GEMINI.md` → `dist/gemini/GEMINI.md`
 - `~/.local/bin/dotagents-workflow` → 워크플로우 상태 명령
 
-Codex와 Gemini는 `~/.agents/skills/product-development-workflow` 별칭에서 같은 owned 스킬을 발견합니다. `~/.local/bin`이 `PATH`에 없으면 설치기가 경고하며 전체 경로로 실행할 수 있습니다.
+Codex와 Gemini는 `~/.agents/skills/` 별칭에서 같은 owned 스킬을 발견합니다. `~/.local/bin`이 `PATH`에 없으면 설치기가 경고하며 전체 경로로 실행할 수 있습니다.
 
 기존 대상이 있으면 기본 동작은 충돌을 표시하고 아무것도 변경하지 않는 것입니다. `--force`는 기존 항목을 타임스탬프가 붙은 형제 경로로 백업한 뒤 설치합니다. 실제 설정을 먼저 검토하지 않은 상태에서는 `--force`를 사용하지 마세요.
 
@@ -177,7 +177,7 @@ Codex와 Gemini는 `~/.agents/skills/product-development-workflow` 별칭에서 
 ./tooling/scripts/install.sh --project /path/to/project
 ```
 
-프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/skills/product-development-workflow`, `.dotagents/bin/dotagents-workflow` 링크를 설치합니다. Codex와 Gemini는 프로젝트의 `.agents/skills` 별칭을 사용합니다. 기존 프로젝트 파일이 있으면 중단하므로 그 파일을 유지하면서 공통 규칙 경로만 직접 참고하거나, 내용을 검토한 뒤 명시적으로 `--force`를 사용해야 합니다.
+프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/skills/product-development-workflow`, `.claude/skills/dotagents-promote`, `.dotagents/bin/dotagents-workflow` 링크를 설치합니다. Codex와 Gemini는 프로젝트의 `.agents/skills` 별칭을 사용합니다. 기존 프로젝트 파일이 있으면 중단하므로 그 파일을 유지하면서 공통 규칙 경로만 직접 참고하거나, 내용을 검토한 뒤 명시적으로 `--force`를 사용해야 합니다.
 
 프로젝트 고유 규칙을 새로 작성할 때는 템플릿을 복사해 실제 상황에 맞게 수정하세요.
 
@@ -323,8 +323,8 @@ clone 위치나 저장소 내부 어댑터 경로가 바뀌면 기존 절대 심
 - 도구가 Markdown의 다른 파일을 자동 include하는 방식이 서로 다릅니다. 그래서 규칙 본문을 호스트 진입점에 함께 넣어 생성합니다. 규칙을 고친 뒤 `make build`를 실행하지 않으면 설치된 진입점이 낡은 채로 남습니다.
 - 기존 설정 파일과 구조적으로 병합하지 않습니다. 충돌을 중단하거나 `--force` 백업으로 처리합니다.
 - Windows는 지원하지 않습니다.
-- 설정 예제는 자동 설치하지 않습니다. 실제 설정과 비밀을 안전하게 병합하는 작업은 사용자 책임입니다.
-- 스킬 레지스트리는 검토 목록과 잠금 기록이며 외부 자산 자동 설치에는 아직 사용하지 않습니다. 프로필, 훅, MCP는 아직 설치기에서 합성하지 않습니다.
+- 전역 설치는 Claude `settings.json`을 링크하므로 `bypassPermissions` 기본 모드와 커밋 메시지 훅이 함께 켜집니다. Codex `config.toml`과 Gemini 설정은 설치하지 않으며 `settings.example.json` 같은 예제도 자동 설치하지 않습니다.
+- 스킬 레지스트리는 검토 목록과 잠금 기록이며 외부 자산 자동 설치에는 아직 사용하지 않습니다. 프로필과 MCP는 아직 설치기에서 합성하지 않습니다.
 
 ## 라이선스
 
