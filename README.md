@@ -125,7 +125,7 @@ agents/rules/ 공통 규칙
 
 - 외부 스킬·플러그인 다운로드와 버전 갱신
 - MCP 설정 생성과 health check
-- Codex·Gemini 커밋 메시지 훅 연결
+- Gemini 커밋 메시지 훅 연결
 - 프로필과 프로젝트 override 합성
 
 ## 설치
@@ -159,6 +159,7 @@ cd /path/to/dotagents
 - `~/.claude/skills/product-development-workflow` → owned 워크플로우 스킬
 - `~/.claude/skills/dotagents-promote` → owned 승격 스킬
 - `~/.codex/AGENTS.md` → `dist/codex/AGENTS.md`
+- `~/.codex/hooks.json` → `agents/adapters/codex/hooks.json`
 - `~/.gemini/GEMINI.md` → `dist/gemini/GEMINI.md`
 - `~/.local/bin/dotagents-workflow` → 워크플로우 상태 명령
 
@@ -323,7 +324,7 @@ clone 위치나 저장소 내부 어댑터 경로가 바뀌면 기존 절대 심
 - 도구가 Markdown의 다른 파일을 자동 include하는 방식이 서로 다릅니다. 그래서 규칙 본문을 호스트 진입점에 함께 넣어 생성합니다. 규칙을 고친 뒤 `make build`를 실행하지 않으면 설치된 진입점이 낡은 채로 남습니다.
 - 기존 설정 파일과 구조적으로 병합하지 않습니다. 충돌을 중단하거나 `--force` 백업으로 처리합니다.
 - Windows는 지원하지 않습니다.
-- 전역 설치는 Claude `settings.json`을 링크하므로 `bypassPermissions` 기본 모드와 커밋 메시지 훅이 함께 켜집니다. Codex `config.toml`과 Gemini 설정은 설치하지 않으며 `settings.example.json` 같은 예제도 자동 설치하지 않습니다.
+- 전역 설치는 Claude `settings.json`과 Codex `hooks.json`을 링크하므로 Claude의 `bypassPermissions` 기본 모드와 두 호스트의 커밋 메시지 훅이 함께 켜집니다. Codex 훅은 Codex에서 `/hooks`로 신뢰해야 실행됩니다. Codex `config.toml`과 Gemini 설정은 설치하지 않으며 `settings.example.json` 같은 예제도 자동 설치하지 않습니다.
 - 스킬 레지스트리는 검토 목록과 잠금 기록이며 외부 자산 자동 설치에는 아직 사용하지 않습니다. 프로필과 MCP는 아직 설치기에서 합성하지 않습니다.
 
 ## 라이선스

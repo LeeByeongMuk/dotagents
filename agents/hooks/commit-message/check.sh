@@ -29,6 +29,8 @@ if [[ -d "$repo_dir" ]]; then
   for marker in commitlint.config.js commitlint.config.cjs commitlint.config.mjs commitlint.config.ts \
                 .commitlintrc .commitlintrc.json .commitlintrc.yml .commitlintrc.yaml .commitlintrc.js \
                 .gitlint .husky/commit-msg .git/hooks/commit-msg; do
+    # The git hook wrapper below may itself be installed as .git/hooks/commit-msg.
+    [[ "$marker" == .git/hooks/commit-msg && "${DOTAGENTS_COMMIT_HOOK:-}" == git ]] && continue
     [[ -f "$top/$marker" ]] && exit 0
   done
 fi
