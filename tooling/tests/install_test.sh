@@ -149,4 +149,49 @@ for unsafe_parent in .claude .dotagents; do
   fi
 done
 
+echo "scenario 10: a global install into the real home runs only from main in the primary checkout"
+guard_repo="$TEST_ROOT/guard-repo"
+guard_home="$TEST_ROOT/guard-home"
+mkdir -p "$guard_repo" "$guard_home"
+cp -R "$REPO_ROOT"/. "$guard_repo"
+rm -rf "$guard_repo/.git"
+guard_repo="$(cd "$guard_repo" && pwd -P)"
+git -C "$guard_repo" init -q
+git -C "$guard_repo" symbolic-ref HEAD refs/heads/feature
+guard_install() { env -u DOTAGENTS_HOME HOME="$guard_home" XDG_STATE_HOME="$guard_home/state" "$1/tooling/scripts/install.sh" --global; }
+if guard_install "$guard_repo" >/dev/null 2>&1; then
+  fail "global install ran from a branch other than main"
+fi
+[[ ! -e "$guard_home/.agents" ]] || fail "refused global install still created links"
+guard_output="$(env -u DOTAGENTS_HOME HOME="$guard_home" XDG_STATE_HOME="$guard_home/state" "$guard_repo/tooling/scripts/install.sh" --dry-run --global)"
+grep -q 'a real run would refuse' <<< "$guard_output" || fail "dry run did not warn about the branch"
+git -C "$guard_repo" symbolic-ref HEAD refs/heads/main
+git -C "$guard_repo" -c user.name=t -c user.email=t@example.com -c core.hooksPath=/dev/null add -A
+git -C "$guard_repo" -c user.name=t -c user.email=t@example.com -c core.hooksPath=/dev/null commit -q -m 'chore: seed guard repository'
+git -C "$guard_repo" worktree add -q --detach "$TEST_ROOT/guard-worktree"
+if guard_output="$(guard_install "$TEST_ROOT/guard-worktree" 2>&1)"; then
+  fail "global install ran from a linked worktree"
+fi
+grep -q 'linked worktree' <<< "$guard_output" || fail "worktree refusal did not name the cause"
+[[ ! -e "$guard_home/.agents" ]] || fail "worktree install created links"
+guard_install "$guard_repo" >/dev/null || fail "global install from main was refused"
+assert_link "$guard_home/.agents"
+
+echo "scenario 11: entries dropped from the install list are removed on reinstall"
+retired_home="$TEST_ROOT/retired-home"
+retired_state="$TEST_ROOT/retired-state"
+mkdir -p "$retired_home/.local/bin" "$retired_home/.config"
+DOTAGENTS_HOME="$retired_home" XDG_STATE_HOME="$retired_state" "$REPO_ROOT/tooling/scripts/install.sh" --global >/dev/null
+retired_manifest="$retired_state/dotagents/install.tsv"
+ln -s "$REPO_ROOT/tooling/scripts/doctor.sh" "$retired_home/.local/bin/dotagents-retired"
+printf '%s\t%s\t%s\n' "$retired_home/.local/bin/dotagents-retired" "$REPO_ROOT/tooling/scripts/doctor.sh" '-' >> "$retired_manifest"
+printf '%s\n' 'original config' > "$retired_home/.config/tool.backup"
+ln -s "$REPO_ROOT/README.md" "$retired_home/.config/tool"
+printf '%s\t%s\t%s\n' "$retired_home/.config/tool" "$REPO_ROOT/README.md" "$retired_home/.config/tool.backup" >> "$retired_manifest"
+DOTAGENTS_HOME="$retired_home" XDG_STATE_HOME="$retired_state" "$REPO_ROOT/tooling/scripts/install.sh" --global >/dev/null
+[[ ! -e "$retired_home/.local/bin/dotagents-retired" && ! -L "$retired_home/.local/bin/dotagents-retired" ]] || fail "retired link was not removed"
+grep -q 'original config' "$retired_home/.config/tool" || fail "retired entry backup was not restored"
+! grep -Fq 'dotagents-retired' "$retired_manifest" || fail "retired entry stayed in the manifest"
+assert_link "$retired_home/.agents"
+
 echo "All install scenarios passed."

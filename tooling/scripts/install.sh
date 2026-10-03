@@ -67,6 +67,25 @@ else
   )
 fi
 
+# A global install into the real home makes this checkout the live
+# configuration for every session, so it runs only from the primary checkout
+# on main. A dry run reports the problem instead of stopping.
+if [[ "$MODE" == "global" && "$target_root" == "$HOME" ]] && git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  live_problem=""
+  git_dir="$(cd "$REPO_ROOT" && cd "$(git rev-parse --git-dir)" && pwd -P)"
+  common_dir="$(cd "$REPO_ROOT" && cd "$(git rev-parse --git-common-dir)" && pwd -P)"
+  branch="$(git -C "$REPO_ROOT" symbolic-ref --quiet --short HEAD || true)"
+  if [[ "$git_dir" != "$common_dir" ]]; then
+    live_problem="this is a linked worktree; install from the primary checkout"
+  elif [[ "$branch" != "main" ]]; then
+    live_problem="the checkout is on ${branch:-a detached HEAD}; switch it to main"
+  fi
+  if [[ -n "$live_problem" ]]; then
+    [[ "$DRY_RUN" -eq 1 ]] || fail "refusing a global install: $live_problem"
+    echo "Warning: a real run would refuse: $live_problem"
+  fi
+fi
+
 validate_target_parent() {
   local target="$1"
   local parent relative current component
@@ -118,6 +137,27 @@ previous_backup() {
   [[ -f "$manifest" ]] || return 1
   awk -F '\t' -v target="$wanted" '$1 == target { print $3; found=1; exit } END { if (!found) exit 1 }' "$manifest"
 }
+
+is_current_target() {
+  local wanted="$1" entry
+  for entry in "${entries[@]}"; do
+    [[ "${entry%%|*}" == "$wanted" ]] && return 0
+  done
+  return 1
+}
+
+# Targets an earlier install recorded that this version no longer declares.
+retired=()
+if [[ -f "$manifest" ]]; then
+  while IFS=$'\t' read -r target _ _; do
+    [[ -n "$target" ]] || continue
+    is_current_target "$target" || retired+=("$target")
+  done < "$manifest"
+fi
+if [[ ${#retired[@]} -gt 0 ]]; then
+  echo "Retired targets to remove:"
+  printf '  %s\n' "${retired[@]}"
+fi
 
 conflicts=()
 for entry in "${entries[@]}"; do
@@ -191,6 +231,25 @@ for entry in "${entries[@]}"; do
   ln -s "$source" "$target"
   printf '%s\t%s\t%s\n' "$target" "$source" "$backup" >> "$temp_manifest"
 done
+
+# Remove retired links and restore the backups they replaced, as uninstall
+# would. A target changed since install is left alone.
+if [[ ${#retired[@]} -gt 0 ]]; then
+  for target in "${retired[@]}"; do
+    source="$(previous_source "$target" 2>/dev/null || true)"
+    backup="$(previous_backup "$target" 2>/dev/null || echo '-')"
+    if [[ -L "$target" && "$(readlink "$target")" == "$source" ]]; then
+      unlink "$target"
+      echo "Removed retired link: $target"
+      if [[ "$backup" != "-" && -e "$backup" && ! -e "$target" ]]; then
+        mv "$backup" "$target"
+        echo "Restored backup: $target"
+      fi
+    else
+      echo "Left retired target that changed after install: $target" >&2
+    fi
+  done
+fi
 
 mv "$temp_manifest" "$manifest"
 echo "Installation complete."
