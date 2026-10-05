@@ -48,22 +48,6 @@
     }
   },
   {
-    "id": "audited-migration",
-    "context": "편집 가능한 현재 승인 마이그레이션 명세가 있고 개인정보가 포함된 비가역 데이터 변환이라 단계별 승인 증거가 필요하다.",
-    "request": "승인된 명세를 사용해 audited 경로로 마이그레이션을 진행해줘.",
-    "expected": {
-      "route": "audited",
-      "implementation_authorized": true,
-      "file_changes_authorized": true,
-      "authority_actions": ["reuse"],
-      "min_questions": 0,
-      "max_questions": 0,
-      "max_subagents": 1,
-      "min_acceptance_criteria": 1,
-      "min_deterministic_checks": 1
-    }
-  },
-  {
     "id": "product-discovery",
     "context": "새 사용자 유지 기능의 문제와 대안이 정해지지 않았고 구현 요청이나 현재 PRD는 없다.",
     "request": "사용자 이탈 원인을 조사하고 가능한 제품 대안을 비교해 추천 기획안을 만들어줘. 구현은 하지 마.",
@@ -196,7 +180,7 @@
     "context": "편집 가능한 현재 승인 명세가 있는 비가역 개인정보 삭제 변경이며 단계별 승인 기록, 롤백 불가 확인, 독립 검토 증거가 완료 조건이다.",
     "request": "승인된 명세대로 개인정보 삭제 변경을 구현하고 필요한 검증을 완료해줘.",
     "expected": {
-      "route": "audited",
+      "route": "lean",
       "implementation_authorized": true,
       "file_changes_authorized": true,
       "authority_actions": ["reuse"],

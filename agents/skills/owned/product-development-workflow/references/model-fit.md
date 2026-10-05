@@ -1,6 +1,6 @@
 # Model Fit policy
 
-Use this reference after the Brief is current and before Execute, only when the host exposes at least two runnable model candidates or the user explicitly requests a model recommendation. Model Fit recommends the primary model and effort for this run. It does not replace product routing, grant permission for external calls, or change the model by itself.
+Use this reference after the Brief is current and before Execute, only when the user explicitly asks to choose or compare models. Model Fit recommends the primary model and effort for this run. It does not replace product routing, grant permission for external calls, or change the model by itself.
 
 ## Keep the assessment bounded
 

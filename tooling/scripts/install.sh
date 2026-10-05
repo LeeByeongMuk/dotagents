@@ -48,7 +48,6 @@ if [[ "$MODE" == "global" ]]; then
     "$target_root/.codex/AGENTS.md|$REPO_ROOT/dist/codex/AGENTS.md"
     "$target_root/.codex/hooks.json|$REPO_ROOT/agents/adapters/codex/hooks.json"
     "$target_root/.gemini/GEMINI.md|$REPO_ROOT/dist/gemini/GEMINI.md"
-    "$target_root/.local/bin/dotagents-workflow|$REPO_ROOT/tooling/scripts/workflow.sh"
   )
 else
   [[ -n "$PROJECT_DIR" ]] || fail "project path is required"
@@ -63,7 +62,6 @@ else
     "$target_root/.claude/skills/product-development-workflow|$REPO_ROOT/agents/skills/owned/product-development-workflow"
     "$target_root/.claude/skills/dotagents-promote|$REPO_ROOT/agents/skills/owned/dotagents-promote"
     "$target_root/GEMINI.md|$REPO_ROOT/dist/gemini/GEMINI.md"
-    "$target_root/.dotagents/bin/dotagents-workflow|$REPO_ROOT/tooling/scripts/workflow.sh"
   )
 fi
 
@@ -119,12 +117,6 @@ echo "Targets:"
 for entry in "${entries[@]}"; do
   echo "  ${entry%%|*} -> ${entry#*|}"
 done
-if [[ "$MODE" == "global" ]]; then
-  case ":${PATH:-}:" in
-    *":$target_root/.local/bin:"*) ;;
-    *) echo "Warning: $target_root/.local/bin is not on PATH; use the full dotagents-workflow path or add it to PATH." ;;
-  esac
-fi
 
 previous_source() {
   local wanted="$1"

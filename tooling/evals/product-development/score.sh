@@ -111,7 +111,7 @@ if ! jq -se \
     (.provenance.codex_reference_sha256 == $codex_reference_sha256) and
     (.provenance.claude_reference_sha256 == $claude_reference_sha256) and
     (.decision | type == "object" and exact_decision_keys) and
-    (.decision.route | IN("direct", "plan", "lean", "audited")) and
+    (.decision.route | IN("direct", "plan", "lean")) and
     (.decision.implementation_authorized | type == "boolean") and
     (.decision.file_changes_authorized | type == "boolean") and
     (.decision.authority_action | IN("none", "reuse", "create", "link")) and

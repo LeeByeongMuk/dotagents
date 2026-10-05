@@ -195,3 +195,30 @@ Claude 첫 실행에서는 공통 JSON Schema의 draft 메타 필드를 Claude C
 | Claude Code / Claude Opus 5.5 | 13/13 | 26 | 26,472 | 63,387 | 7,838 | 97초 | $0.669254 |
 
 2026-08-20의 Opus 5 기준(13/13, 8,880 출력 토큰, 146초, $0.907175)보다 출력 토큰, 지연, 비용이 모두 적다. 이 표는 같은 모델·effort의 향후 회귀 기준이다.
+
+## 2026-09-30 audited 제거 후 라우팅·행동 eval
+
+- Date: `2026-09-30`
+- Baseline: `10803da`
+- Candidate: 이 변경의 head
+- Models: Claude Opus 5.5 medium, GPT-5.6 Sol medium. GPT 6.1 Sol은 Codex CLI 0.154.0의 모델 목록에 없고 ChatGPT 계정에서 지원하지 않는다는 오류로 실행하지 못했다
+- Result: 두 공급자 모두 12/12, `score.sh --require-all` 통과
+
+### 목적
+
+ADR 0005에 따라 audited 경로를 제거하고 Model Fit을 사용자 요청 시로 좁힌 스킬이 라우팅·권한·권위 원본·질문·서브에이전트 계약을 유지하는지 확인한다. 사례는 audited 경로를 이름으로 요청하던 `audited-migration`을 빼 12개이고, `formal-evidence-implementation`은 `lean`을 기대한다.
+
+### 라우팅 결과
+
+| 공급자 | 결과 | 입력 토큰 | 캐시 읽기 | 캐시 쓰기 | 출력 토큰 | 지연 합계 | 보고 비용 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Claude Code / Claude Opus 5.5 | 12/12 | 24 | 24,222 | 62,040 | 6,689 | 86초 | $0.63504 |
+| Codex / GPT-5.6 Sol | 12/12 | 130,282 | 37,504 | 0 | 2,303 | 95초 | - |
+
+- `formal-evidence-implementation`: 두 공급자 모두 `lean`, 질문 0, 독립 검토 서브에이전트 1, 수용 조건 5, 결정론적 검사 4를 냈다. 공식 증거 요구를 audited 없이 수용 조건과 독립 검토로 표현했다
+- `blocked-implementation-decision`: 두 공급자 모두 막힌 제품 결정 하나를 질문했다
+- Opus 5.5의 2026-09-29 기준(13개 사례)과는 사례 수가 달라 합계를 직접 비교하지 않는다. 이 표가 12개 사례 기준의 새 회귀 기준이다
+
+### 행동 결과
+
+`behavior.sh`를 Claude Opus 5.5 medium으로 실행했다. `routine`과 `long_run` 모두 권위 원본 재사용, 실행 전 중단 없음, 서브에이전트 0, 모델 생성 검토 없음으로 2026-09-29 `new` 변형과 같았다. 비용은 $0.14다.

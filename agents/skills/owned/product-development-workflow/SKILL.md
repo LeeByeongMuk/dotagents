@@ -1,6 +1,6 @@
 ---
 name: product-development-workflow
-description: Use for product planning, product discovery, new products, or meaningful features with unresolved what/why decisions. Route planning-only requests to a non-mutating Plan, implementation requests to Brief → Execute → Verify, and formal high-risk work to audited. Reuse a current PRD, issue, or specification. Do not use for small edits, isolated bugs, explanations, or fact-finding that does not require a product decision.
+description: Use for product planning, product discovery, new products, or meaningful features with unresolved what/why decisions. Route planning-only requests to a non-mutating Plan and implementation requests to Brief → Execute → Verify. Reuse a current PRD, issue, or specification. Do not use for small edits, isolated bugs, explanations, or fact-finding that does not require a product decision.
 ---
 
 # Product Development Workflow
@@ -13,12 +13,11 @@ Choose one path before creating artifacts or changing files:
 
 - `direct`: a small edit, isolated bug, explanation, or factual lookup that does not make a product decision. Do not use this workflow; follow the project's normal path.
 - `plan`: the user asks to discover a product problem, define requirements, compare product alternatives, design, or plan without authorizing implementation. Inspect relevant material and return or update the requested planning artifact, then stop before Execute.
-- `lean`: the user authorizes building or changing a product or meaningful feature. This is the default implementation path: Brief → Execute → Verify.
-- `audited`: the user explicitly requests the ten-stage workflow, or formal evidence is required for compliance, sensitive security boundaries, irreversible data migration, cross-team approval, or a long-lived handoff.
+- `lean`: the user authorizes building or changing a product or meaningful feature: Brief → Execute → Verify.
 
-Do not choose `audited` from file count, task size, or model distrust alone. Explain the concrete evidence requirement. If none exists, use `plan` or `lean` according to the user's requested action.
+When compliance, a sensitive security boundary, an irreversible data change, or cross-team approval requires formal evidence, stay on `lean` and make the required approvals and evidence acceptance criteria in the Brief.
 
-Words such as “research” or “explore” do not choose the route by themselves: use `plan` when the result makes product decisions and `direct` for factual lookup. If planning and implementation are requested together, use `lean` unless the implementation needs audited evidence. A high-risk subject alone does not authorize implementation; remain on `plan` until the user requests implementation or an audited artifact.
+Words such as “research” or “explore” do not choose the route by themselves: use `plan` when the result makes product decisions and `direct` for factual lookup. If planning and implementation are requested together, use `lean`. A high-risk subject alone does not authorize implementation; remain on `plan` until the user requests implementation.
 
 ## Run the plan path
 
@@ -29,7 +28,7 @@ Words such as “research” or “explore” do not choose the route by themsel
 
 ## Run the lean path
 
-Read `references/model-fit.md` only when its trigger below applies. Do not load `references/stages.md`, `references/artifacts.md`, or the machine contract on the lean path.
+Read `references/model-fit.md` only when its trigger below applies.
 ### Brief
 
 1. Reuse a current, authoritative project PRD, issue, or specification as the Brief when it can stay current and owns the product decisions.
@@ -42,7 +41,7 @@ The adopted product document is the authority for product facts. Keep it and at 
 
 ### Model Fit
 
-After the Brief is current and before Execute, read and apply `references/model-fit.md` when the host exposes at least two runnable model candidates or the user explicitly requests model selection. That reference owns the candidate inventory, decision order, and result record.
+After the Brief is current and before Execute, read and apply `references/model-fit.md` only when the user explicitly asks to choose or compare models. A host that merely offers several models is not a trigger. That reference owns the candidate inventory, decision order, and result record.
 
 Separate the recommendation from execution. Model Fit is a bounded pre-execution recommendation, not a new approval stage or a fixed multi-model chain. If the active model still satisfies every acceptance criterion but the host cannot apply a recommended switch, continue the run and record it as a next-run recommendation.
 
@@ -69,24 +68,13 @@ Separate the recommendation from execution. Model Fit is a bounded pre-execution
 
 Do not require a fixed model-generated review pass or generic self-review loop. Deterministic project checks remain mandatory.
 
-## Resume a lean run
+## Resume a run
 
 Read the adopted product authority, any local run record, project rules, Git status, diff, and recent commits. Continue from the recorded checkpoint and current repository truth without replaying completed discovery.
 
-## Run the audited path
-
-The audited path preserves the ten-stage compatibility workflow.
-
-1. Read `references/stages.md` and `references/artifacts.md` completely.
-2. Treat `agents/workflows/product-development/workflow.toml` as authoritative for its stages and artifacts.
-3. Find the state command in this order: `dotagents-workflow` on `PATH`, `<project>/.dotagents/bin/dotagents-workflow`, then `./tooling/scripts/workflow.sh` inside dotagents.
-4. Follow the stage, approval, resume, adopt, and verification contracts in those references.
-
-The audited CLI proves stage order, artifact safety, approval continuity, and hashes. It does not prove implementation correctness; stages 7–9 must contain real test and QA evidence.
-
 ## Complete the work
 
-For `lean`, finish after acceptance criteria have evidence, the run record and affected living context documents are current, and the requested delivery action is complete. For `audited`, finish only after the CLI `verify` command succeeds. Report unresolved risks and do not treat shipping as implicit.
+For `lean`, finish after acceptance criteria have evidence, the run record and affected living context documents are current, and the requested delivery action is complete. Report unresolved risks and do not treat shipping as implicit.
 
 When the run surfaces a portable convention, list it as a dotagents promotion candidate with a proposed destination. Apply it only through the separately authorized `dotagents-promote` skill.
 

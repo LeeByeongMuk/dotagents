@@ -23,7 +23,7 @@ all(.[];
       "min_acceptance_criteria",
       "min_deterministic_checks"
     ]) and
-    (.route | IN("direct", "plan", "lean", "audited")) and
+    (.route | IN("direct", "plan", "lean")) and
     (.implementation_authorized | type == "boolean") and
     (.file_changes_authorized | type == "boolean") and
     (.authority_actions | type == "array" and length > 0 and (unique | length) == length and all(.[]; IN("none", "reuse", "create", "link"))) and

@@ -15,7 +15,7 @@
   "properties": {
     "route": {
       "type": "string",
-      "enum": ["direct", "plan", "lean", "audited"]
+      "enum": ["direct", "plan", "lean"]
     },
     "implementation_authorized": {
       "type": "boolean"
