@@ -162,6 +162,8 @@ cd /path/to/dotagents
 
 Codex와 Gemini는 `~/.agents/skills/` 별칭에서 같은 owned 스킬을 발견합니다.
 
+Codex 모델 기본값 복원, 간단한 작업용 CLI 프로필과 로컬 승인 규칙 관리는 [Codex 설정 안내](agents/adapters/codex/README.md)를 참고하세요. `make doctor`는 전역 설치가 있으면 Codex 커밋 훅 링크도 확인합니다.
+
 실제 홈에 설치하는 전역 설치는 주 체크아웃이 main일 때만 실행됩니다. linked worktree나 다른 브랜치에서 실행하면 링크를 바꾸지 않고 중단하며, `--dry-run`은 경고만 표시합니다.
 
 기존 대상이 있으면 기본 동작은 충돌을 표시하고 아무것도 변경하지 않는 것입니다. `--force`는 기존 항목을 타임스탬프가 붙은 형제 경로로 백업한 뒤 설치합니다. 실제 설정을 먼저 검토하지 않은 상태에서는 `--force`를 사용하지 마세요.

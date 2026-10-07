@@ -1,0 +1,3 @@
+# Copy to ~/.codex/quick.config.toml, then run: codex --profile quick
+# Only override reasoning effort; inherit the model and permissions.
+model_reasoning_effort = "medium"

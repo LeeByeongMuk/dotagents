@@ -1,4 +1,10 @@
 # Copy only reviewed options into your own config.toml.
 # Keep credentials in environment variables or the tool's secure auth store.
+model = "gpt-6.1-sol"
+model_reasoning_effort = "high"
+service_tier = "fast"
+
+# These permission defaults are independent of the model settings above.
+# Preserve your existing permission choices when restoring model defaults.
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
