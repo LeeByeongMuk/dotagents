@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>{{PRODUCT}} {{GUIDE_TITLE}} ({{SURFACE}})</title>
+<link rel="stylesheet" href="guide.css">
+<style>
+  :root { --accent: {{ACCENT_COLOR}}; }
+  /* Page-specific classes go here with a prefix (for example .p7-*) so they never collide with guide.css. */
+</style>
+</head>
+<body data-footer="{{PRODUCT}} · {{GUIDE_TITLE}} ({{SURFACE}})">
+
+<!-- Cover -->
+<section class="page dark cover">
+  <div class="brand"><span class="dot"></span>{{PRODUCT}}</div>
+  <h1>{{GUIDE_TITLE}}</h1>
+  <p class="sub">{{ONE_LINE_PURPOSE}}</p>
+  <div class="meta"><span>대상 · {{READER}}</span><span>v1.0 · {{DATE}}</span></div>
+</section>
+
+<!-- Contents: data-page-of="<page id>" fills in the page number -->
+<section class="page">
+  <div class="hdr"><span class="tag">차례</span><h2>이 가이드에서 다루는 내용</h2></div>
+  <div class="toc">
+    <div>
+      <div class="row"><span>{{FEATURE}}이란 무엇인가요?</span><span class="n" data-page-of="what-is"></span></div>
+      <div class="row"><span>메뉴 위치와 준비 순서</span><span class="n" data-page-of="where"></span></div>
+      <div class="row sec"><span>{{PART_1_TITLE}}</span><span class="n" data-page-of="part-1"></span></div>
+      <div class="row"><span>{{TASK_1_TITLE}}</span><span class="n" data-page-of="task-1"></span></div>
+      <div class="row"><span>{{TASK_2_TITLE}}</span><span class="n" data-page-of="task-2"></span></div>
+    </div>
+    <div>
+      <div class="row"><span>자주 묻는 질문</span><span class="n" data-page-of="faq"></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- What is it: lead, flow, terms, core rules -->
+<section class="page" id="what-is">
+  <div class="hdr"><span class="tag">시작하기</span><h2>{{FEATURE}}이란 무엇인가요?</h2></div>
+  <p class="lead">{{FEATURE}}은 <b>{{ONE_SENTENCE_DEFINITION}}</b>입니다. {{WHY_THE_READER_USES_IT}}</p>
+  <div class="lane" style="margin-top:18px">
+    <div class="lt">{{FLOW_TITLE}}</div>
+    <div class="flow">
+      <div class="box"><b>{{STEP_A}}</b><span class="s">{{STEP_A_DETAIL}}</span></div><span class="arr">→</span>
+      <div class="box"><b>{{STEP_B}}</b><span class="s">{{STEP_B_DETAIL}}</span></div><span class="arr">→</span>
+      <div class="box ac"><b>{{STEP_C}}</b><span class="s">{{STEP_C_DETAIL}}</span></div><span class="arr">→</span>
+      <div class="box dk"><b>{{STEP_D}}</b><span class="s">{{STEP_D_DETAIL}}</span></div>
+    </div>
+  </div>
+  <div class="grid g46" style="margin-top:22px">
+    <div>
+      <h3 class="sec-title">용어</h3>
+      <div class="grid g3" style="gap:14px">
+        <div class="card"><h4>{{TERM_1}}</h4><p>{{TERM_1_MEANING}}</p></div>
+        <div class="card"><h4>{{TERM_2}}</h4><p>{{TERM_2_MEANING}}</p></div>
+        <div class="card"><h4>{{TERM_3}}</h4><p>{{TERM_3_MEANING}}</p></div>
+      </div>
+    </div>
+    <div>
+      <h3 class="sec-title">핵심 규칙</h3>
+      <table class="t tight">
+        <tr><td class="k">{{RULE_1}}</td><td>{{RULE_1_DETAIL}}</td></tr>
+        <tr><td class="k">{{RULE_2}}</td><td>{{RULE_2_DETAIL}}</td></tr>
+        <tr><td class="k">{{RULE_3}}</td><td>{{RULE_3_DETAIL}}</td></tr>
+        <tr><td class="k">{{RULE_4}}</td><td>{{RULE_4_DETAIL}}</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Optional: where to find it and the preparation order -->
+<section class="page" id="where">
+  <div class="hdr"><span class="tag">시작하기</span><h2>메뉴 위치와 준비 순서</h2></div>
+  <table class="t">
+    <tr><th style="width:260px">할 일</th><th style="width:340px">메뉴</th><th>누가</th></tr>
+    <tr><td class="k">{{TASK_1_TITLE}}</td><td>{{MENU_A}} › {{MENU_B}}</td><td>{{WHO}}</td></tr>
+    <tr><td class="k">{{TASK_2_TITLE}}</td><td>{{MENU_A}} › {{MENU_C}}</td><td>{{WHO}}</td></tr>
+  </table>
+  <div class="note" style="margin-top:18px"><span class="l">참고</span><span>{{ORDER_OR_PREREQUISITE}}</span></div>
+</section>
+
+<!-- Optional PART divider, one per surface or phase -->
+<section class="page dark part" id="part-1">
+  <div class="kicker">PART 1</div>
+  <h1>{{PART_1_TITLE}}</h1>
+  <p class="sub">{{PART_1_SUMMARY}}</p>
+</section>
+
+<!-- Task page, web screen. The mockup is the fallback; the commented block shows a real capture. -->
+<section class="page" id="task-1">
+  <div class="hdr"><span class="tag">{{PART_1_TITLE}}</span><h2>{{TASK_1_TITLE}}</h2><span class="crumb">{{MENU_A}} › {{MENU_B}}</span></div>
+  <div class="grid" style="grid-template-columns:560px 1fr;gap:34px">
+    <div>
+      <!--
+      <div class="fit" style="width:560px">
+        <img src="img/{{CAPTURE_FILE}}.png" alt="">
+        <span class="num pin" style="left:20%;top:30%">1</span>
+      </div>
+      <p class="cap">{{CAPTION}}</p>
+      -->
+      <div class="dlg">
+        <h5>{{DIALOG_TITLE}}</h5>
+        <div class="d">{{DIALOG_DESCRIPTION}}</div>
+        <div class="fld">
+          <div class="f"><label>{{FIELD_1}} *</label><div class="in">{{FIELD_1_VALUE}}</div><span class="num pin" style="left:-4px;top:50%">1</span></div>
+          <div class="f"><label>{{FIELD_2}}</label><div class="in ph">{{FIELD_2_PLACEHOLDER}}</div></div>
+          <div class="f w"><label>{{FIELD_3}}</label><div class="in">{{FIELD_3_VALUE}}</div><span class="num pin" style="left:-4px;top:50%">2</span></div>
+        </div>
+        <div class="foot"><span class="btn">취소</span><span class="btn p">{{SAVE_LABEL}}</span></div>
+        <span class="num pin" style="left:100%;top:88%">3</span>
+      </div>
+      <p class="cap">예시 화면</p>
+    </div>
+    <div class="steps">
+      <div class="step"><span class="num">1</span><span><b>「{{FIELD_1}}」</b>에 {{WHAT_TO_ENTER}}를 넣습니다.</span></div>
+      <div class="step"><span class="num">2</span><span><b>「{{FIELD_3}}」</b>를 고릅니다. {{WHAT_IT_CHANGES}}</span></div>
+      <div class="step"><span class="num">3</span><span><b>[{{SAVE_LABEL}}]</b>을 누르면 「{{SUCCESS_MESSAGE}}」가 뜹니다.</span></div>
+      <div class="note"><span class="l">참고</span><span>{{CONTEXT_NOTE}}</span></div>
+      <div class="note warn"><span class="l">주의</span><span>{{FAILURE_OR_IRREVERSIBLE_NOTE}}</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Task page, mobile screen -->
+<section class="page" id="task-2">
+  <div class="hdr"><span class="tag">{{PART_1_TITLE}}</span><h2>{{TASK_2_TITLE}}</h2><span class="crumb">{{MENU_A}} › {{MENU_C}}</span></div>
+  <div class="grid" style="grid-template-columns:420px 1fr;gap:40px">
+    <div>
+      <div class="phone">
+        <div class="pbar"><span class="bk">‹</span>{{SCREEN_TITLE}}</div>
+        <div class="pbody">
+          <div class="mtabs"><span class="on">{{TAB_1}}</span><span>{{TAB_2}}</span></div>
+          <div class="mcard">
+            <div class="tr"><span class="tt">{{ITEM_TITLE}}</span><span class="mchip gr">{{ITEM_STATE}}</span></div>
+            <div class="ds">{{ITEM_DESCRIPTION}}</div>
+            <div class="br"><span class="mut">{{ITEM_META}}</span><span class="mbtn pri">{{ITEM_ACTION}}</span></div>
+            <span class="num pin" style="left:52%;top:78%">1</span>
+          </div>
+          <div class="mrow"><span class="ic">i</span><span><span class="lb">{{ROW_LABEL}}</span><br><span class="sb">{{ROW_SUB}}</span></span></div>
+        </div>
+      </div>
+      <p class="cap">예시 화면</p>
+    </div>
+    <div class="steps">
+      <div class="step"><span class="num">1</span><span><b>[{{ITEM_ACTION}}]</b>을 누릅니다. {{WHAT_HAPPENS_NEXT}}</span></div>
+      <div class="note"><span class="l">참고</span><span>{{CONTEXT_NOTE}}</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ: situations in the reader's words -->
+<section class="page" id="faq">
+  <div class="hdr"><span class="tag">FAQ</span><h2>자주 묻는 질문</h2></div>
+  <table class="t tight">
+    <tr><th style="width:330px">상황</th><th>이렇게 하세요</th></tr>
+    <tr><td class="k">{{SITUATION_1}}</td><td>{{ANSWER_1}}</td></tr>
+    <tr><td class="k">{{SITUATION_2}}</td><td>{{ANSWER_2}}</td></tr>
+  </table>
+</section>
+
+<!-- Closing -->
+<section class="page dark cover">
+  <div class="brand"><span class="dot"></span>{{PRODUCT}}</div>
+  <h1>{{GUIDE_TITLE}}</h1>
+  <p class="desc">이 문서는 {{DATE}} 기준 {{SURFACE}} 화면으로 만들었습니다. 화면의 이름과 금액은 예시이며 메뉴 이름은 설정에 따라 다를 수 있습니다.</p>
+  <div class="meta"><span>v1.0 · {{DATE}}</span></div>
+</section>
+
+<script>
+  // Adds the footer to light pages and fills contents page numbers.
+  (() => {
+    const pages = [...document.querySelectorAll('.page')];
+    const footer = document.body.dataset.footer || '';
+    pages.forEach((page, index) => {
+      if (page.classList.contains('dark') || page.querySelector('.ftr')) return;
+      const ftr = document.createElement('div');
+      ftr.className = 'ftr';
+      const left = document.createElement('span');
+      const right = document.createElement('span');
+      left.textContent = footer;
+      right.textContent = `${index + 1} / ${pages.length}`;
+      ftr.append(left, right);
+      page.append(ftr);
+    });
+    document.querySelectorAll('[data-page-of]').forEach((el) => {
+      const target = document.getElementById(el.dataset.pageOf);
+      const page = target && target.closest('.page');
+      el.textContent = page ? String(pages.indexOf(page) + 1) : '?';
+    });
+  })();
+</script>
+</body>
+</html>

@@ -45,6 +45,11 @@ promote_alias="$REPO_ROOT/agents/skills/dotagents-promote"
 [[ "$(readlink "$promote_alias")" == "owned/dotagents-promote" ]] || fail "promote discovery alias target is incorrect"
 [[ -f "$promote_alias/SKILL.md" ]] || fail "promote discovery alias does not expose SKILL.md"
 
+usage_guide_alias="$REPO_ROOT/agents/skills/usage-guide"
+[[ -L "$usage_guide_alias" ]] || fail "usage guide discovery alias is not a symbolic link"
+[[ "$(readlink "$usage_guide_alias")" == "owned/usage-guide" ]] || fail "usage guide discovery alias target is incorrect"
+[[ -f "$usage_guide_alias/SKILL.md" ]] || fail "usage guide discovery alias does not expose SKILL.md"
+
 english_docs="$(find "$REPO_ROOT" -path "$REPO_ROOT/.git" -prune -o -type f -name '*.en.md' -print)"
 [[ -z "$english_docs" ]] || fail "duplicate English documentation must not be committed"
 
