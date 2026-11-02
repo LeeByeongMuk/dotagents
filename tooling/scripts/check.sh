@@ -33,6 +33,12 @@ required=(
   agents/skills/owned/product-development-workflow/references/model-fit.md
   agents/skills/owned/dotagents-promote/SKILL.md
   agents/skills/owned/dotagents-promote/agents/openai.yaml
+  agents/skills/owned/usage-guide/SKILL.md
+  agents/skills/owned/usage-guide/agents/openai.yaml
+  agents/skills/owned/usage-guide/assets/guide.css
+  agents/skills/owned/usage-guide/assets/skeleton.html
+  agents/skills/owned/usage-guide/scripts/render.sh
+  agents/skills/owned/usage-guide/scripts/inline_assets.py
   agents/profiles/README.md
   agents/integrations/README.md
   agents/adapters/claude/CLAUDE.md agents/adapters/claude/settings.json agents/adapters/codex/AGENTS.md

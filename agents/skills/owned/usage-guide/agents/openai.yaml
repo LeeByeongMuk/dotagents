@@ -1,0 +1,4 @@
+interface:
+  display_name: "Usage Guide"
+  short_description: "Build an end-user usage guide PDF with screens and numbered steps"
+  default_prompt: "Use $usage-guide to turn the feature we just built into a usage guide PDF for its end users."

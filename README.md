@@ -117,6 +117,7 @@ agents/rules/ 공통 규칙
 - 사용자가 요청할 때 Claude·Codex 후보를 하드 제약, 프로젝트 eval, 문맥 연속성, 비용·지연 순으로 비교하는 Model Fit 권고
 - Claude Code, Codex, Gemini의 공통 스킬 발견
 - 세션에서 발견한 공통 관례를 격리 브랜치로 승격 제안·반영하는 `dotagents-promote` 스킬
+- 기능을 최종 사용자용 16:9 사용 가이드 PDF와 단일 HTML로 만드는 `usage-guide` 스킬
 - owned/external 스킬 목록과 검토한 외부 소스 커밋 잠금
 
 다음 항목은 구조만 예약되어 있거나 아직 자동 실행 기능이 아닙니다.
@@ -156,6 +157,7 @@ cd /path/to/dotagents
 - `~/.claude/settings.json` → `agents/adapters/claude/settings.json`
 - `~/.claude/skills/product-development-workflow` → owned 워크플로우 스킬
 - `~/.claude/skills/dotagents-promote` → owned 승격 스킬
+- `~/.claude/skills/usage-guide` → owned 사용 가이드 스킬
 - `~/.codex/AGENTS.md` → `dist/codex/AGENTS.md`
 - `~/.codex/hooks.json` → `agents/adapters/codex/hooks.json`
 - `~/.gemini/GEMINI.md` → `dist/gemini/GEMINI.md`
@@ -179,7 +181,7 @@ Codex 모델 기본값 복원, 간단한 작업용 CLI 프로필과 로컬 승�
 ./tooling/scripts/install.sh --project /path/to/project
 ```
 
-프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/skills/product-development-workflow`, `.claude/skills/dotagents-promote` 링크를 설치합니다. Codex와 Gemini는 프로젝트의 `.agents/skills` 별칭을 사용합니다. 기존 프로젝트 파일이 있으면 중단하므로 그 파일을 유지하면서 공통 규칙 경로만 직접 참고하거나, 내용을 검토한 뒤 명시적으로 `--force`를 사용해야 합니다.
+프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/skills/product-development-workflow`, `.claude/skills/dotagents-promote`, `.claude/skills/usage-guide` 링크를 설치합니다. Codex와 Gemini는 프로젝트의 `.agents/skills` 별칭을 사용합니다. 기존 프로젝트 파일이 있으면 중단하므로 그 파일을 유지하면서 공통 규칙 경로만 직접 참고하거나, 내용을 검토한 뒤 명시적으로 `--force`를 사용해야 합니다.
 
 프로젝트 고유 규칙을 새로 작성할 때는 템플릿을 복사해 실제 상황에 맞게 수정하세요.
 
