@@ -3,6 +3,15 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
+# dist/ can be linked into every live session. All mutation tests run in a
+# disposable source/output copy, including deterministic regeneration.
+work="$(mktemp -d "${TMPDIR:-/tmp}/dotagents-build.XXXXXX")"
+trap 'rm -rf "$work"' EXIT
+mkdir -p "$work/agents" "$work/tooling/scripts"
+cp -R "$REPO_ROOT/agents/rules" "$REPO_ROOT/agents/adapters" "$work/agents/"
+cp -R "$REPO_ROOT/dist" "$work/"
+cp "$REPO_ROOT/tooling/scripts/build.sh" "$REPO_ROOT/tooling/scripts/install.sh" "$work/tooling/scripts/"
+REPO_ROOT="$work"
 BUILD="$REPO_ROOT/tooling/scripts/build.sh"
 
 fail() { echo "test failed: $*" >&2; exit 1; }
@@ -54,9 +63,6 @@ for adapter in agents/adapters/claude/CLAUDE.md agents/adapters/codex/AGENTS.md 
 done
 
 # Staleness must be detected rather than silently accepted.
-work="$(mktemp -d "${TMPDIR:-/tmp}/dotagents-build.XXXXXX")"
-# dist/ may be the live entry point, so restore it even if the test is cut short.
-trap 'if [[ -f "$work/claude.bak" ]]; then cp "$work/claude.bak" "$REPO_ROOT/dist/claude/CLAUDE.md"; fi; rm -rf "$work"' EXIT
 cp "$REPO_ROOT/dist/claude/CLAUDE.md" "$work/claude.bak"
 printf '\n<!-- drift -->\n' >> "$REPO_ROOT/dist/claude/CLAUDE.md"
 if "$BUILD" --check >/dev/null 2>&1; then
