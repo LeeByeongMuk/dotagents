@@ -77,6 +77,22 @@ git -C "$repo" -c user.name=t -c user.email=t@example.com commit -q --allow-empt
 rm "$repo/.git/hooks/commit-msg"
 
 expect_cmd 0 'git status'
+expect_cmd 0 "printf '%s\\n' 'git' 'commit'"
+expect_cmd 0 'printf "%s\n" "git" "commit"'
+expect_cmd 0 "echo 'git' 'commit'"
+expect_cmd 2 'command git commit -m "Add thing"'
+expect_cmd 2 'env TEST_VALUE=literal git commit -m "Add thing"'
+expect_cmd 2 'TEST_VALUE=literal git commit -m "Add thing"'
+expect_cmd 2 'sudo -n git commit -m "Add thing"'
+expect_cmd 2 'echo ready; git commit -m "Add thing"'
+expect_cmd 2 '(git commit -m "Add thing")'
+expect_cmd 2 'if true; then git commit -m "Add thing"; fi'
+expect_cmd 2 'if false; then echo skip; else git commit -m "Add thing"; fi'
+expect_cmd 2 'if git commit -m "Add thing"; then echo done; fi'
+expect_cmd 2 'if false; then echo skip; elif git commit -m "Add thing"; then echo done; fi'
+expect_cmd 2 'while true; do git commit -m "Add thing"; done'
+expect_cmd 2 'while git commit -m "Add thing"; do echo done; done'
+expect_cmd 2 'until git commit -m "Add thing"; do echo retry; done'
 expect_cmd 0 'git commit -m "feat: add thing"'
 expect_cmd 0 'git commit -am "fix: handle empty input"'
 expect_cmd 0 'git commit --message="chore: bump deps"'
@@ -101,6 +117,58 @@ expect_cmd 0 'git commit -C HEAD --amend'
 expect_cmd 0 'git commit --fixup=HEAD'
 expect_cmd 0 $'git commit --amend \\\n  --no-edit'
 
+# Git's global -C selects the target repository's policy, not the caller's.
+# Keep the policies opposite so validating the wrong directory changes results.
+target="$work/target repo"
+git init -q "$target"
+mkdir "$target/nested"
+git -C "$repo" config dotagents.commitCheck false
+git -C "$target" config dotagents.commitCheck true
+expect_cmd 2 "git -C '$target' commit -m 'Add thing'"
+expect_cmd 2 'git -C "../target repo" commit -m "Add thing"'
+expect_cmd 2 'git -c "test.note=words with spaces" -C "../target repo" commit -m "Add thing"'
+expect_cmd 2 'git -C .. -C "target repo" -C nested commit -m "Add thing"'
+expect_cmd 2 'git -C.. -Ctarget\ repo -C "" commit -m "Add thing"'
+expect_cmd 2 $'git -C .. \\\n  -C "target repo" commit -m "Add thing"'
+expect_cmd 0 'git -C "../target repo" commit -C HEAD --amend'
+git -C "$repo" config dotagents.commitCheck true
+git -C "$target" config dotagents.commitCheck false
+expect_cmd 0 "git -C '$target' commit -m 'Add thing'"
+expect_cmd 0 'git -C .. -C "target repo" commit -m "Add thing"'
+git -C "$target" config dotagents.commitCheck true
+
+# Relative -F paths are resolved after all global -C options, including quotes.
+# A different file at the caller's path must not determine the result.
+printf '%s\n' 'Add thing' > "$repo/message.txt"
+printf '%s\n' 'fix: use the target message' > "$target/message.txt"
+expect_cmd 0 'git -C "../target repo" commit -F message.txt'
+printf '%s\n' 'fix: use the caller message' > "$repo/message.txt"
+printf '%s\n' 'Add thing' > "$target/message.txt"
+expect_cmd 2 'git -C "../target repo" commit --file=message.txt'
+printf '%s\n' 'fix: read a quoted path' > "$target/nested/commit message.txt"
+expect_cmd 0 'git -C .. -C "target repo" -C nested commit -F "commit message.txt"'
+expect_cmd 0 "git -C '$target' -C nested commit --file='commit message.txt'"
+expect_cmd 0 'git -C "../target repo" -C nested commit -Fcommit\ message.txt'
+expect_cmd 0 $'# git commit -m "Add thing"\ngit -C "../target repo" commit -m "fix: keep comments inert"'
+expect_cmd 0 $'cat <<\'EOF\'\n한글 문서\nEOF\ngit -C "../target repo" commit -m "fix: keep heredoc offsets"'
+large_body="$(printf '%10000s' '' | tr ' ' x)"
+expect_cmd 2 $'cat <<\'EOF\'\n'"$large_body"$'\nEOF\ngit -C "../target repo" commit -m "Add thing"'
+expect_cmd 2 $'git -C "../target repo" commit -F - <<\'EOF\'\nAdd thing\nEOF'
+
+# Expansions cannot establish a repository policy without executing shell code.
+expect_cmd 2 'git -C "$target" commit -m "fix: use a literal directory"'
+expect_cmd 2 'git -C $(pwd) commit -m "Add thing"'
+expect_cmd 2 'git -C `pwd` commit -m "Add thing"'
+expect_cmd 2 'git -C $(printf "%s" "$(pwd)") commit -m "Add thing"'
+expect_cmd 2 'git commit -F $(printf message.txt)'
+expect_cmd 2 'git commit -F `printf message.txt`'
+probe="$work/must-not-run"
+expect_cmd 2 "git -C \"\$(touch '$probe')\" commit -m 'fix: use a literal directory'"
+expect_cmd 2 "git -C \$(touch '$probe'; pwd) commit -m 'Add thing'"
+expect_cmd 2 "git commit -F \$(touch '$probe'; printf message.txt)"
+[[ ! -e "$probe" ]] || fail "pre-tool-use hook executed a path substitution"
+git -C "$repo" config --unset dotagents.commitCheck
+
 # Codex sends the same fields plus its own extensions.
 set +e
 jq -cn --arg c 'git commit -m "Add thing"' --arg d "$repo" \
@@ -115,7 +183,10 @@ leak_dir="$work/tmp"
 mkdir -p "$leak_dir"
 jq -cn --arg c 'git commit -m "Add thing"' --arg d "$repo" '{tool_name:"Bash",tool_input:{command:$c},cwd:$d}' \
   | TMPDIR="$leak_dir" "$HOOK_DIR/pre-tool-use.sh" >/dev/null 2>&1 || true
-[[ -z "$(ls -A "$leak_dir")" ]] || fail "rejected commit left temporary files"
+# Git may create its own platform cache (for example xcrun_db on macOS).
+# Only files owned by this hook count as leaks.
+leaked_messages=("$leak_dir"/dotagents-commit.*)
+[[ ! -e "${leaked_messages[0]}" ]] || fail "rejected commit left temporary files"
 
 # A heredoc that writes an unrelated file must not supply the commit message.
 expect_cmd 0 $'cat > a.js <<\'EOF\'\nvar x = 1;\nEOF\ngit commit -m "fix: correct a typo"'

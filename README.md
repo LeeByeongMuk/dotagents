@@ -33,7 +33,7 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 | [commit-msg](agents/hooks/commit-message/commit-msg) | Git이 최종 커밋 메시지 파일을 전달할 때 검사합니다. | 선택 사항이며 자동 설치하지 않습니다. 프로젝트의 Git 훅으로 직접 연결합니다. |
 | [check.sh](agents/hooks/commit-message/check.sh) | 위 두 진입점이 공유하는 검사기입니다. Conventional Commits 형식, 길이와 문체를 검사합니다. | 단독 실행도 가능합니다: `check.sh <메시지 파일>` |
 
-프로젝트에 commitlint·gitlint·기존 커밋 훅이 있으면 프로젝트 검사를 우선합니다. 자체 커밋 규칙을 쓰는 프로젝트는 `git config dotagents.commitCheck false`로 이 검사를 끌 수 있습니다. 이 훅의 범위는 커밋 메시지이며 Git 작업 전반의 안전성 검사는 아닙니다. Gemini에는 아직 커밋 훅을 연결하지 않습니다.
+프로젝트에 commitlint·gitlint·기존 커밋 훅이 있으면 프로젝트 검사를 우선합니다. 자체 커밋 규칙을 쓰는 프로젝트는 `git config dotagents.commitCheck false`로 공통 커밋 문체 검사를 건너뛸 수 있습니다. 도구 실행 전 훅은 문체 검사에 앞서 메시지와 경로를 읽으므로, 이 설정으로도 실행 전에 읽을 수 있는 메시지가 필요할 수 있습니다. 이 훅의 범위는 커밋 메시지이며 Git 작업 전반의 안전성 검사는 아닙니다. Gemini에는 아직 커밋 훅을 연결하지 않습니다.
 
 gstack 같은 외부 스킬은 [스킬 레지스트리](agents/registry/skills.toml)에 출처를 기록한 연동 대상입니다. 직접 만든 위 3개와 구분하며, 이 저장소의 설치기가 외부 스킬을 다운로드하지는 않습니다.
 
