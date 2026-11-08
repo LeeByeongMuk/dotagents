@@ -100,6 +100,17 @@ expect_score_failure "unknown-effort" "$test_root/unknown-effort.jsonl"
 jq -c '.effort = "none"' "$EVAL_ROOT/fixtures/claude.jsonl" > "$test_root/unsupported-claude-effort.jsonl"
 expect_score_failure "unsupported-claude-effort" "$test_root/unsupported-claude-effort.jsonl"
 
+jq -c '.effort = "ultra"' "$EVAL_ROOT/fixtures/codex.jsonl" > "$test_root/codex-ultra.jsonl"
+"$EVAL_ROOT/score.sh" "$test_root/codex-ultra.jsonl" >/dev/null || fail "Codex ultra results were rejected"
+jq -c '.effort = "ultra"' "$EVAL_ROOT/fixtures/claude.jsonl" > "$test_root/claude-ultra.jsonl"
+expect_score_failure "claude-ultra" "$test_root/claude-ultra.jsonl"
+for runner in run.sh behavior.sh; do
+  if "$EVAL_ROOT/$runner" --provider claude --model mock-claude --effort ultra --output "$test_root/rejected.jsonl" > "$test_root/rejected.out" 2>&1; then
+    fail "$runner accepted Claude ultra"
+  fi
+  grep -Fq 'Claude --effort must be' "$test_root/rejected.out" || fail "$runner rejected Claude ultra for the wrong reason"
+done
+
 jq -c 'if .case_id == "plan-only" then .usage.input_tokens = "many" else . end' \
   "$EVAL_ROOT/fixtures/codex.jsonl" > "$test_root/malformed-usage.jsonl"
 expect_score_failure "malformed-usage" "$test_root/malformed-usage.jsonl"
@@ -169,6 +180,9 @@ has_arg() { local wanted="$1" value; for value in "${args[@]}"; do [[ "$value" =
 has_pair() { local first="$1" second="$2" index; for ((index = 0; index + 1 < ${#args[@]}; index++)); do [[ "${args[$index]}" == "$first" && "${args[$((index + 1))]}" == "$second" ]] && return 0; done; return 1; }
 has_arg --strict-config && has_pair --disable shell_tool && has_pair --disable unified_exec && has_pair --disable view_image && has_pair --disable image_generation || exit 81
 has_pair --config 'agents.enabled=false' && has_pair --config 'apps._default.enabled=false' && has_pair --config 'web_search="disabled"' || exit 82
+if [[ -n "${FAKE_CODEX_EXPECT_EFFORT:-}" ]]; then
+  has_pair --config "model_reasoning_effort=\"$FAKE_CODEX_EXPECT_EFFORT\"" || exit 85
+fi
 [[ "${FAKE_CODEX_FAIL:-0}" == "0" ]] || exit 83
 if [[ -n "${FAKE_CODEX_READY_FILE:-}" ]]; then
   : > "$FAKE_CODEX_READY_FILE"
@@ -183,6 +197,9 @@ for ((index = 0; index + 1 < ${#args[@]}; index++)); do
 done
 [[ -n "$decision_file" ]] || exit 84
 printf '%s\n' '{"route":"direct","implementation_authorized":false,"file_changes_authorized":true,"authority_action":"none","questions":[],"subagents":[],"acceptance_criteria":[],"deterministic_checks":["형식 검사"]}' > "$decision_file"
+if [[ "${FAKE_CODEX_BEHAVIOR:-0}" == "1" ]]; then
+  printf '%s\n' '{"authority_action":"reuse","pre_execution_pause":false,"questions":[],"subagents":[],"model_generated_review":"none","review_trigger":"","deterministic_checks":["test"],"rationale":"authorized implementation"}' > "$decision_file"
+fi
 printf '%s\n' '{"type":"turn.completed","usage":{"input_tokens":101,"output_tokens":41,"reasoning_tokens":9,"cached_input_tokens":21,"cache_write_input_tokens":4}}'
 MOCK_CODEX
 
@@ -204,6 +221,12 @@ PATH="$mock_bin:$PATH" "$EVAL_ROOT/run.sh" --provider claude --model mock-claude
 "$EVAL_ROOT/score.sh" "$mock_codex_result" "$mock_claude_result" >/dev/null || fail "normalized mock adapter results did not pass"
 jq -e '.usage.cache_read_tokens == 21 and .usage.cache_write_tokens == 4 and .provenance.adapter_revision == "2"' "$mock_codex_result" >/dev/null || fail "Codex usage or provenance normalization failed"
 jq -e '.usage.cache_read_tokens == 22 and .usage.cache_write_tokens == 5 and .usage.cost_usd == 0.004' "$mock_claude_result" >/dev/null || fail "Claude usage normalization failed"
+
+FAKE_CODEX_EXPECT_EFFORT=ultra PATH="$mock_bin:$PATH" "$EVAL_ROOT/run.sh" --provider codex --model mock-codex --effort ultra --case direct-fix --output "$test_root/mock-ultra.jsonl"
+jq -e '.effort == "ultra"' "$test_root/mock-ultra.jsonl" >/dev/null || fail "runner did not record ultra"
+"$EVAL_ROOT/score.sh" "$test_root/mock-ultra.jsonl" >/dev/null || fail "mocked ultra run did not score"
+FAKE_CODEX_EXPECT_EFFORT=ultra FAKE_CODEX_BEHAVIOR=1 PATH="$mock_bin:$PATH" "$EVAL_ROOT/behavior.sh" --provider codex --model mock-codex --effort ultra --scenario routine --output "$test_root/behavior-ultra.jsonl"
+jq -e '.effort == "ultra" and .scenario_id == "routine"' "$test_root/behavior-ultra.jsonl" >/dev/null || fail "behavior runner did not record ultra"
 
 printf '%s\n' 'preserve-after-model-failure' > "$test_root/failure-preserve.jsonl"
 if FAKE_CODEX_FAIL=1 PATH="$mock_bin:$PATH" "$EVAL_ROOT/run.sh" --provider codex --model mock-codex --case direct-fix --output "$test_root/failure-preserve.jsonl" --force >/dev/null 2>&1; then

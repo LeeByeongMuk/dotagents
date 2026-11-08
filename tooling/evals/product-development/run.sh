@@ -71,7 +71,7 @@ fi
 if [[ "$PROVIDER" == "claude" ]]; then
   [[ "$EFFORT" =~ ^(low|medium|high|xhigh|max)$ ]] || fail "Claude --effort must be low, medium, high, xhigh, or max"
 else
-  [[ "$EFFORT" =~ ^(none|low|medium|high|xhigh|max)$ ]] || fail "Codex --effort must be none, low, medium, high, xhigh, or max"
+  [[ "$EFFORT" =~ ^(none|low|medium|high|xhigh|max|ultra)$ ]] || fail "Codex --effort must be none, low, medium, high, xhigh, max, or ultra"
 fi
 [[ -f "$HARNESS_FILE" ]] || fail "harness file does not exist: $HARNESS_FILE"
 [[ "$FORCE_OUTPUT" -eq 0 || -n "$OUTPUT_FILE" ]] || fail "--force requires --output"

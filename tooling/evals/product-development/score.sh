@@ -100,7 +100,7 @@ if ! jq -se \
     (.provider == "codex" or .provider == "claude") and
     (.model | type == "string" and length > 0) and
     ((.provider == "claude" and (.effort | IN("low", "medium", "high", "xhigh", "max"))) or
-      (.provider == "codex" and (.effort | IN("none", "low", "medium", "high", "xhigh", "max")))) and
+     (.provider == "codex" and (.effort | IN("none", "low", "medium", "high", "xhigh", "max", "ultra")))) and
     (.case_id | type == "string" and length > 0) and
     (.provenance | type == "object" and exact_provenance_keys) and
     (.provenance.adapter_revision == $adapter_revision) and

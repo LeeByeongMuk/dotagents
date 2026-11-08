@@ -55,14 +55,44 @@ find_font() {
 
 chrome="${CHROME:-$(find_chrome)}"
 [[ -n "$chrome" ]] || fail "Chrome or Chromium not found; set CHROME to its binary"
+command -v "$chrome" >/dev/null 2>&1 || fail "Chrome or Chromium is not executable: $chrome"
 font="${GUIDE_FONT:-$(find_font)}"
 
-work="$(mktemp -d "${TMPDIR:-/tmp}/usage-guide-print.XXXXXX")"
-trap 'rm -rf "$work"' EXIT
+# Keep staged files on the output filesystem so each publication is a rename.
+work="$(mktemp -d "$out_dir/.usage-guide-print.XXXXXX")"
+review=""
+keep_review=0
+keep_work=0
+publishing=0
+cleanup() {
+  local status=$?
+  trap '' INT TERM
+  # A successful PDF rename completes the pair, even if a signal arrives before
+  # the shell can record success. Otherwise restore the HTML on every exit.
+  if [[ "$publishing" -eq 1 && -e "$staged_pdf" ]]; then
+    if [[ "$had_html" -eq 1 ]]; then
+      if ! mv -f "$work/previous.html" "$html_out"; then
+        keep_work=1
+        echo "error: could not restore HTML; previous HTML is saved at $work/previous.html" >&2
+      fi
+    elif ! rm -f "$html_out"; then
+      echo "error: could not remove unpublished HTML: $html_out" >&2
+    fi
+  fi
+  [[ "$keep_work" -eq 1 ]] || rm -rf "$work"
+  if [[ "$keep_review" -eq 0 && -n "$review" ]]; then
+    rm -rf "$review"
+  fi
+  return "$status"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 html_out="$out_dir/$name.html"
 pdf_out="$out_dir/$name.pdf"
 print_copy="$work/print.html"
+staged_pdf="$work/guide.pdf"
 
 python3 -I "$script_dir/inline_assets.py" "$src" "$work/standalone.html"
 if [[ -n "$font" ]]; then
@@ -71,22 +101,35 @@ else
   echo "warning: no font file found; headless Chrome may fall back to another system font. Set GUIDE_FONT." >&2
   cp "$work/standalone.html" "$print_copy"
 fi
-cp "$work/standalone.html" "$html_out"
 
-rm -f "$pdf_out"
 print_url="$(python3 -I -c 'import pathlib, sys; print(pathlib.Path(sys.argv[1]).as_uri())' "$print_copy")"
 "$chrome" --headless=new --disable-gpu --no-sandbox --allow-file-access-from-files \
   --user-data-dir="$work/profile" --no-pdf-header-footer --run-all-compositor-stages-before-draw \
-  --virtual-time-budget=8000 --print-to-pdf="$pdf_out" "$print_url" >/dev/null 2>&1 || true
-[[ -s "$pdf_out" ]] || fail "Chrome did not write the PDF: $pdf_out"
+  --virtual-time-budget=8000 --print-to-pdf="$staged_pdf" "$print_url" >/dev/null 2>&1 \
+  || fail "Chrome failed to render the PDF"
+[[ -s "$staged_pdf" ]] || fail "Chrome did not write a nonempty PDF"
 
 review="$(mktemp -d "${TMPDIR:-/tmp}/usage-guide-review.XXXXXX")"
-pdftoppm -png -r "${REVIEW_DPI:-60}" "$pdf_out" "$review/page"
+pdftoppm -png -r "${REVIEW_DPI:-60}" "$staged_pdf" "$review/page" || fail "PDF review rendering failed"
+pdfinfo "$staged_pdf" > "$work/pdfinfo" || fail "PDF metadata validation failed"
+grep -E '^(Pages|Page size):' "$work/pdfinfo" > "$work/page-info" || fail "PDF page metadata is missing"
+pdffonts "$staged_pdf" > "$work/pdffonts" || fail "PDF font validation failed"
+
+[[ ! -d "$html_out" && ! -d "$pdf_out" ]] || fail "output file path is a directory"
+had_html=0
+if [[ -e "$html_out" || -L "$html_out" ]]; then
+  cp -pP "$html_out" "$work/previous.html"
+  had_html=1
+fi
+publishing=1
+mv -f "$work/standalone.html" "$html_out" || fail "could not publish HTML: $html_out"
+mv -f "$staged_pdf" "$pdf_out" || fail "could not publish PDF: $pdf_out"
+keep_review=1
 
 echo "html: $html_out"
 echo "pdf: $pdf_out"
-pdfinfo "$pdf_out" | grep -E '^(Pages|Page size):'
+cat "$work/page-info"
 echo "font file: ${font:-none}"
 echo "embedded fonts:"
-pdffonts "$pdf_out" | tail -n +3 | awk '{print $1}' | sed 's/^[A-Z]\{6\}+//' | sort | uniq -c | awk '{print "  " $2 " (" $1 ")"}'
+tail -n +3 "$work/pdffonts" | awk '{print $1}' | sed 's/^[A-Z]\{6\}+//' | sort | uniq -c | awk '{print "  " $2 " (" $1 ")"}'
 echo "review: $review"

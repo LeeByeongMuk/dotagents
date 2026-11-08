@@ -191,8 +191,80 @@ if [[ ${#conflicts[@]} -gt 0 && "$FORCE" -ne 1 ]]; then
 fi
 
 mkdir -p "$(dirname "$manifest")"
-temp_manifest="${manifest}.tmp.$$"
+transaction_dir="$(mktemp -d "${manifest}.transaction.XXXXXX")"
+temp_manifest="$transaction_dir/install.tsv"
+committed=0
+manifest_commit_started=0
+undo_kind=()
+undo_from=()
+undo_to=()
+
+finish_install() {
+  local status=$? index kind original destination rollback_failed=0
+  trap - EXIT INT TERM
+  set +e
+  if [[ "$committed" -ne 1 ]]; then
+    echo "Installation failed; rolling back changes." >&2
+    for ((index=${#undo_kind[@]}-1; index>=0; index--)); do
+      kind="${undo_kind[$index]}"
+      original="${undo_from[$index]}"
+      destination="${undo_to[$index]}"
+      if [[ "$kind" == "link" ]]; then
+        if [[ -L "$destination" && "$(readlink "$destination")" == "$original" ]]; then
+          unlink "$destination" || rollback_failed=1
+        elif [[ -e "$destination" || -L "$destination" ]]; then
+          echo "Cannot roll back changed target: $destination" >&2
+          rollback_failed=1
+        fi
+      elif [[ -e "$destination" || -L "$destination" ]]; then
+        if [[ -e "$original" || -L "$original" ]]; then
+          echo "Cannot restore occupied target: $original" >&2
+          rollback_failed=1
+        else
+          mv "$destination" "$original" || rollback_failed=1
+        fi
+      fi
+    done
+    if [[ "$manifest_commit_started" -eq 1 ]]; then
+      if [[ -e "$transaction_dir/previous-manifest" || -L "$transaction_dir/previous-manifest" ]]; then
+        mv "$transaction_dir/previous-manifest" "$manifest" || rollback_failed=1
+      else
+        rm -f "$manifest" || rollback_failed=1
+      fi
+    fi
+  fi
+  if [[ "$rollback_failed" -eq 0 ]]; then
+    rm -r "$transaction_dir"
+  else
+    echo "Rollback incomplete; recovery files kept in: $transaction_dir" >&2
+  fi
+  exit "$status"
+}
+
+trap finish_install EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+if [[ -e "$manifest" || -L "$manifest" ]]; then
+  cp -Pp "$manifest" "$transaction_dir/previous-manifest"
+fi
 : > "$temp_manifest"
+
+# Record undo operations before each mutation so errors and signals can also
+# recover the target whose replacement has not finished yet.
+move_for_install() {
+  undo_kind+=("move") undo_from+=("$1") undo_to+=("$2")
+  mv "$1" "$2"
+}
+
+backup_target() {
+  local target="$1" suffix=0
+  backup="${target}.dotagents-backup.${timestamp}"
+  while [[ -e "$backup" || -L "$backup" ]]; do
+    suffix=$((suffix + 1))
+    backup="${target}.dotagents-backup.${timestamp}.${suffix}"
+  done
+  move_for_install "$target" "$backup"
+}
 
 for entry in "${entries[@]}"; do
   target="${entry%%|*}"
@@ -209,19 +281,16 @@ for entry in "${entries[@]}"; do
     current="$(readlink "$target")"
     recorded="$(previous_source "$target" 2>/dev/null || true)"
     case "$current" in
-      "$recorded") unlink "$target" ;;
-      "$REPO_ROOT"/*) unlink "$target" ;;
-      *)
-        backup="${target}.dotagents-backup.${timestamp}"
-        mv "$target" "$backup"
-        ;;
+      "$recorded") move_for_install "$target" "$transaction_dir/link.${#undo_kind[@]}" ;;
+      "$REPO_ROOT"/*) move_for_install "$target" "$transaction_dir/link.${#undo_kind[@]}" ;;
+      *) backup_target "$target" ;;
     esac
   elif [[ -e "$target" ]]; then
-    backup="${target}.dotagents-backup.${timestamp}"
-    mv "$target" "$backup"
+    backup_target "$target"
   fi
 
   mkdir -p "$(dirname "$target")"
+  undo_kind+=("link") undo_from+=("$source") undo_to+=("$target")
   ln -s "$source" "$target"
   printf '%s\t%s\t%s\n' "$target" "$source" "$backup" >> "$temp_manifest"
 done
@@ -233,10 +302,10 @@ if [[ ${#retired[@]} -gt 0 ]]; then
     source="$(previous_source "$target" 2>/dev/null || true)"
     backup="$(previous_backup "$target" 2>/dev/null || echo '-')"
     if [[ -L "$target" && "$(readlink "$target")" == "$source" ]]; then
-      unlink "$target"
+      move_for_install "$target" "$transaction_dir/link.${#undo_kind[@]}"
       echo "Removed retired link: $target"
-      if [[ "$backup" != "-" && -e "$backup" && ! -e "$target" ]]; then
-        mv "$backup" "$target"
+      if [[ "$backup" != "-" && ( -e "$backup" || -L "$backup" ) && ! -e "$target" && ! -L "$target" ]]; then
+        move_for_install "$backup" "$target"
         echo "Restored backup: $target"
       fi
     else
@@ -245,5 +314,7 @@ if [[ ${#retired[@]} -gt 0 ]]; then
   done
 fi
 
+manifest_commit_started=1
 mv "$temp_manifest" "$manifest"
+committed=1
 echo "Installation complete."
