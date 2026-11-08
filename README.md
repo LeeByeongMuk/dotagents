@@ -15,6 +15,28 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 - 행동과 설명은 Markdown으로, 목록·버전·프로필 같은 기계 판독 정보는 TOML로 관리합니다.
 - 비밀 값과 로컬 세션 상태는 저장소에 넣지 않습니다.
 
+## 직접 만든 스킬과 훅
+
+이 저장소에서 직접 관리하는 스킬은 다음 3개입니다. 지원 호스트에서 `$스킬명`을 지정하거나 해당 작업을 요청하면 사용합니다.
+
+| 스킬 | 하는 일 | 사용 예 |
+| --- | --- | --- |
+| [product-development-workflow](agents/skills/owned/product-development-workflow/SKILL.md) | 작은 수정은 바로 처리하고, 제품 기획은 `Plan`, 구현은 `Brief → Execute → Verify`로 진행합니다. 기존 PRD·이슈를 재사용하며 모델 비교는 사용자가 요청할 때만 수행합니다. | “이 기능을 기획해줘” / “이 PRD대로 구현하고 검증해줘” |
+| [dotagents-promote](agents/skills/owned/dotagents-promote/SKILL.md) | 세션에서 얻은 재사용 가능한 관례를 공통 규칙·템플릿·스킬로 정리하고 별도 worktree 브랜치에 커밋합니다. main 병합은 별도 결정입니다. | “이번에 정한 공통 규칙을 dotagents에 반영해줘” |
+| [usage-guide](agents/skills/owned/usage-guide/SKILL.md) | 실제 화면과 UI 용어를 바탕으로 최종 사용자용 16:9 PDF와 단일 HTML 사용 가이드를 만듭니다. 화면 캡처 또는 CSS 목업, 빨간 번호 표시와 단계 설명을 사용하고 렌더 결과를 확인합니다. | “방금 만든 기능의 사용 가이드를 만들어줘” |
+
+직접 만든 실행 훅은 **커밋 메시지 검사** 1종이며, 실행 위치별 진입점이 있습니다.
+
+| 진입점 | 실행 시점과 역할 | 설치 방식 |
+| --- | --- | --- |
+| [pre-tool-use.sh](agents/hooks/commit-message/pre-tool-use.sh) | Claude Code·Codex의 셸 도구 실행 전에 `git commit` 메시지를 읽어 검사합니다. `git -C` 대상 저장소의 규칙과 상대 메시지 파일 경로를 사용합니다. | 전역 설치가 호스트 설정을 연결합니다. Codex는 `/hooks`에서 신뢰해야 실행됩니다. |
+| [commit-msg](agents/hooks/commit-message/commit-msg) | Git이 최종 커밋 메시지 파일을 전달할 때 검사합니다. | 선택 사항이며 자동 설치하지 않습니다. 프로젝트의 Git 훅으로 직접 연결합니다. |
+| [check.sh](agents/hooks/commit-message/check.sh) | 위 두 진입점이 공유하는 검사기입니다. Conventional Commits 형식, 길이와 문체를 검사합니다. | 단독 실행도 가능합니다: `check.sh <메시지 파일>` |
+
+프로젝트에 commitlint·gitlint·기존 커밋 훅이 있으면 프로젝트 검사를 우선합니다. 자체 커밋 규칙을 쓰는 프로젝트는 `git config dotagents.commitCheck false`로 이 검사를 끌 수 있습니다. 이 훅의 범위는 커밋 메시지이며 Git 작업 전반의 안전성 검사는 아닙니다. Gemini에는 아직 커밋 훅을 연결하지 않습니다.
+
+gstack 같은 외부 스킬은 [스킬 레지스트리](agents/registry/skills.toml)에 출처를 기록한 연동 대상입니다. 직접 만든 위 3개와 구분하며, 이 저장소의 설치기가 외부 스킬을 다운로드하지는 않습니다.
+
 ## 저장소 구조
 
 루트는 원본, 관리 도구, 문서, 생성 결과만 드러내도록 작게 유지합니다.
@@ -29,7 +51,7 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 │   ├── workflows/                 # 워크플로우 사람용 사용 안내
 │   ├── skills/
 │   │   └── owned/                 # 직접 만든 스킬(제품 개발 오케스트레이터 포함)
-│   ├── hooks/                     # 세션·도구·출하 수명주기 훅 규격
+│   ├── hooks/                     # 커밋 메시지 검사기와 호스트·Git 진입점
 │   ├── profiles/                  # 프로젝트 유형별 구성 조합
 │   ├── integrations/              # 외부 스킬·MCP·플러그인·도구 연동 규격
 │   ├── adapters/
@@ -68,7 +90,7 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 
 ### Hooks
 
-훅은 세션 시작, 도구 실행 전후, 커밋 전, 출하 전, 컨텍스트 복구 같은 수명주기 작업을 담당합니다. 각 훅은 실행 조건, 지원 호스트, 부작용, 실패 정책을 명시하고 `agents/registry/hooks.toml`에 등록합니다.
+현재 구현된 훅은 위의 커밋 메시지 검사입니다. 각 훅은 실행 조건, 지원 호스트, 부작용, 실패 정책을 명시하고 `agents/registry/hooks.toml`에 등록합니다.
 
 훅은 로컬 명령을 실행할 수 있는 신뢰 경계입니다. 검토되지 않은 외부 훅을 자동 활성화하지 않습니다.
 
@@ -164,11 +186,13 @@ cd /path/to/dotagents
 
 Codex와 Gemini는 `~/.agents/skills/` 별칭에서 같은 owned 스킬을 발견합니다.
 
-Codex 모델 기본값 복원, 간단한 작업용 CLI 프로필과 로컬 승인 규칙 관리는 [Codex 설정 안내](agents/adapters/codex/README.md)를 참고하세요. `make doctor`는 전역 설치가 있으면 Codex 커밋 훅 링크도 확인합니다.
+Codex 모델 기본값 복원, 간단한 작업용 CLI 프로필과 로컬 승인 규칙 관리는 [Codex 설정 안내](agents/adapters/codex/README.md)를 참고하세요. `make doctor`는 전역 설치가 있으면 세 호스트 진입점이 `dist/`를 가리키는지와 Codex 커밋 훅 링크를 확인합니다. 공통 규칙이 없는 옛 `agents/adapters/` 진입점을 가리키는 링크도 감지하며, 기존 파일을 변경하지는 않습니다.
 
 실제 홈에 설치하는 전역 설치는 주 체크아웃이 main일 때만 실행됩니다. linked worktree나 다른 브랜치에서 실행하면 링크를 바꾸지 않고 중단하며, `--dry-run`은 경고만 표시합니다.
 
 기존 대상이 있으면 기본 동작은 충돌을 표시하고 아무것도 변경하지 않는 것입니다. `--force`는 기존 항목을 타임스탬프가 붙은 형제 경로로 백업한 뒤 설치합니다. 실제 설정을 먼저 검토하지 않은 상태에서는 `--force`를 사용하지 마세요.
+
+설치 도중 명령이 실패하거나 INT·TERM으로 중단되면 바뀐 링크·백업과 설치 기록을 이전 상태로 복구합니다. 복구 자체가 실패하면 수동 복구에 필요한 파일 경로를 출력하고 남깁니다. SIGKILL이나 전원 차단에는 이 복구가 실행되지 않습니다.
 
 ```bash
 ./tooling/scripts/install.sh --dry-run --global --force
