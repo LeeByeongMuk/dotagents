@@ -59,7 +59,7 @@ if [[ "$PROVIDER" == "claude" ]]; then
   command -v claude >/dev/null || fail "claude CLI is not installed"
   [[ -n "$HOST_FILE" ]] || HOST_FILE="$SKILL_DIR/references/claude-code.md"
 else
-  [[ "$EFFORT" =~ ^(none|low|medium|high|xhigh|max)$ ]] || fail "Codex --effort must be none, low, medium, high, xhigh, or max"
+  [[ "$EFFORT" =~ ^(none|low|medium|high|xhigh|max|ultra)$ ]] || fail "Codex --effort must be none, low, medium, high, xhigh, max, or ultra"
   command -v codex >/dev/null || fail "codex CLI is not installed"
   [[ -n "$HOST_FILE" ]] || HOST_FILE="$SKILL_DIR/references/codex-cli.md"
 fi

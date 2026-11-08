@@ -11,7 +11,7 @@ Codex와 Claude Code에 같은 사례와 같은 결과 스키마를 제공하고
 - 제품 작업의 수용 조건과 구현 작업의 결정론적 검사 필드·최소 개수 보존
 - 가능한 경우 입력·출력·reasoning 또는 thinking·캐시 읽기·캐시 쓰기 토큰, 지연, 비용 수집
 
-`cases.json`의 12개 사례가 기본 라우팅, 제품 탐색·사실 조사·기획 후 구현·고위험 기획·요청된 기획 문서 갱신, 권위 원본의 재사용·생성·링크, 차단 결정 질문, 키워드 없는 공식 증거 경계를 소유하고, `case-contract.jq`가 안전한 사례 ID와 정확한 입력 필드를 검증합니다. `decision.schema.json`은 두 모델이 반환할 동일한 구조입니다. `implementation_authorized`는 제품·기능 구현 권한을, `file_changes_authorized`는 작은 수정이나 기획 문서 갱신을 포함한 모든 로컬 파일 변경 권한을 뜻합니다. `run.sh`는 공급자별 CLI 출력을 모델과 검증된 effort를 포함한 공통 JSONL로 정규화하며 `score.sh`가 결과를 채점합니다. Claude는 CLI가 지원하는 `low|medium|high|xhigh|max`만 허용하고, Codex의 `none`은 Claude 결과로 기록할 수 없습니다.
+`cases.json`의 12개 사례가 기본 라우팅, 제품 탐색·사실 조사·기획 후 구현·고위험 기획·요청된 기획 문서 갱신, 권위 원본의 재사용·생성·링크, 차단 결정 질문, 키워드 없는 공식 증거 경계를 소유하고, `case-contract.jq`가 안전한 사례 ID와 정확한 입력 필드를 검증합니다. `decision.schema.json`은 두 모델이 반환할 동일한 구조입니다. `implementation_authorized`는 제품·기능 구현 권한을, `file_changes_authorized`는 작은 수정이나 기획 문서 갱신을 포함한 모든 로컬 파일 변경 권한을 뜻합니다. `run.sh`는 공급자별 CLI 출력을 모델과 검증된 effort를 포함한 공통 JSONL로 정규화하며 `score.sh`가 결과를 채점합니다. 실행기와 채점기는 Codex의 `none|low|medium|high|xhigh|max|ultra`, Claude의 `low|medium|high|xhigh|max`를 허용합니다. 실제 사용 가능 여부는 선택한 모델과 CLI가 결정하며, Codex의 `none`·`ultra`는 Claude 결과로 기록할 수 없습니다.
 
 ## 실제 실행
 
