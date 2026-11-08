@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/dotagents-test.XXXXXX")"
+TEST_ROOT="$(cd "$TEST_ROOT" && pwd -P)"
 trap 'rm -r "$TEST_ROOT"' EXIT
 
 fail() { echo "test failed: $*" >&2; exit 1; }
@@ -179,5 +180,121 @@ DOTAGENTS_HOME="$retired_home" XDG_STATE_HOME="$retired_state" "$REPO_ROOT/tooli
 grep -q 'original config' "$retired_home/.config/tool" || fail "retired entry backup was not restored"
 ! grep -Fq 'dotagents-retired' "$retired_manifest" || fail "retired entry stayed in the manifest"
 assert_link "$retired_home/.agents"
+
+failure_bin="$TEST_ROOT/failure-bin"
+mkdir -p "$failure_bin"
+export INSTALL_TEST_REAL_LN="$(command -v ln)"
+export INSTALL_TEST_REAL_MV="$(command -v mv)"
+cat > "$failure_bin/ln" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${INSTALL_TEST_FAIL_TARGET:-}" == "${@: -1}" ]]; then
+  if [[ "${INSTALL_TEST_SIGNAL:-error}" != "error" ]]; then
+    "$INSTALL_TEST_REAL_LN" "$@"
+    kill -s "$INSTALL_TEST_SIGNAL" "$PPID"
+    exit 0
+  fi
+  exit 73
+fi
+exec "$INSTALL_TEST_REAL_LN" "$@"
+EOF
+cat > "$failure_bin/mv" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == *.transaction.*/install.tsv && "${INSTALL_TEST_FAIL_MANIFEST:-}" == "$2" ]]; then
+  if [[ "${INSTALL_TEST_SIGNAL:-error}" != "error" ]]; then
+    "$INSTALL_TEST_REAL_MV" "$@"
+    kill -s "$INSTALL_TEST_SIGNAL" "$PPID"
+    exit 0
+  fi
+  exit 73
+fi
+exec "$INSTALL_TEST_REAL_MV" "$@"
+EOF
+cat > "$failure_bin/date" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' '20000101000000'
+EOF
+chmod +x "$failure_bin/ln" "$failure_bin/mv" "$failure_bin/date"
+
+echo "scenario 12: failed or interrupted forced installs restore originals before retry"
+for interruption in error TERM INT; do
+  failed_project="$TEST_ROOT/failed-project-$interruption"
+  mkdir -p "$failed_project"
+  printf '%s\n' 'original project rules' > "$failed_project/AGENTS.md"
+  ln -s "$TEST_ROOT/missing-original" "$failed_project/CLAUDE.md"
+  if PATH="$failure_bin:$PATH" INSTALL_TEST_FAIL_TARGET="$failed_project/CLAUDE.md" INSTALL_TEST_SIGNAL="$interruption" \
+    "$REPO_ROOT/tooling/scripts/install.sh" --project "$failed_project" --force >/dev/null 2>&1; then
+    fail "injected $interruption should stop the install"
+  fi
+  [[ ! -L "$failed_project/AGENTS.md" ]] || fail "$interruption left the new AGENTS link"
+  grep -q 'original project rules' "$failed_project/AGENTS.md" || fail "$interruption lost the original AGENTS file"
+  [[ "$(readlink "$failed_project/CLAUDE.md")" == "$TEST_ROOT/missing-original" ]] || fail "$interruption lost the original dangling link"
+  [[ ! -e "$failed_project/.agents" && ! -L "$failed_project/.agents" ]] || fail "$interruption left a partial install"
+  [[ ! -e "$failed_project/.dotagents-install.tsv" ]] || fail "$interruption committed a partial manifest"
+  ! compgen -G "$failed_project/*.dotagents-backup.*" >/dev/null || fail "$interruption left orphaned backups"
+  ! compgen -G "$failed_project/.dotagents-install.tsv.transaction.*" >/dev/null || fail "$interruption left transaction files"
+  "$REPO_ROOT/tooling/scripts/install.sh" --project "$failed_project" --force >/dev/null
+  "$REPO_ROOT/tooling/scripts/uninstall.sh" --project "$failed_project" >/dev/null
+  grep -q 'original project rules' "$failed_project/AGENTS.md" || fail "$interruption retry lost the original backup record"
+done
+
+echo "scenario 13: a failed upgrade preserves managed links, the manifest, and existing backups"
+upgrade_project="$TEST_ROOT/failed-upgrade"
+mkdir -p "$upgrade_project"
+printf '%s\n' 'rules before the first install' > "$upgrade_project/AGENTS.md"
+"$REPO_ROOT/tooling/scripts/install.sh" --project "$upgrade_project" --force >/dev/null
+cp "$upgrade_project/.dotagents-install.tsv" "$TEST_ROOT/upgrade-manifest"
+upgrade_backup="$(awk -F '\t' -v target="$upgrade_project/AGENTS.md" '$1 == target { print $3 }' "$TEST_ROOT/upgrade-manifest")"
+if PATH="$failure_bin:$PATH" INSTALL_TEST_FAIL_TARGET="$upgrade_project/CLAUDE.md" \
+  "$moved_repo/tooling/scripts/install.sh" --project "$upgrade_project" >/dev/null 2>&1; then
+  fail "injected upgrade failure should stop the install"
+fi
+cmp -s "$upgrade_project/.dotagents-install.tsv" "$TEST_ROOT/upgrade-manifest" || fail "failed upgrade changed the previous manifest"
+while IFS=$'\t' read -r target source _; do
+  [[ "$(readlink "$target")" == "$source" ]] || fail "failed upgrade did not restore managed link: $target"
+done < "$TEST_ROOT/upgrade-manifest"
+grep -q 'rules before the first install' "$upgrade_backup" || fail "failed upgrade changed an existing backup"
+! compgen -G "$upgrade_project/.dotagents-install.tsv.transaction.*" >/dev/null || fail "failed upgrade left transaction files"
+"$moved_repo/tooling/scripts/install.sh" --project "$upgrade_project" >/dev/null
+"$moved_repo/tooling/scripts/uninstall.sh" --project "$upgrade_project" >/dev/null
+grep -q 'rules before the first install' "$upgrade_project/AGENTS.md" || fail "upgrade retry lost the original backup record"
+
+echo "scenario 14: manifest commit failure reverses retired-link removals and backup restores"
+retired_project="$TEST_ROOT/failed-retirement"
+mkdir -p "$retired_project"
+"$REPO_ROOT/tooling/scripts/install.sh" --project "$retired_project" >/dev/null
+retired_target="$retired_project/retired-config"
+retired_backup="$retired_project/retired-config.backup"
+ln -s "$REPO_ROOT/README.md" "$retired_target"
+printf '%s\n' 'original retired config' > "$retired_backup"
+printf '%s\t%s\t%s\n' "$retired_target" "$REPO_ROOT/README.md" "$retired_backup" >> "$retired_project/.dotagents-install.tsv"
+cp "$retired_project/.dotagents-install.tsv" "$TEST_ROOT/retirement-manifest"
+for interruption in error TERM; do
+  if PATH="$failure_bin:$PATH" INSTALL_TEST_FAIL_MANIFEST="$retired_project/.dotagents-install.tsv" INSTALL_TEST_SIGNAL="$interruption" \
+    "$REPO_ROOT/tooling/scripts/install.sh" --project "$retired_project" >/dev/null 2>&1; then
+    fail "injected manifest $interruption should stop the install"
+  fi
+  cmp -s "$retired_project/.dotagents-install.tsv" "$TEST_ROOT/retirement-manifest" || fail "failed retirement changed the previous manifest"
+  [[ "$(readlink "$retired_target")" == "$REPO_ROOT/README.md" ]] || fail "failed retirement did not restore the retired link"
+  grep -q 'original retired config' "$retired_backup" || fail "failed retirement did not put the restored backup back"
+  ! compgen -G "$retired_project/.dotagents-install.tsv.transaction.*" >/dev/null || fail "failed retirement left transaction files"
+done
+"$REPO_ROOT/tooling/scripts/install.sh" --project "$retired_project" >/dev/null
+grep -q 'original retired config' "$retired_target" || fail "retirement retry did not restore the backup"
+
+echo "scenario 15: rollback preserves an existing backup with the same timestamp"
+collision_project="$TEST_ROOT/backup-collision"
+mkdir -p "$collision_project"
+printf '%s\n' 'current project rules' > "$collision_project/AGENTS.md"
+collision_backup="$collision_project/AGENTS.md.dotagents-backup.20000101000000"
+printf '%s\n' 'older project rules' > "$collision_backup"
+if PATH="$failure_bin:$PATH" INSTALL_TEST_FAIL_TARGET="$collision_project/CLAUDE.md" \
+  "$REPO_ROOT/tooling/scripts/install.sh" --project "$collision_project" --force >/dev/null 2>&1; then
+  fail "injected failure with a backup collision should stop the install"
+fi
+grep -q 'current project rules' "$collision_project/AGENTS.md" || fail "backup collision lost the current original"
+grep -q 'older project rules' "$collision_backup" || fail "backup collision overwrote an older backup"
+[[ ! -e "$collision_backup.1" ]] || fail "backup collision left an orphaned backup"
 
 echo "All install scenarios passed."
