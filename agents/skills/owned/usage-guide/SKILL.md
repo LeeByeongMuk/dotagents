@@ -60,7 +60,7 @@ A typical guide runs 10 to 18 pages. The skeleton script adds the footer and pag
 
 ## Render and verify
 
-Run `scripts/render.sh <working-dir>/guide.html <output-dir> <file-name>`. It inlines CSS and images into `<file-name>.html`, prints `<file-name>.pdf` with headless Chrome, and writes review PNGs to a new temporary directory each run. It embeds the first Pretendard variable font it finds; set `GUIDE_FONT` to another variable font file when that does not fit the language.
+Run `scripts/render.sh <working-dir>/guide.html <output-dir> <file-name>`. It inlines CSS and images into `<file-name>.html`, prints `<file-name>.pdf` with headless Chrome, and writes review PNGs to a new temporary directory each successful run. It stages the outputs and checks Chrome, PDF metadata, fonts, and review rendering before replacing earlier files. It embeds the first Pretendard variable font it finds; set `GUIDE_FONT` to another variable font file when that does not fit the language.
 
 Check every point before delivering:
 
@@ -82,4 +82,5 @@ Common fixes: shrink a table with `table.t.tight` or split the page; let mockups
 
 - Stop and say what to install when Chrome or Chromium, python3, or poppler (`pdfinfo`, `pdffonts`, `pdftoppm`) is missing.
 - Stop when a referenced image or stylesheet is missing; `render.sh` lists the missing files.
-- Side effects: writes the two output files and overwrites earlier versions with the same name, leaves a temporary directory of review PNGs, and runs headless Chrome with an isolated profile that is deleted afterwards. Captures may need the user's login. Nothing is written to the project repository.
+- Failed rendering or validation preserves earlier HTML and PDF files. If publication fails or is interrupted after publishing the HTML and before publishing the PDF, the script restores the earlier HTML. If restoration itself fails, it reports the retained backup path.
+- Side effects: replaces the two output files after validation, leaves a temporary directory of review PNGs on success, and runs headless Chrome with an isolated profile that is deleted afterwards. Captures may need the user's login. Nothing is written to the project repository.
