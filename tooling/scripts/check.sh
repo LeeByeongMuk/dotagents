@@ -31,6 +31,8 @@ required=(
   agents/skills/owned/product-development-workflow/references/codex-cli.md
   agents/skills/owned/product-development-workflow/references/claude-code.md
   agents/skills/owned/product-development-workflow/references/model-fit.md
+  agents/skills/owned/fsd-refactor/SKILL.md
+  agents/skills/owned/fsd-refactor/agents/openai.yaml
   agents/skills/owned/dotagents-promote/SKILL.md
   agents/skills/owned/dotagents-promote/agents/openai.yaml
   agents/skills/owned/usage-guide/SKILL.md
