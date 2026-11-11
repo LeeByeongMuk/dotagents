@@ -46,6 +46,7 @@ if [[ "$MODE" == "global" ]]; then
     "$target_root/.claude/skills/product-development-workflow|$REPO_ROOT/agents/skills/owned/product-development-workflow"
     "$target_root/.claude/skills/dotagents-promote|$REPO_ROOT/agents/skills/owned/dotagents-promote"
     "$target_root/.claude/skills/usage-guide|$REPO_ROOT/agents/skills/owned/usage-guide"
+    "$target_root/.claude/skills/repo-activity-review|$REPO_ROOT/agents/skills/owned/repo-activity-review"
     "$target_root/.codex/AGENTS.md|$REPO_ROOT/dist/codex/AGENTS.md"
     "$target_root/.codex/hooks.json|$REPO_ROOT/agents/adapters/codex/hooks.json"
     "$target_root/.gemini/GEMINI.md|$REPO_ROOT/dist/gemini/GEMINI.md"
@@ -63,6 +64,7 @@ else
     "$target_root/.claude/skills/product-development-workflow|$REPO_ROOT/agents/skills/owned/product-development-workflow"
     "$target_root/.claude/skills/dotagents-promote|$REPO_ROOT/agents/skills/owned/dotagents-promote"
     "$target_root/.claude/skills/usage-guide|$REPO_ROOT/agents/skills/owned/usage-guide"
+    "$target_root/.claude/skills/repo-activity-review|$REPO_ROOT/agents/skills/owned/repo-activity-review"
     "$target_root/GEMINI.md|$REPO_ROOT/dist/gemini/GEMINI.md"
   )
 fi

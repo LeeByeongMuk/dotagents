@@ -50,6 +50,23 @@ usage_guide_alias="$REPO_ROOT/agents/skills/usage-guide"
 [[ "$(readlink "$usage_guide_alias")" == "owned/usage-guide" ]] || fail "usage guide discovery alias target is incorrect"
 [[ -f "$usage_guide_alias/SKILL.md" ]] || fail "usage guide discovery alias does not expose SKILL.md"
 
+activity_alias="$REPO_ROOT/agents/skills/repo-activity-review"
+[[ -L "$activity_alias" ]] || fail "activity discovery alias is not a symbolic link"
+[[ "$(readlink "$activity_alias")" == "owned/repo-activity-review" ]] || fail "activity discovery alias target is incorrect"
+[[ -f "$activity_alias/SKILL.md" && -f "$activity_alias/references/recurring.md" ]] || fail "activity discovery alias does not expose skill assets"
+activity_skill="$activity_alias/SKILL.md"
+[[ "$(sed -n '1p' "$activity_skill")" == "---" ]] || fail "activity skill is missing opening frontmatter"
+[[ "$(grep -c '^---$' "$activity_skill")" -ge 2 ]] || fail "activity skill is missing closing frontmatter"
+grep -Fqx 'name: repo-activity-review' "$activity_skill" || fail "activity skill name is invalid"
+grep -Eq '^description: .+' "$activity_skill" || fail "activity skill description is missing"
+activity_metadata="$activity_alias/agents/openai.yaml"
+grep -Eq '^  display_name: ".+"$' "$activity_metadata" || fail "activity display metadata is missing"
+grep -Eq '^  short_description: ".{25,64}"$' "$activity_metadata" || fail "activity short description is invalid"
+grep -Eq '^  default_prompt: ".*\$repo-activity-review.*"$' "$activity_metadata" || fail "activity default prompt must invoke the skill"
+if grep -Eq '^  allow_implicit_invocation: false$' "$activity_metadata"; then
+  fail "activity skill must remain automatically discoverable"
+fi
+
 english_docs="$(find "$REPO_ROOT" -path "$REPO_ROOT/.git" -prune -o -type f -name '*.en.md' -print)"
 [[ -z "$english_docs" ]] || fail "duplicate English documentation must not be committed"
 
@@ -164,5 +181,19 @@ done
 skill_count="$(grep -c '^\[\[skills\]\]$' "$skills_registry")"
 [[ "$(grep -c '^license = "[^"]\+"$' "$skills_registry")" -eq "$skill_count" ]] || fail "every skill registry entry must declare a license"
 [[ "$(grep -c '^enabled_by_default = \(true\|false\)$' "$skills_registry")" -eq "$skill_count" ]] || fail "every skill registry entry must declare default enablement"
+
+activity_block="$(registry_skill_block repo-activity-review)"
+[[ -n "$activity_block" ]] || fail "missing activity skill registry entry"
+for expected in \
+  'kind = "owned"' \
+  'source = "agents/skills/owned/repo-activity-review"' \
+  'license = "MIT"' \
+  'hosts = ["claude", "codex", "gemini"]' \
+  'profiles = ["default", "full"]' \
+  'workflows = []' \
+  'optional = true' \
+  'enabled_by_default = true'; do
+  grep -Fqx "$expected" <<< "$activity_block" || fail "invalid activity registry field: $expected"
+done
 
 echo "Repository structure passed."

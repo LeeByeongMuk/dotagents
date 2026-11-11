@@ -1,0 +1,4 @@
+interface:
+  display_name: "Repository Activity Review"
+  short_description: "Summarize repository activity from verified change evidence"
+  default_prompt: "Use $repo-activity-review to summarize activity in the specified repositories and period with evidence and current status."
