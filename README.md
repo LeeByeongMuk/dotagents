@@ -226,7 +226,7 @@ Next.js 프로젝트는 위 복사 원본을 `agents/templates/nextjs/AGENTS.md`
 ./tooling/scripts/install.sh --project /path/to/project
 ```
 
-프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/skills/product-development-workflow`, `.claude/skills/dotagents-promote`, `.claude/skills/usage-guide` 링크를 설치합니다. 기존 파일이 있으면 설치가 중단됩니다. `--force`는 기존 파일을 백업하고 링크로 교체하는 선택이므로, 고유 규칙을 유지할 프로젝트에는 위 권장 방식을 사용하세요.
+프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/skills/product-development-workflow`, `.claude/skills/dotagents-promote`, `.claude/skills/usage-guide` 링크를 설치합니다. Codex와 Gemini는 프로젝트의 `.agents/skills` 별칭을 사용합니다. 기존 파일이 있으면 설치가 중단됩니다. `--force`는 기존 파일을 백업하고 링크로 교체하는 선택이므로, 고유 규칙을 유지할 프로젝트에는 위 권장 방식을 사용하세요.
 
 설치된 `AGENTS.md` 등은 공통 `dist/`를 가리킵니다. 이 링크에 템플릿을 복사하거나 직접 편집하면 공유 생성 파일이 바뀌므로, 링크 상태에서 프로젝트 고유 규칙을 작성하지 않습니다. 이미 프로젝트 링크 설치를 사용 중이라면 [제거](#제거)의 dry-run으로 제거될 링크를 확인하고 제거한 뒤 로컬 파일 방식으로 전환합니다.
 
