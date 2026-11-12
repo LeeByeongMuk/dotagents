@@ -151,6 +151,7 @@ run_doctor 0
 unlink "$test_home/.agents"
 run_doctor 1
 grep -q '^missing: managed .agents link' "$TEST_ROOT/output" || fail "recorded missing root was treated as uninstalled"
+grep -Fq "recorded in $manifest" "$TEST_ROOT/output" || fail "recorded missing root did not name the install record"
 [[ ! -e "$test_home/.agents" ]] || fail "doctor created .agents"
 ln -s "$TEST_ROOT/missing-agents" "$test_home/.agents"
 run_doctor 1

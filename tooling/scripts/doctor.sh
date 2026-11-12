@@ -44,6 +44,9 @@ if [[ -n "$recorded_agents" ]] && ! [[ -L "$agents_target" && "$agents_target" -
   else
     echo "conflict: managed .agents link ($agents_target) does not link $recorded_agents; review the existing path before changing it" >&2
   fi
+  # Only the record says an install exists here, so name it: after a partial
+  # uninstall the leftover row is the whole reason for this error.
+  echo "note: this install is recorded in $manifest" >&2
   link_issue=1
 elif [[ -f "$agents_target/rules/git.md" ]]; then
   installed_agents="$(cd "$target_root/.agents" && pwd -P)"
