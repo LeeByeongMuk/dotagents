@@ -120,6 +120,9 @@ assert_link "$project_dir/.agents/skills/product-development-workflow"
 [[ "$(readlink "$project_dir/CLAUDE.md")" == "$REPO_ROOT/dist/claude/CLAUDE.md" ]] || fail "project Claude adapter source is incorrect"
 [[ "$(readlink "$project_dir/GEMINI.md")" == "$REPO_ROOT/dist/gemini/GEMINI.md" ]] || fail "project Gemini adapter source is incorrect"
 
+# Install from the original checkout again so the reinstall below repairs
+# existing links even when an earlier step removed them.
+"$REPO_ROOT/tooling/scripts/install.sh" --project "$project_dir" >/dev/null
 "$moved_repo/tooling/scripts/install.sh" --project "$project_dir" >/dev/null
 assert_link "$project_dir/.agents/skills/fsd-refactor"
 [[ "$(readlink "$project_dir/.claude/skills/fsd-refactor")" == "$moved_repo/agents/skills/owned/fsd-refactor" ]] || fail "project reinstall did not repair the FSD source"
