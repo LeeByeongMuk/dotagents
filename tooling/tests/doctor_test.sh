@@ -34,7 +34,7 @@ for entry in 'claude/CLAUDE.md' 'codex/AGENTS.md' 'gemini/GEMINI.md'; do
 done
 ln -s "$source_repo/agents/adapters/claude/settings.json" "$test_home/.claude/settings.json"
 mkdir -p "$test_home/.claude/skills"
-for skill in product-development-workflow dotagents-promote usage-guide; do
+for skill in product-development-workflow fsd-refactor dotagents-promote usage-guide; do
   ln -s "$source_repo/agents/skills/owned/$skill" "$test_home/.claude/skills/$skill"
 done
 run_doctor 1
@@ -96,8 +96,10 @@ done
 run_doctor 0
 
 for relative in .claude/settings.json \
-  .claude/skills/product-development-workflow .claude/skills/dotagents-promote .claude/skills/usage-guide \
-  .agents/skills/product-development-workflow .agents/skills/dotagents-promote .agents/skills/usage-guide; do
+  .claude/skills/product-development-workflow .claude/skills/fsd-refactor \
+  .claude/skills/dotagents-promote .claude/skills/usage-guide \
+  .agents/skills/product-development-workflow .agents/skills/fsd-refactor \
+  .agents/skills/dotagents-promote .agents/skills/usage-guide; do
   target="$test_home/$relative"
   reported_target="$target"
   fix='reinstall from the primary checkout'
