@@ -11,7 +11,7 @@ help: ## 타깃 목록
 deps: ## 필수 도구 설치 (macOS Homebrew)
 	$(BREW) install git jq ripgrep gh
 
-doctor: ## 필수 도구, 전역 호스트 진입점과 Codex 커밋 훅 링크 진단
+doctor: ## 필수 도구와 전역 지침·설정·스킬·훅 링크 진단
 	./tooling/scripts/doctor.sh
 
 build: ## 어댑터와 공통 규칙을 합쳐 dist 최종본 생성

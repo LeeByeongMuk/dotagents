@@ -1,0 +1,4 @@
+interface:
+  display_name: "FSD Refactor"
+  short_description: "Refactor adopted FSD structures while preserving behavior"
+  default_prompt: "Use $fsd-refactor to inspect this project's FSD rules and refactor the requested scope while preserving behavior, rendering, URLs, and API contracts."

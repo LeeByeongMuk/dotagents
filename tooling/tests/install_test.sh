@@ -20,6 +20,9 @@ assert_link "$home_dir/.agents"
 assert_link "$home_dir/.claude/CLAUDE.md"
 assert_link "$home_dir/.claude/settings.json"
 assert_link "$home_dir/.claude/skills/product-development-workflow"
+assert_link "$home_dir/.claude/skills/fsd-refactor"
+assert_link "$home_dir/.agents/skills/fsd-refactor"
+[[ -f "$home_dir/.agents/skills/fsd-refactor/agents/openai.yaml" ]] || fail "global FSD discovery does not expose metadata"
 assert_link "$home_dir/.claude/skills/dotagents-promote"
 assert_link "$home_dir/.claude/skills/usage-guide"
 assert_link "$home_dir/.claude/skills/repo-activity-review"
@@ -41,6 +44,7 @@ jq -e '.hooks.PreToolUse' "$home_dir/.codex/hooks.json" >/dev/null || fail "inst
 [[ "$(readlink "$home_dir/.codex/AGENTS.md")" == "$REPO_ROOT/dist/codex/AGENTS.md" ]] || fail "Codex adapter source was not updated"
 [[ "$(readlink "$home_dir/.gemini/GEMINI.md")" == "$REPO_ROOT/dist/gemini/GEMINI.md" ]] || fail "Gemini adapter source was not updated"
 [[ "$(readlink "$home_dir/.claude/skills/product-development-workflow")" == "$REPO_ROOT/agents/skills/owned/product-development-workflow" ]] || fail "Claude workflow skill source is incorrect"
+[[ "$(readlink "$home_dir/.claude/skills/fsd-refactor")" == "$REPO_ROOT/agents/skills/owned/fsd-refactor" ]] || fail "Claude FSD skill source is incorrect"
 [[ "$(readlink "$home_dir/.claude/skills/dotagents-promote")" == "$REPO_ROOT/agents/skills/owned/dotagents-promote" ]] || fail "Claude promote skill source is incorrect"
 [[ "$(readlink "$home_dir/.claude/skills/usage-guide")" == "$REPO_ROOT/agents/skills/owned/usage-guide" ]] || fail "Claude usage guide skill source is incorrect"
 [[ "$(readlink "$home_dir/.claude/skills/repo-activity-review")" == "$REPO_ROOT/agents/skills/owned/repo-activity-review" ]] || fail "Claude activity skill source is incorrect"
@@ -48,6 +52,9 @@ jq -e '.hooks.PreToolUse' "$home_dir/.codex/hooks.json" >/dev/null || fail "inst
 echo "scenario 2: repeated install is idempotent"
 DOTAGENTS_HOME="$home_dir" XDG_STATE_HOME="$state_dir" "$REPO_ROOT/tooling/scripts/install.sh" --global >/dev/null
 assert_link "$home_dir/.codex/AGENTS.md"
+
+assert_link "$home_dir/.claude/skills/fsd-refactor"
+[[ "$(readlink "$home_dir/.claude/skills/fsd-refactor")" == "$REPO_ROOT/agents/skills/owned/fsd-refactor" ]] || fail "repeated install changed the FSD source"
 
 echo "scenario 3: existing file blocks install without changes"
 conflict_home="$TEST_ROOT/conflict-home"
@@ -66,6 +73,10 @@ moved_repo="$(cd "$moved_repo" && pwd -P)"
 DOTAGENTS_HOME="$home_dir" XDG_STATE_HOME="$state_dir" "$moved_repo/tooling/scripts/install.sh" --global >/dev/null
 [[ "$(readlink "$home_dir/.agents")" == "$moved_repo/agents" ]] || fail "moved source was not applied"
 
+assert_link "$home_dir/.claude/skills/fsd-refactor"
+assert_link "$home_dir/.agents/skills/fsd-refactor"
+[[ "$(readlink "$home_dir/.claude/skills/fsd-refactor")" == "$moved_repo/agents/skills/owned/fsd-refactor" ]] || fail "reinstall did not repair the FSD source after repository move"
+
 echo "scenario 5: user-replaced file is preserved during uninstall"
 modified_home="$TEST_ROOT/modified-home"
 modified_state="$TEST_ROOT/modified-state"
@@ -76,6 +87,7 @@ printf '%s\n' 'user replacement' > "$modified_home/.gemini/GEMINI.md"
 DOTAGENTS_HOME="$modified_home" XDG_STATE_HOME="$modified_state" "$REPO_ROOT/tooling/scripts/uninstall.sh" --global >/dev/null 2>&1
 grep -q 'user replacement' "$modified_home/.gemini/GEMINI.md" || fail "user-replaced file was removed"
 [[ ! -e "$modified_home/.claude/skills/product-development-workflow" ]] || fail "workflow skill link was not removed"
+[[ ! -e "$modified_home/.claude/skills/fsd-refactor" && ! -L "$modified_home/.claude/skills/fsd-refactor" ]] || fail "FSD skill link was not removed"
 [[ ! -e "$modified_home/.claude/skills/dotagents-promote" ]] || fail "promote skill link was not removed"
 [[ ! -e "$modified_home/.claude/skills/usage-guide" ]] || fail "usage guide skill link was not removed"
 [[ ! -e "$modified_home/.claude/skills/repo-activity-review" && ! -L "$modified_home/.claude/skills/repo-activity-review" ]] || fail "activity skill link was not removed"
@@ -100,6 +112,10 @@ assert_link "$project_dir/.agents"
 assert_link "$project_dir/AGENTS.md"
 assert_link "$project_dir/CLAUDE.md"
 assert_link "$project_dir/.claude/skills/product-development-workflow"
+assert_link "$project_dir/.claude/skills/fsd-refactor"
+assert_link "$project_dir/.agents/skills/fsd-refactor"
+[[ -f "$project_dir/.agents/skills/fsd-refactor/agents/openai.yaml" ]] || fail "project FSD discovery does not expose metadata"
+[[ "$(readlink "$project_dir/.claude/skills/fsd-refactor")" == "$REPO_ROOT/agents/skills/owned/fsd-refactor" ]] || fail "project Claude FSD skill source is incorrect"
 assert_link "$project_dir/.claude/skills/dotagents-promote"
 assert_link "$project_dir/.claude/skills/usage-guide"
 assert_link "$project_dir/.claude/skills/repo-activity-review"
@@ -118,6 +134,15 @@ assert_link "$project_dir/.agents/skills/product-development-workflow"
 "$REPO_ROOT/tooling/scripts/uninstall.sh" --project "$project_dir" >/dev/null
 [[ ! -e "$project_dir/.claude/skills/repo-activity-review" && ! -L "$project_dir/.claude/skills/repo-activity-review" ]] || fail "project activity skill link was not removed"
 [[ ! -e "$project_dir/.agents/skills/repo-activity-review" ]] || fail "activity shared discovery survived project removal"
+
+# Install from the original checkout again so the reinstall below repairs
+# existing links even when an earlier step removed them.
+"$REPO_ROOT/tooling/scripts/install.sh" --project "$project_dir" >/dev/null
+"$moved_repo/tooling/scripts/install.sh" --project "$project_dir" >/dev/null
+assert_link "$project_dir/.agents/skills/fsd-refactor"
+[[ "$(readlink "$project_dir/.claude/skills/fsd-refactor")" == "$moved_repo/agents/skills/owned/fsd-refactor" ]] || fail "project reinstall did not repair the FSD source"
+"$moved_repo/tooling/scripts/uninstall.sh" --project "$project_dir" >/dev/null
+[[ ! -e "$project_dir/.claude/skills/fsd-refactor" && ! -L "$project_dir/.claude/skills/fsd-refactor" ]] || fail "project FSD link was not removed"
 
 echo "scenario 8: reinstall repairs legacy internal adapter paths"
 legacy_home="$TEST_ROOT/legacy-home"
