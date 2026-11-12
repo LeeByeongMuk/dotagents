@@ -186,7 +186,7 @@ cd /path/to/dotagents
 
 Codex와 Gemini는 `~/.agents/skills/` 별칭에서 같은 owned 스킬을 발견합니다.
 
-Codex 모델 기본값 복원, 간단한 작업용 CLI 프로필과 로컬 승인 규칙 관리는 [Codex 설정 안내](agents/adapters/codex/README.md)를 참고하세요. `make doctor`는 전역 설치가 있으면 세 호스트 진입점이 `dist/`를 가리키는지와 Codex 커밋 훅 링크를 확인합니다. 공통 규칙이 없는 옛 `agents/adapters/` 진입점을 가리키는 링크도 감지하며, 기존 파일을 변경하지는 않습니다.
+Codex 모델 기본값 복원, 간단한 작업용 CLI 프로필과 로컬 승인 규칙 관리는 [Codex 설정 안내](agents/adapters/codex/README.md)를 참고하세요. `make doctor`는 전역 설치의 호스트 진입점, Claude 설정·스킬, Codex 커밋 훅과 공통 스킬 별칭을 검사합니다. 설치 기록이 있는데 `.agents` 연결이 없거나 깨진 경우, 잘못된 원본을 가리키는 경우도 알립니다. 진단은 기존 파일을 변경하지 않으며, 링크가 정상이어도 호스트의 실제 로딩·실행이나 Codex 훅 신뢰 상태까지 확인한 것은 아닙니다.
 
 실제 홈에 설치하는 전역 설치는 주 체크아웃이 main일 때만 실행됩니다. linked worktree나 다른 브랜치에서 실행하면 링크를 바꾸지 않고 중단하며, `--dry-run`은 경고만 표시합니다.
 
