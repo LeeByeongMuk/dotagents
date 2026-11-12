@@ -40,6 +40,11 @@ workflow_alias="$REPO_ROOT/agents/skills/product-development-workflow"
 [[ "$(readlink "$workflow_alias")" == "owned/product-development-workflow" ]] || fail "workflow discovery alias target is incorrect"
 [[ -f "$workflow_alias/SKILL.md" ]] || fail "workflow discovery alias does not expose SKILL.md"
 
+fsd_alias="$REPO_ROOT/agents/skills/fsd-refactor"
+[[ -L "$fsd_alias" ]] || fail "FSD discovery alias is not a symbolic link"
+[[ "$(readlink "$fsd_alias")" == "owned/fsd-refactor" ]] || fail "FSD discovery alias target is incorrect"
+[[ -f "$fsd_alias/SKILL.md" && -f "$fsd_alias/agents/openai.yaml" ]] || fail "FSD discovery alias does not expose skill and metadata"
+
 promote_alias="$REPO_ROOT/agents/skills/dotagents-promote"
 [[ -L "$promote_alias" ]] || fail "promote discovery alias is not a symbolic link"
 [[ "$(readlink "$promote_alias")" == "owned/dotagents-promote" ]] || fail "promote discovery alias target is incorrect"
@@ -73,6 +78,16 @@ grep -Fq 'only when the user explicitly asks to choose or compare models' "$work
 grep -Fq 'Separate the recommendation from execution' "$workflow_skill" || fail "workflow Model Fit must not imply model-switch authority"
 grep -Fq 'Do not require a fixed model-generated review pass' "$workflow_skill" || fail "workflow skill must not force a generic review pass"
 grep -Fq 'dotagents promotion candidate' "$workflow_skill" || fail "workflow skill must propose promotion candidates at completion"
+
+fsd_skill="$REPO_ROOT/agents/skills/owned/fsd-refactor/SKILL.md"
+[[ "$(sed -n '1p' "$fsd_skill")" == "---" ]] || fail "FSD skill is missing opening frontmatter"
+[[ "$(grep -c '^---$' "$fsd_skill")" -ge 2 ]] || fail "FSD skill is missing closing frontmatter"
+grep -Fqx 'name: fsd-refactor' "$fsd_skill" || fail "FSD skill name is invalid"
+grep -Eq '^description: .+' "$fsd_skill" || fail "FSD skill description is missing"
+fsd_metadata="$REPO_ROOT/agents/skills/owned/fsd-refactor/agents/openai.yaml"
+grep -Eq '^  display_name: ".+"$' "$fsd_metadata" || fail "FSD display metadata is missing"
+grep -Eq '^  short_description: ".+"$' "$fsd_metadata" || fail "FSD short description is missing"
+grep -Eq '^  default_prompt: ".*\$fsd-refactor.*"$' "$fsd_metadata" || fail "FSD default prompt must invoke the skill explicitly"
 
 promote_skill="$REPO_ROOT/agents/skills/owned/dotagents-promote/SKILL.md"
 grep -Fq 'Never edit the primary checkout' "$promote_skill" || fail "promote skill must protect the live main checkout"
@@ -143,6 +158,12 @@ registry_skill_block() {
     $0 ~ "(^|\\n)id = \\\"" skill_id "\\\"(\\n|$)" { print; exit }
   ' "$skills_registry"
 }
+
+fsd_block="$(registry_skill_block "fsd-refactor")"
+[[ -n "$fsd_block" ]] || fail "missing FSD skill registry entry"
+for expected in 'kind = "owned"' 'source = "agents/skills/owned/fsd-refactor"' 'license = "MIT"' 'hosts = ["claude", "codex", "gemini"]' 'profiles = ["default", "full"]' 'workflows = []' 'optional = true' 'enabled_by_default = true'; do
+  grep -Fqx "$expected" <<< "$fsd_block" || fail "FSD registry contract is invalid: $expected"
+done
 
 while IFS='|' read -r skill_id expected_workflows; do
   skill_block="$(registry_skill_block "$skill_id")"
