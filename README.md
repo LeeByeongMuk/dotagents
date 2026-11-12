@@ -293,6 +293,7 @@ clone 위치나 저장소 내부 어댑터 경로가 바뀌면 기존 절대 심
 - Windows는 지원하지 않습니다.
 - 전역 설치는 Claude `settings.json`과 Codex `hooks.json`을 링크하므로 Claude의 `bypassPermissions` 기본 모드와 두 호스트의 커밋 메시지 훅이 함께 켜집니다. Codex 훅은 Codex에서 `/hooks`로 신뢰해야 실행됩니다. Codex `config.toml`과 Gemini 설정은 설치하지 않으며 `settings.example.json` 같은 예제도 자동 설치하지 않습니다.
 - 스킬 레지스트리는 검토 목록과 잠금 기록이며 외부 자산 자동 설치에는 아직 사용하지 않습니다. 프로필과 MCP는 아직 설치기에서 합성하지 않습니다.
+- 전역 스킬과 같은 이름의 프로젝트 로컬 스킬이 있으면 어느 쪽이 실행될지는 호스트가 정합니다. 프로젝트 본을 계속 쓰려면 이름을 다르게 둡니다.
 
 ## 라이선스
 
