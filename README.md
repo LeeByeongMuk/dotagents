@@ -189,7 +189,7 @@ cd /path/to/dotagents
 
 Codex와 Gemini는 `~/.agents/skills/` 별칭에서 같은 owned 스킬을 발견합니다.
 
-Codex 모델 기본값 복원, 간단한 작업용 CLI 프로필과 로컬 승인 규칙 관리는 [Codex 설정 안내](agents/adapters/codex/README.md)를 참고하세요. `make doctor`는 전역 설치가 있으면 세 호스트 진입점이 `dist/`를 가리키는지와 Codex 커밋 훅 링크를 확인합니다. 공통 규칙이 없는 옛 `agents/adapters/` 진입점을 가리키는 링크도 감지하며, 기존 파일을 변경하지는 않습니다.
+Codex 모델 기본값 복원, 간단한 작업용 CLI 프로필과 로컬 승인 규칙 관리는 [Codex 설정 안내](agents/adapters/codex/README.md)를 참고하세요. `make doctor`는 전역 설치의 호스트 진입점, Claude 설정·스킬, Codex 커밋 훅과 공통 스킬 별칭을 검사합니다. 설치 기록이 있는데 `.agents` 연결이 없거나 깨진 경우, 잘못된 원본을 가리키는 경우도 알립니다. 진단은 기존 파일을 변경하지 않으며, 링크가 정상이어도 호스트의 실제 로딩·실행이나 Codex 훅 신뢰 상태까지 확인한 것은 아닙니다.
 
 실제 홈에 설치하는 전역 설치는 주 체크아웃이 main일 때만 실행됩니다. linked worktree나 다른 브랜치에서 실행하면 링크를 바꾸지 않고 중단하며, `--dry-run`은 경고만 표시합니다.
 
@@ -201,24 +201,37 @@ Codex 모델 기본값 복원, 간단한 작업용 CLI 프로필과 로컬 승�
 ./tooling/scripts/install.sh --dry-run --global --force
 ```
 
-### 프로젝트에 적용
+### 프로젝트에 적용 — 권장 방식
+
+개인 환경에서는 전역 설치로 공통 규칙·스킬을 사용하고, 각 프로젝트에는 고유한 `AGENTS.md`와 전용 스킬을 둡니다. 전역 설치 후 프로젝트별로 설치기를 다시 실행할 필요는 없습니다. 프로젝트 규칙에는 실제 빌드·검증 명령, 도메인 규칙과 프로젝트 고유 관례를 적고 공통 규칙은 복사하지 않습니다. Claude·Gemini의 프로젝트 진입 파일이 필요하면 해당 프로젝트의 기존 참조 방식을 따릅니다.
+
+프로젝트 규칙이 아직 없을 때만 dotagents 저장소 루트에서 아래 예시로 템플릿을 복사합니다. 기존 파일이나 심볼릭 링크가 있으면 보존하고 내용을 먼저 확인합니다.
+
+```bash
+project_dir=/path/to/project
+if [ -e "$project_dir/AGENTS.md" ] || [ -L "$project_dir/AGENTS.md" ]; then
+  printf '%s\n' 'AGENTS.md가 이미 있습니다. 파일 또는 링크 대상을 먼저 확인하세요.'
+else
+  cp -n agents/templates/generic/AGENTS.md "$project_dir/AGENTS.md"
+fi
+```
+
+Next.js 프로젝트는 위 복사 원본을 `agents/templates/nextjs/AGENTS.md`로 바꿀 수 있습니다. 이 템플릿도 기술 선택을 자동으로 가정하지 않습니다. FSD를 실제로 채택한 프로젝트만 `agents/templates/nextjs/fsd-optional.md`를 참고하세요.
+
+프로젝트 전용 스킬은 프로젝트가 소유한 `.agents/skills/` 등에 둡니다. `.agents`가 공통 원본을 가리키는 링크라면 그 안에서 전용 스킬을 만들거나 수정하지 않습니다. 여러 프로젝트에서 재사용할 필요가 확인된 스킬만 별도 요청으로 dotagents에 올립니다.
+
+### 프로젝트에 공통 파일을 직접 링크 — 선택 사항
+
+`--project`는 해당 프로젝트에 공통 원본을 직접 연결하는 별도 방식입니다. 프로젝트 고유 규칙을 생성하거나 기존 내용과 병합하지 않습니다.
 
 ```bash
 ./tooling/scripts/install.sh --dry-run --project /path/to/project
 ./tooling/scripts/install.sh --project /path/to/project
 ```
 
-프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`와 위 owned 스킬의 `.claude/skills/<스킬명>` 링크를 설치합니다. Codex와 Gemini는 프로젝트의 `.agents/skills` 별칭을 사용합니다. 기존 프로젝트 파일이 있으면 중단하므로 그 파일을 유지하면서 공통 규칙 경로만 직접 참고하거나, 내용을 검토한 뒤 명시적으로 `--force`를 사용해야 합니다.
+프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`와 위 owned 스킬의 `.claude/skills/<스킬명>` 링크를 설치합니다. Codex와 Gemini는 프로젝트의 `.agents/skills` 별칭을 사용합니다. 기존 파일이 있으면 설치가 중단됩니다. `--force`는 기존 파일을 백업하고 링크로 교체하는 선택이므로, 고유 규칙을 유지할 프로젝트에는 위 권장 방식을 사용하세요.
 
-프로젝트 고유 규칙을 새로 작성할 때는 템플릿을 복사해 실제 상황에 맞게 수정하세요.
-
-```bash
-cp agents/templates/generic/AGENTS.md /path/to/project/AGENTS.md
-# 또는
-cp agents/templates/nextjs/AGENTS.md /path/to/project/AGENTS.md
-```
-
-Next.js 템플릿은 기술 선택을 자동으로 가정하지 않습니다. FSD를 실제로 채택한 프로젝트만 `agents/templates/nextjs/fsd-optional.md`를 참고하세요.
+설치된 `AGENTS.md` 등은 공통 `dist/`를 가리킵니다. 이 링크에 템플릿을 복사하거나 직접 편집하면 공유 생성 파일이 바뀌므로, 링크 상태에서 프로젝트 고유 규칙을 작성하지 않습니다. 이미 프로젝트 링크 설치를 사용 중이라면 [제거](#제거)의 dry-run으로 제거될 링크를 확인하고 제거한 뒤 로컬 파일 방식으로 전환합니다.
 
 ## 제품 개발 워크플로우 사용
 
