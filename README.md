@@ -17,11 +17,12 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 
 ## 직접 만든 스킬과 훅
 
-이 저장소에서 직접 관리하는 스킬은 다음 3개입니다. 지원 호스트에서 `$스킬명`을 지정하거나 해당 작업을 요청하면 사용합니다.
+이 저장소에서 직접 관리하는 스킬은 다음과 같습니다. 지원 호스트에서 `$스킬명`을 지정하거나 해당 작업을 요청하면 사용합니다.
 
 | 스킬 | 하는 일 | 사용 예 |
 | --- | --- | --- |
 | [product-development-workflow](agents/skills/owned/product-development-workflow/SKILL.md) | 작은 수정은 바로 처리하고, 제품 기획은 `Plan`, 구현은 `Brief → Execute → Verify`로 진행합니다. 기존 PRD·이슈를 재사용하며 모델 비교는 사용자가 요청할 때만 수행합니다. | “이 기능을 기획해줘” / “이 PRD대로 구현하고 검증해줘” |
+| [fsd-refactor](agents/skills/owned/fsd-refactor/SKILL.md) | 이미 FSD를 채택한 프로젝트의 구조 위반을 조사하고 동작·렌더 결과·URL·API를 보존하며 리팩터링합니다. | “이 슬라이스의 FSD 구조 위반을 검토해줘” / “확인된 위반을 정리하고 검증해줘” |
 | [dotagents-promote](agents/skills/owned/dotagents-promote/SKILL.md) | 세션에서 얻은 재사용 가능한 관례를 공통 규칙·템플릿·스킬로 정리하고 별도 worktree 브랜치에 커밋합니다. main 병합은 별도 결정입니다. | “이번에 정한 공통 규칙을 dotagents에 반영해줘” |
 | [usage-guide](agents/skills/owned/usage-guide/SKILL.md) | 실제 화면과 UI 용어를 바탕으로 최종 사용자용 16:9 PDF와 단일 HTML 사용 가이드를 만듭니다. 화면 캡처 또는 CSS 목업, 빨간 번호 표시와 단계 설명을 사용하고 렌더 결과를 확인합니다. | “방금 만든 기능의 사용 가이드를 만들어줘” |
 
@@ -35,7 +36,7 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 
 프로젝트에 commitlint·gitlint·기존 커밋 훅이 있으면 프로젝트 검사를 우선합니다. 자체 커밋 규칙을 쓰는 프로젝트는 `git config dotagents.commitCheck false`로 공통 커밋 문체 검사를 건너뛸 수 있습니다. 도구 실행 전 훅은 문체 검사에 앞서 메시지와 경로를 읽으므로, 이 설정으로도 실행 전에 읽을 수 있는 메시지가 필요할 수 있습니다. 이 훅의 범위는 커밋 메시지이며 Git 작업 전반의 안전성 검사는 아닙니다. Gemini에는 아직 커밋 훅을 연결하지 않습니다.
 
-gstack 같은 외부 스킬은 [스킬 레지스트리](agents/registry/skills.toml)에 출처를 기록한 연동 대상입니다. 직접 만든 위 3개와 구분하며, 이 저장소의 설치기가 외부 스킬을 다운로드하지는 않습니다.
+gstack 같은 외부 스킬은 [스킬 레지스트리](agents/registry/skills.toml)에 출처를 기록한 연동 대상입니다. 직접 만든 위 스킬과 구분하며, 이 저장소의 설치기가 외부 스킬을 다운로드하지는 않습니다.
 
 ## 저장소 구조
 
@@ -138,6 +139,7 @@ agents/rules/ 공통 규칙
 - 하나의 살아 있는 제품 Brief와 자율 실행, 결정론적 검증을 잇는 기본 제품 개발 워크플로우
 - 사용자가 요청할 때 Claude·Codex 후보를 하드 제약, 프로젝트 eval, 문맥 연속성, 비용·지연 순으로 비교하는 Model Fit 권고
 - Claude Code, Codex, Gemini의 공통 스킬 발견
+- 이미 FSD를 채택한 프로젝트의 구조를 동작 보존 범위에서 정리하는 `fsd-refactor` 스킬
 - 세션에서 발견한 공통 관례를 격리 브랜치로 승격 제안·반영하는 `dotagents-promote` 스킬
 - 기능을 최종 사용자용 16:9 사용 가이드 PDF와 단일 HTML로 만드는 `usage-guide` 스킬
 - owned/external 스킬 목록과 검토한 외부 소스 커밋 잠금
@@ -178,6 +180,7 @@ cd /path/to/dotagents
 - `~/.claude/CLAUDE.md` → `dist/claude/CLAUDE.md`
 - `~/.claude/settings.json` → `agents/adapters/claude/settings.json`
 - `~/.claude/skills/product-development-workflow` → owned 워크플로우 스킬
+- `~/.claude/skills/fsd-refactor` → owned FSD 리팩터링 스킬
 - `~/.claude/skills/dotagents-promote` → owned 승격 스킬
 - `~/.claude/skills/usage-guide` → owned 사용 가이드 스킬
 - `~/.codex/AGENTS.md` → `dist/codex/AGENTS.md`
@@ -226,7 +229,7 @@ Next.js 프로젝트는 위 복사 원본을 `agents/templates/nextjs/AGENTS.md`
 ./tooling/scripts/install.sh --project /path/to/project
 ```
 
-프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/skills/product-development-workflow`, `.claude/skills/dotagents-promote`, `.claude/skills/usage-guide` 링크를 설치합니다. Codex와 Gemini는 프로젝트의 `.agents/skills` 별칭을 사용합니다. 기존 파일이 있으면 설치가 중단됩니다. `--force`는 기존 파일을 백업하고 링크로 교체하는 선택이므로, 고유 규칙을 유지할 프로젝트에는 위 권장 방식을 사용하세요.
+프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`와 위 owned 스킬의 `.claude/skills/<스킬명>` 링크를 설치합니다. Codex와 Gemini는 프로젝트의 `.agents/skills` 별칭을 사용합니다. 기존 파일이 있으면 설치가 중단됩니다. `--force`는 기존 파일을 백업하고 링크로 교체하는 선택이므로, 고유 규칙을 유지할 프로젝트에는 위 권장 방식을 사용하세요.
 
 설치된 `AGENTS.md` 등은 공통 `dist/`를 가리킵니다. 이 링크에 템플릿을 복사하거나 직접 편집하면 공유 생성 파일이 바뀌므로, 링크 상태에서 프로젝트 고유 규칙을 작성하지 않습니다. 이미 프로젝트 링크 설치를 사용 중이라면 [제거](#제거)의 dry-run으로 제거될 링크를 확인하고 제거한 뒤 로컬 파일 방식으로 전환합니다.
 
@@ -303,6 +306,7 @@ clone 위치나 저장소 내부 어댑터 경로가 바뀌면 기존 절대 심
 - Windows는 지원하지 않습니다.
 - 전역 설치는 Claude `settings.json`과 Codex `hooks.json`을 링크하므로 Claude의 `bypassPermissions` 기본 모드와 두 호스트의 커밋 메시지 훅이 함께 켜집니다. Codex 훅은 Codex에서 `/hooks`로 신뢰해야 실행됩니다. Codex `config.toml`과 Gemini 설정은 설치하지 않으며 `settings.example.json` 같은 예제도 자동 설치하지 않습니다.
 - 스킬 레지스트리는 검토 목록과 잠금 기록이며 외부 자산 자동 설치에는 아직 사용하지 않습니다. 프로필과 MCP는 아직 설치기에서 합성하지 않습니다.
+- 전역 스킬과 같은 이름의 프로젝트 로컬 스킬이 있으면 어느 쪽이 실행될지는 호스트가 정합니다. 프로젝트 본을 계속 쓰려면 이름을 다르게 둡니다.
 
 ## 라이선스
 
