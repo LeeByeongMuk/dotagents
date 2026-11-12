@@ -197,4 +197,22 @@ run_doctor 1
 [[ "$(grep -c '^missing: generated host entry point' "$TEST_ROOT/output")" -eq 3 ]] || fail "missing generated files were not diagnosed"
 [[ ! -e "$TEST_ROOT/unbuilt/dist" ]] || fail "doctor generated files"
 
+echo "scenario: every link a real global install records is diagnosed when it goes missing"
+# Driven by the installer's own manifest, so a link added to install.sh but
+# not to doctor.sh fails here instead of silently going unchecked.
+installed_home="$TEST_ROOT/installed-home"
+installed_state="$TEST_ROOT/installed-state"
+mkdir "$installed_home"
+run_installed_doctor() {
+  DOTAGENTS_HOME="$installed_home" XDG_STATE_HOME="$installed_state" "$REPO_ROOT/tooling/scripts/doctor.sh" > "$TEST_ROOT/output" 2>&1 < /dev/null
+}
+DOTAGENTS_HOME="$installed_home" XDG_STATE_HOME="$installed_state" "$REPO_ROOT/tooling/scripts/install.sh" --global > /dev/null
+run_installed_doctor || fail "doctor rejected a fresh global install"
+while IFS=$'\t' read -r target source _; do
+  unlink "$target"
+  ! run_installed_doctor || fail "doctor does not diagnose the installed link: $target"
+  ln -s "$source" "$target"
+done < "$installed_state/dotagents/install.tsv"
+run_installed_doctor || fail "doctor rejected the restored global install"
+
 echo "All doctor scenarios passed."
