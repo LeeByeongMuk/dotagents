@@ -100,7 +100,7 @@ if [[ -n "$installed_repo" ]]; then
 
   check_link "$target_root/.codex/hooks.json" "$installed_agents/adapters/codex/hooks.json" "Codex commit hook link"
   check_link "$target_root/.claude/settings.json" "$installed_agents/adapters/claude/settings.json" "Claude settings link"
-  for skill in product-development-workflow fsd-refactor dotagents-promote usage-guide; do
+  for skill in product-development-workflow fsd-refactor dotagents-promote usage-guide repo-activity-review; do
     check_link "$target_root/.claude/skills/$skill" "$installed_agents/skills/owned/$skill" "Claude skill link ($skill)"
     # The alias is a tracked link inside the source checkout; the installer
     # does not create it, so a reinstall cannot bring it back.

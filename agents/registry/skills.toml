@@ -45,6 +45,17 @@ optional = true
 enabled_by_default = true
 
 [[skills]]
+id = "repo-activity-review"
+kind = "owned"
+source = "agents/skills/owned/repo-activity-review"
+license = "MIT"
+hosts = ["claude", "codex", "gemini"]
+profiles = ["default", "full"]
+workflows = []
+optional = true
+enabled_by_default = true
+
+[[skills]]
 id = "mattpocock-grilling"
 kind = "external"
 source_id = "mattpocock-skills"

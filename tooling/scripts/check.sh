@@ -41,6 +41,9 @@ required=(
   agents/skills/owned/usage-guide/assets/skeleton.html
   agents/skills/owned/usage-guide/scripts/render.sh
   agents/skills/owned/usage-guide/scripts/inline_assets.py
+  agents/skills/owned/repo-activity-review/SKILL.md
+  agents/skills/owned/repo-activity-review/references/recurring.md
+  agents/skills/owned/repo-activity-review/agents/openai.yaml
   agents/profiles/README.md
   agents/integrations/README.md
   agents/adapters/claude/CLAUDE.md agents/adapters/claude/settings.json agents/adapters/codex/AGENTS.md

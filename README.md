@@ -25,6 +25,7 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 | [fsd-refactor](agents/skills/owned/fsd-refactor/SKILL.md) | 이미 FSD를 채택한 프로젝트의 구조 위반을 조사하고 동작·렌더 결과·URL·API를 보존하며 리팩터링합니다. | “이 슬라이스의 FSD 구조 위반을 검토해줘” / “확인된 위반을 정리하고 검증해줘” |
 | [dotagents-promote](agents/skills/owned/dotagents-promote/SKILL.md) | 세션에서 얻은 재사용 가능한 관례를 공통 규칙·템플릿·스킬로 정리하고 별도 worktree 브랜치에 커밋합니다. main 병합은 별도 결정입니다. | “이번에 정한 공통 규칙을 dotagents에 반영해줘” |
 | [usage-guide](agents/skills/owned/usage-guide/SKILL.md) | 실제 화면과 UI 용어를 바탕으로 최종 사용자용 16:9 PDF와 단일 HTML 사용 가이드를 만듭니다. 화면 캡처 또는 CSS 목업, 빨간 번호 표시와 단계 설명을 사용하고 렌더 결과를 확인합니다. | “방금 만든 기능의 사용 가이드를 만들어줘” |
+| [repo-activity-review](agents/skills/owned/repo-activity-review/SKILL.md) | 지정한 로컬·GitHub 저장소의 실제 변경과 검증 근거로 기간별 활동과 현재 상태를 대화에 정리합니다. 반복 기록은 요청한 경우에만 저장합니다. | “이 저장소의 지난주 개발 활동을 근거와 함께 정리해줘” |
 
 직접 만든 실행 훅은 **커밋 메시지 검사** 1종이며, 실행 위치별 진입점이 있습니다.
 
@@ -142,6 +143,7 @@ agents/rules/ 공통 규칙
 - 이미 FSD를 채택한 프로젝트의 구조를 동작 보존 범위에서 정리하는 `fsd-refactor` 스킬
 - 세션에서 발견한 공통 관례를 격리 브랜치로 승격 제안·반영하는 `dotagents-promote` 스킬
 - 기능을 최종 사용자용 16:9 사용 가이드 PDF와 단일 HTML로 만드는 `usage-guide` 스킬
+- 지정한 저장소와 기간의 변경·검증 근거를 정리하는 `repo-activity-review` 스킬
 - owned/external 스킬 목록과 검토한 외부 소스 커밋 잠금
 
 다음 항목은 구조만 예약되어 있거나 아직 자동 실행 기능이 아닙니다.
@@ -183,6 +185,7 @@ cd /path/to/dotagents
 - `~/.claude/skills/fsd-refactor` → owned FSD 리팩터링 스킬
 - `~/.claude/skills/dotagents-promote` → owned 승격 스킬
 - `~/.claude/skills/usage-guide` → owned 사용 가이드 스킬
+- `~/.claude/skills/repo-activity-review` → owned 저장소 활동 정리 스킬
 - `~/.codex/AGENTS.md` → `dist/codex/AGENTS.md`
 - `~/.codex/hooks.json` → `agents/adapters/codex/hooks.json`
 - `~/.gemini/GEMINI.md` → `dist/gemini/GEMINI.md`
