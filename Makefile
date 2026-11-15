@@ -23,11 +23,11 @@ check: ## 저장소 전체 검사
 test: ## 모든 회귀 테스트
 	@for t in tooling/tests/*_test.sh; do echo "== $$t"; "$$t" >/dev/null || exit 1; done; echo "all tests passed"
 
-install-dry: ## 전역 설치 dry-run
-	./tooling/scripts/install.sh --dry-run --global
+install-dry: ## 기존 항목 백업 후 전역 설치 dry-run
+	./tooling/scripts/install.sh --dry-run --global --force
 
-install: ## 전역 설치
-	./tooling/scripts/install.sh --global
+install: ## 기존 항목 백업 후 전역 설치
+	./tooling/scripts/install.sh --global --force
 
 uninstall: ## 전역 제거
 	./tooling/scripts/uninstall.sh --global

@@ -172,8 +172,8 @@ make doctor   # 설치 상태 진단
 
 ```bash
 cd /path/to/dotagents
-./tooling/scripts/install.sh --dry-run --global
-./tooling/scripts/install.sh --global
+make install-dry
+make install
 ```
 
 전역 모드는 다음 링크를 만듭니다.
@@ -196,13 +196,11 @@ Codex 모델 기본값 복원, 간단한 작업용 CLI 프로필과 로컬 승�
 
 실제 홈에 설치하는 전역 설치는 주 체크아웃이 main일 때만 실행됩니다. linked worktree나 다른 브랜치에서 실행하면 링크를 바꾸지 않고 중단하며, `--dry-run`은 경고만 표시합니다.
 
-기존 대상이 있으면 기본 동작은 충돌을 표시하고 아무것도 변경하지 않는 것입니다. `--force`는 기존 항목을 타임스탬프가 붙은 형제 경로로 백업한 뒤 설치합니다. 실제 설정을 먼저 검토하지 않은 상태에서는 `--force`를 사용하지 마세요.
+`make install`은 `--global --force`로 실행하여 충돌하는 기존 항목을 타임스탬프가 붙은 형제 경로로 백업한 뒤 저장소 링크로 교체합니다. 이미 올바른 링크는 유지합니다. 백업된 설정은 더 이상 활성 설정으로 사용되지 않습니다. `make install-dry`로 변경 대상을 먼저 확인할 수 있습니다.
+
+충돌 시 중단하려면 `./tooling/scripts/install.sh --global`을 직접 실행합니다.
 
 설치 도중 명령이 실패하거나 INT·TERM으로 중단되면 바뀐 링크·백업과 설치 기록을 이전 상태로 복구합니다. 복구 자체가 실패하면 수동 복구에 필요한 파일 경로를 출력하고 남깁니다. SIGKILL이나 전원 차단에는 이 복구가 실행되지 않습니다.
-
-```bash
-./tooling/scripts/install.sh --dry-run --global --force
-```
 
 ### 프로젝트에 적용 — 권장 방식
 
