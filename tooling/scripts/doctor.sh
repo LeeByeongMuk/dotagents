@@ -3,6 +3,9 @@
 # Diagnostics only: never replace user files or install hooks.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+source "$SCRIPT_DIR/lib/owned-skills.sh"
+
 missing=0
 link_issue=0
 entry_issue=0
@@ -100,12 +103,19 @@ if [[ -n "$installed_repo" ]]; then
 
   check_link "$target_root/.codex/hooks.json" "$installed_agents/adapters/codex/hooks.json" "Codex commit hook link"
   check_link "$target_root/.claude/settings.json" "$installed_agents/adapters/claude/settings.json" "Claude settings link"
-  for skill in product-development-workflow fsd-refactor dotagents-promote usage-guide repo-activity-review; do
-    check_link "$target_root/.claude/skills/$skill" "$installed_agents/skills/owned/$skill" "Claude skill link ($skill)"
-    # The alias is a tracked link inside the source checkout; the installer
-    # does not create it, so a reinstall cannot bring it back.
-    check_link "$installed_agents/skills/$skill" "$installed_agents/skills/owned/$skill" "shared skill alias ($skill)" "restore the alias in the source checkout"
-  done
+  # Diagnose the installed checkout's desired set, including declarations not
+  # yet present in its install ledger. Do not use the calling worktree's set.
+  if owned_skills="$(owned_skill_names "$installed_agents")"; then
+    while IFS= read -r skill; do
+      check_link "$target_root/.claude/skills/$skill" "$installed_agents/skills/owned/$skill" "Claude skill link ($skill)"
+      # The alias is a tracked link inside the source checkout; the installer
+      # does not create it, so a reinstall cannot bring it back.
+      check_link "$installed_agents/skills/$skill" "$installed_agents/skills/owned/$skill" "shared skill alias ($skill)" "restore the alias in the source checkout"
+    done <<< "$owned_skills"
+  else
+    echo "invalid: installed owned skill source; restore the source checkout before reinstalling" >&2
+    link_issue=1
+  fi
   echo "note: link checks do not verify host loading or execution; review and trust Codex hooks with /hooks; trust is not checked here"
 elif [[ "$link_issue" -ne 0 ]]; then
   echo "skip: host and skill links (repair the managed .agents link or source first)"

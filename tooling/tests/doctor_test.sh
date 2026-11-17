@@ -34,8 +34,11 @@ for entry in 'claude/CLAUDE.md' 'codex/AGENTS.md' 'gemini/GEMINI.md'; do
 done
 ln -s "$source_repo/agents/adapters/claude/settings.json" "$test_home/.claude/settings.json"
 mkdir -p "$test_home/.claude/skills"
-for skill in product-development-workflow fsd-refactor dotagents-promote usage-guide repo-activity-review; do
-  ln -s "$source_repo/agents/skills/owned/$skill" "$test_home/.claude/skills/$skill"
+[[ -f "$source_repo/agents/skills/owned/product-development-workflow/SKILL.md" ]] || fail "core workflow fixture is missing"
+for skill_dir in "$source_repo"/agents/skills/owned/*; do
+  [[ -d "$skill_dir" ]] || continue
+  skill="${skill_dir##*/}"
+  ln -s "$skill_dir" "$test_home/.claude/skills/$skill"
 done
 run_doctor 1
 grep -q '^missing: Codex commit hook link' "$TEST_ROOT/output" || fail "missing hook link was not diagnosed"
@@ -95,13 +98,13 @@ for entry in 'claude/CLAUDE.md' 'codex/AGENTS.md' 'gemini/GEMINI.md'; do
 done
 run_doctor 0
 
-for relative in .claude/settings.json \
-  .claude/skills/product-development-workflow .claude/skills/fsd-refactor \
-  .claude/skills/dotagents-promote .claude/skills/usage-guide \
-  .claude/skills/repo-activity-review \
-  .agents/skills/product-development-workflow .agents/skills/fsd-refactor \
-  .agents/skills/dotagents-promote .agents/skills/usage-guide \
-  .agents/skills/repo-activity-review; do
+link_cases=(.claude/settings.json)
+for skill_dir in "$source_repo"/agents/skills/owned/*; do
+  [[ -d "$skill_dir" ]] || continue
+  skill="${skill_dir##*/}"
+  link_cases+=(".claude/skills/$skill" ".agents/skills/$skill")
+done
+for relative in "${link_cases[@]}"; do
   target="$test_home/$relative"
   reported_target="$target"
   fix='reinstall from the primary checkout'

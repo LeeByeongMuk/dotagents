@@ -55,6 +55,9 @@ required=(
   tooling/scripts/build.sh
   tooling/scripts/check-sources.sh
   tooling/scripts/doctor.sh
+  tooling/scripts/lib/owned-skills.sh
+  tooling/scripts/check-owned-skills.sh
+  tooling/tests/owned_skills_test.sh
   agents/templates/generic/AGENTS.md agents/templates/nextjs/AGENTS.md
   agents/templates/context-docs/README.md agents/templates/context-docs/domain-overview.md
   agents/templates/context-docs/interface-contract.md agents/templates/context-docs/integration-map.md
@@ -106,7 +109,7 @@ else
   ok "no broken symbolic links"
 fi
 
-for script in "$REPO_ROOT"/tooling/scripts/*.sh "$REPO_ROOT"/tooling/tests/*.sh "$REPO_ROOT"/tooling/evals/product-development/*.sh; do
+for script in "$REPO_ROOT"/tooling/scripts/*.sh "$REPO_ROOT"/tooling/scripts/lib/*.sh "$REPO_ROOT"/tooling/tests/*.sh "$REPO_ROOT"/tooling/evals/product-development/*.sh; do
   bash -n "$script" || bad "shell syntax failed: ${script#"$REPO_ROOT/"}"
 done
 ok "shell syntax"
