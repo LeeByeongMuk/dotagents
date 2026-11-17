@@ -1,7 +1,7 @@
 # dotagents 개편 작업 절차서
 
 - Run ID: `dotagents-renewal`
-- Status: `EXECUTING`
+- Status: `COMPLETE`
 - Updated: `2026-11-17`
 - 작성 기준 커밋: `3b6145f`
 - 현재 범위: 사용자의 2026-11-17 실행 요청에 따라 P0~P3 전체를 병렬 구현하고 기능별 PR을 만든다. 커밋·푸시·PR 생성은 허용됐으며 병합·전역 적용은 사용자가 PR을 검토한 뒤 결정한다.
@@ -21,14 +21,14 @@ P1의 핵심 변경은 **owned 스킬의 선택 원본을 하나로 만들고, �
 - 빈 목록이나 잘못된 원본을 정상적인 전체 제거로 처리하지 않는다.
 - 파일 전달·발견 경로 검사와 실제 호스트 실행, 모델의 작업 품질을 별도로 보고한다.
 
-## 현재 근거와 소유 경계
+## 개편 전 근거와 소유 경계 (`3b6145f`)
 
 | 확인한 사실 | 근거와 의미 |
 |---|---|
 | 전역 설치 11개, 프로젝트 설치 9개 항목에 owned 스킬 5개가 각각 들어 있다 | [install.sh](../../../tooling/scripts/install.sh)의 두 `entries` 배열. 고정 항목은 이번 범위에서 유지 |
-| 진단기는 전역 설치의 스킬 5개와 원본의 alias 5개를 따로 나열한다 | [doctor.sh](../../../tooling/scripts/doctor.sh). 프로젝트용 진단 명령 추가는 이번 범위가 아님 |
+| 진단기는 전역 설치의 스킬 5개와 원본의 alias 5개를 따로 나열한다 | [doctor.sh](../../../tooling/scripts/doctor.sh). 프로젝트용 진단 명령은 P1 밖에서 T08로 분리 |
 | 설치 기록에 있는 모든 전역 링크의 누락을 검사하는 회귀 테스트가 있다 | [doctor_test.sh](../../../tooling/tests/doctor_test.sh). 목록 중복이 현재 무방비 상태라는 의미는 아님 |
-| owned 스킬 5개도 registry에 등록돼 있다 | [skills.toml](../../../agents/registry/skills.toml), [레지스트리 규격](../../../agents/registry/README.md). 현재 설치 입력은 아니며 외부 자산도 자동 다운로드하지 않음 |
+| owned 스킬 5개도 registry에 등록돼 있다 | [skills.toml](../../../agents/registry/skills.toml), [레지스트리 규격](../../../agents/registry/README.md). 기준 상태에서 설치 입력은 아니며 외부 자산도 자동 다운로드하지 않음 |
 | alias·registry 검사는 일부 항목을 이름별로 검증한다 | [structure_test.sh](../../../tooling/tests/structure_test.sh). 모든 owned 디렉터리와의 일반적인 집합 일치 검사는 보강 필요 |
 | 공통 규칙은 호스트 진입점에 본문으로 전달한다 | [ADR 0003](../../decisions/0003-generated-host-entry-points.md). 이번 변경에서 생성·전달 방식 유지 |
 | 전역 설치가 주 체크아웃을 참조하며 main·worktree 보호 조건이 있다 | [저장소 지침](../../../AGENTS.md). 현재 주 체크아웃의 `agents/adapters/claude/settings.json` 수정은 사용자 변경으로 보존 |
@@ -136,7 +136,7 @@ P1 내부 순서는 `T01 → T02 → T04 → T05`다. T04는 기술 계약 확�
 
 ### T09 소유 경계와 고정 항목
 
-아래 항목은 서로 독립적으로 결정한다. 한 문제의 발견이 나머지 개편까지 승인하지 않는다.
+사용자가 전체 구현을 승인한 항목을 선택형 managed 전역 설치로 구현했다. `.agents`와 skills는 실제 디렉터리로 두고 owned 항목만 연결하며, 호스트 설정은 사용자 소유 일반 파일로 분리한다. 고정 항목 선언은 설치·진단이 공유한다. legacy 기본값과 기존 프로젝트 링크 모드는 유지하며, legacy에서 managed로의 전환은 명시적 제거·재설치 절차를 따른다. 아래 근거는 개편 전 확인 항목이고 구체적인 동작·이행·보장 범위는 [PR #46](https://github.com/LeeByeongMuk/dotagents/pull/46)이 원본이다.
 
 | 항목 | 시작할 근거 | 먼저 할 작은 확인 |
 |---|---|---|
@@ -160,7 +160,7 @@ T06은 잠긴 출처·선택한 항목·명시한 대상에 한정한 설치·�
 
 ## 수용 조건
 
-체크된 계획 결정과 아직 실행하지 않은 구현 검증을 구분한다.
+계획 결정과 실제 실행 증거를 구분한다. 완료 범위는 별도 PR 전달까지이며 병합·실제 홈 적용은 포함하지 않는다.
 
 - [x] `AC-01` 원본·설치 대상·alias·registry·테스트 준비의 선언 지점과 현행 소유 경계를 기준 커밋에서 확인한다.
 - [x] `AC-02` 기준선 검사 결과, 정규화한 전역·프로젝트 설치 기록, 가상 스킬 누락을 재현하는 실패 결과를 기록한다.
@@ -169,29 +169,29 @@ T06은 잠긴 출처·선택한 항목·명시한 대상에 한정한 설치·�
 - [x] `AC-05` 새 가상 스킬의 추가·제거가 반복 목록 수정 없이 설치·전역 진단에 반영되고, 빈 목록·잘못된 이름·불완전한 원본은 무변경 실패한다. alias·registry 불일치도 검출한다.
 - [x] `AC-06` legacy 기본 설치에서 기존 자산의 정규화된 전후 설치 기록이 일치하고, 해당 소유 경계에서 충돌·백업·실패 복구·제거·사용자 변경 보존 검사와 행동 단언을 유지한다.
 - [x] `AC-07` 규칙 본문 전달·스킬 발견 경로·훅 연결의 구조 검사가 유지된다. 실제 호스트 실행 여부와 프로젝트 로컬 규칙의 비변경을 따로 기록한다.
-- [ ] `AC-08` `make check`, 변경 형식·링크 검사가 통과하고 추가·제거 절차와 실행 증거가 실제 상태에 맞는다.
+- [x] `AC-08` `make check`, 변경 형식·링크 검사가 통과하고 추가·제거 절차와 실행 증거가 실제 상태에 맞는다.
 
-- [ ] `AC-09` 선택적 설치 구조에서 설정 소유권·공유 namespace·고정 항목의 책임을 명시하고 기존 설치 이행·충돌·복구를 검증한다.
-- [ ] `AC-10` 외부 스킬의 출처·고정 버전·호스트 설치 범위를 명시하고 선택한 항목만 설치·갱신·제거하는 경로를 검증한다.
-- [ ] `AC-11` 실제 추가된 인터페이스를 대상으로 제한된 모델 평가를 실행하고 모델·effort·입력·결과·측정 한계를 기록한다.
+- [x] `AC-09` 선택적 설치 구조에서 설정 소유권·공유 namespace·고정 항목의 책임을 명시하고 기존 설치 이행·충돌·복구를 검증한다.
+- [x] `AC-10` 외부 스킬의 출처·고정 버전·호스트 설치 범위를 명시하고 선택한 항목만 설치·갱신·제거하는 경로를 검증한다.
+- [x] `AC-11` 실제 추가된 인터페이스를 대상으로 제한된 모델 평가를 실행하고 모델·effort·입력·결과·측정 한계를 기록한다.
 - [x] `AC-12` 선택형 환경 프로필의 초기화·미리보기·적용·드리프트·제거를 임시 경로에서 검증하고 OS별 미실행 범위를 표시한다.
-- [ ] `AC-13` 프로젝트 준비·점검이 로컬 규칙·기존 파일·symlink 경계를 보존하고 전역 dotagents 없이 사용할 수 있음을 검증한다.
-- [ ] `AC-14` PR별 필수 검사와 필요한 조합 검증이 통과하며 기존 PR #40과의 중복·의존·충돌을 표시한다.
-- [ ] `AC-15` 모든 작업을 목적별 PR로 전달하고 본인 assignee와 의존 관계를 설정한다. 자동 병합·전역 적용은 수행하지 않는다.
+- [x] `AC-13` 프로젝트 준비·점검이 로컬 규칙·기존 파일·symlink 경계를 보존하고 전역 dotagents 없이 사용할 수 있음을 검증한다.
+- [x] `AC-14` PR별 필수 검사와 필요한 조합 검증이 통과하며 기존 PR #40과의 중복·의존·충돌을 표시한다.
+- [x] `AC-15` 모든 작업을 목적별 PR로 전달하고 본인 assignee와 의존 관계를 설정한다. 자동 병합·전역 적용은 수행하지 않는다.
 
 ## PR 분할과 병렬 실행
 
 | 작업 단위 | 브랜치 | 범위 | 의존 관계 | 상태 |
 |---|---|---|---|---|
-| 실행 계획·전체 검증 기록 | `docs/dotagents-renewal-plan` | 사용자 전체 실행 범위와 결과 원본 | 없음 | [PR #43](https://github.com/LeeByeongMuk/dotagents/pull/43), 진행 중 갱신 |
+| 실행 계획·전체 검증 기록 | `docs/dotagents-renewal-plan` | 사용자 전체 실행 범위와 결과 원본 | main | [PR #43](https://github.com/LeeByeongMuk/dotagents/pull/43), 완료 |
 | owned 스킬 통합 | `feat/owned-skill-discovery` | T01·T02·T04·T05 | main | [PR #41](https://github.com/LeeByeongMuk/dotagents/pull/41), CI 통과 |
 | 환경 프로필·배포 비교 | `feat/environment-profile` | T03, T08 환경 확장 | main | [PR #44](https://github.com/LeeByeongMuk/dotagents/pull/44), CI·실제 엔진 검사 통과 |
-| 프로젝트 준비 도구 | `feat/project-readiness` | T08 프로젝트 확장 | main | [PR #42](https://github.com/LeeByeongMuk/dotagents/pull/42), CI 통과·문서 조합 보강 중 |
-| 설치 소유 경계 | `feat/managed-install-layout` | T09 | #41 위의 후속 PR | 구현·검증 중 |
-| 외부 스킬 관리 | `feat/external-skill-management` | T06 | main, managed 경로와 연동 가능 | 구현·검증 중 |
-| 표적 모델 평가 | `test/renewal-model-evaluation` | T07 | main, #42/#44의 명시한 문서 snapshot 평가 | 실제 평가 완료·PR 준비 중 |
+| 프로젝트 준비 도구 | `feat/project-readiness` | T08 프로젝트 확장 | main | [PR #42](https://github.com/LeeByeongMuk/dotagents/pull/42), CI 통과 |
+| 설치 소유 경계 | `feat/managed-install-layout` | T09 | **#41 위의 후속 PR** | [PR #46](https://github.com/LeeByeongMuk/dotagents/pull/46), CI 통과 |
+| 외부 스킬 관리 | `feat/external-skill-management` | T06 | main, managed 경로와 연동 가능 | [PR #47](https://github.com/LeeByeongMuk/dotagents/pull/47), CI 통과 |
+| 표적 모델 평가 | `test/renewal-model-evaluation` | T07 | main, #42/#44의 명시한 문서 snapshot 평가 | [PR #45](https://github.com/LeeByeongMuk/dotagents/pull/45), CI 통과 |
 
-Herdr 안에서 실행 중임을 확인했으며 사용자 허용에 따라 worktree 방식으로 격리한다. 동시에 세 구현 작업을 실행하고 완료된 슬롯을 후속 작업에 사용한다. 기존 PR [#40](https://github.com/LeeByeongMuk/dotagents/pull/40)의 설치 기본 `--force` 변경은 이번 작업에 임의로 포함하지 않는다. 커밋은 목적별로 만들고 PR은 사용자 본인에게 할당한다.
+Herdr 안에서 실행 중임을 확인하고 사용자 허용에 따라 worktree 방식으로 격리했다. 세 구현 에이전트가 병렬 작업하고 완료된 슬롯에서 후속 작업을 수행했다. 7개 PR 모두 `LeeByeongMuk`에게 할당했으며 자동 병합은 설정하지 않았다. 기존 PR [#40](https://github.com/LeeByeongMuk/dotagents/pull/40)의 `make install --force` 변경은 어느 PR에도 포함하지 않았다. #46은 #41 병합 후 base를 main으로 바꿔 검토하며, 다른 PR은 main을 대상으로 한다.
 
 ## 결정 상태와 열린 제품 결정
 
@@ -208,47 +208,59 @@ Herdr 안에서 실행 중임을 확인했으며 사용자 허용에 따라 work
 
 ## 실행 체크포인트와 리뷰 반영
 
-- 현재 상태: Fable 리뷰와 계획 수정 뒤 사용자 요청으로 P0~P3 병렬 구현 시작. `EXECUTING`이다.
-- 다음 행동: 아래 PR 분할 표에 따라 각 worktree의 검증·커밋·PR을 완료하고 의존 관계와 증거를 모은다.
+- 현재 상태: Fable 리뷰와 최종 계획 수정 뒤 P0~P3 구현·검증·목적별 PR 전달을 완료했다. `COMPLETE`이며 병합 완료를 뜻하지 않는다.
+- 다음 행동: 사용자가 PR별 도입 여부를 판단한다. 자동 병합·main 반영·실제 홈 적용은 수행하지 않았다.
 - 문서 원본: 이 절차서와 [문서 안내](../../README.md). 구현 파일과 현재 상태는 각 PR·worktree를 기준으로 확인한다. 주 체크아웃과 실제 홈의 설정은 이번 작업에서 변경하지 않는다.
 - 검토 반영: 필수 A/B 실험 제거, owned 스킬로 범위 제한, 세 원본의 역할 분리, 설치 기록 호환성과 추가·제거·빈 목록 검증 구체화, 소유권·배포 결정을 조건부 작업으로 분리.
 - 보완 판단: 공용 함수를 테스트 기대값의 유일한 원본으로 쓰지 않는다. 빈 목록뿐 아니라 일부 원본 누락도 실패시켜 오인 제거를 막는다. 계획 확정 뒤의 별도 재리뷰는 필수 단계가 아니다.
 
 ### Model Fit
 
-- Decision: `switch` — 사용자 지정 모델을 독립 리뷰 CLI에 적용한 범위다. 현재 조정 대화의 모델을 전환했다는 의미는 아니다.
-- Primary: `anthropic/claude-fable-5-2` — 계획 리뷰.
-- Effort: `max` — CLI 실행 인자 `--effort max`로 지정.
-- Next-run recommendation: `None`. 구현 모델은 추천이 아니라 사용자 지정이다.
-- Optional secondary: `None`.
-- Confidence: `high` — 사용자 지정과 실제 실행 기록에 근거하며 모델 간 우열 평가가 아니다.
-- Hard filters: `None` — 재로그인 후 지정 모델 호출 성공.
-- Evidence: `2026-11-17`, Claude Code `2.1.326`, `--model claude-fable-5-2 --effort max`, 도구 없는 리뷰 1회. 종료 코드 `0`, `is_error: false`, 응답 모델과 `modelUsage` 모두 `claude-fable-5-2`. 출력 토큰 `99,168`은 추론을 포함한다. 모델 ID는 [공식 모델 문서](https://platform.claude.com/docs/en/models/fable-5-2/overview)에서도 확인했다.
-- Tradeoff: 사용자 지정이므로 별도 후보 비교를 생략했다. Fable은 제공된 자료를 읽었으며 설치·검사·chezmoi를 실행하지 않았다.
-- Execution: `applied by host` — 리뷰 CLI만 적용·완료. 최종 문서 편집과 검증은 조정 에이전트가 수행한다.
-- 구현 적용: `openai/gpt-6.1-sol`, effort `high`. `2026-11-17` Codex 런타임 모델 목록에서 재확인하고 각 병렬 구현 에이전트에 명시적으로 적용했다. 다른 모델로 대체하지 않는다.
-- Re-evaluate when: 구현 착수 시 모델 목록·계정 가용성이 변경되거나 사용자가 지정을 바꿀 때.
+- Decision: `keep` — 사용자 지정 구현 모델을 세 병렬 구현 에이전트와 후속 작업에 계속 적용했다. 조정 대화의 모델을 변경했다는 의미는 아니다.
+- Primary: `openai/gpt-6.1-sol` — 기능 구현·회귀 검사·수정.
+- Effort: `high` — 에이전트 생성 시 명시적으로 지정.
+- Next-run recommendation: `None`. 모델 비교에 따른 추천이 아니라 사용자 지정이다.
+- Optional secondary: `anthropic/claude-fable-5-2`, `max` — 완료된 독립 계획 리뷰 단계에만 사용.
+- Confidence: `high` — 사용자 지정과 실행 기록에 근거하며 모델 간 우열 평가가 아니다.
+- Hard filters: `None` — 재로그인 후 지정 리뷰 모델 호출 성공, 구현 시 모델 목록·가용성 확인.
+- Evidence: `2026-11-17`, Claude Code `2.1.326`, `--model claude-fable-5-2 --effort max`, 도구 없는 계획 리뷰 1회. 종료 코드 `0`, `is_error: false`, 응답 모델과 `modelUsage` 모두 `claude-fable-5-2`. 출력 토큰 `99,168`은 추론을 포함한다. 이후 세 구현 에이전트의 모델·effort를 `gpt-6.1-sol`·`high`로 지정했다.
+- Tradeoff: 사용자 지정이므로 후보 비교를 생략했다. Fable은 제공된 자료를 검토했으며 설치·검사·chezmoi를 실행하지 않았다. 표적 인터페이스 평가는 구현 검증과 별도로 기록한다.
+- Execution: `applied by host` — 계획 리뷰 CLI와 구현 에이전트에 각 지정 적용. 전체 문서 정리·통합 검증·PR 전달은 조정 에이전트가 수행했다.
+- Re-evaluate when: 사용자가 모델 지정을 바꾸거나 후속 실행의 계정·모델 가용성이 달라질 때.
 
 ## 검증 증거
 
+모든 결과는 2026-11-17의 명시한 커밋·격리 fixture를 기준으로 한다. 실제 홈·기존 프로젝트를 바꾸지 않았으며 GitHub CI는 각 PR의 최신 커밋에서 확인했다.
+
 | 대상 | 방법 | 결과 |
 |---|---|---|
-| 독립 계획 리뷰 | Fable 5.2 `max`, 제공된 문서·코드의 구조 검토 | PASS — 2026-11-17 실제 호출 성공. 핵심 범위·의존 관계·책임 구분 지적 반영. 구현 AC 검증으로 사용하지 않음 |
+| 독립 계획 리뷰 | Fable 5.2 `max`, 제공된 문서·코드의 구조 검토 | PASS — 실제 호출 성공. 범위·의존 관계·책임 구분 지적 반영. 구현 AC 검증으로 사용하지 않음 |
 | `AC-04` | 계획의 역할 표·의도한 변화 확인 | PASS — 문서상의 결정 완료. 구현 검증과 구분 |
-| 기존 기준선 | 기준 `3b6145f`와 이전 문서 변경에서 `make check` | PASS — 2026-11-17 종료 0. 모든 회귀 검사·생성본 확인·설치 dry-run 통과 |
-| 최종 문서 변경 | `make check`, `git diff --check`, 로컬 링크·공백 검사 | PASS — 2026-11-17, 최종 수정본에서 종료 0. 회귀 검사 9개·생성본·설치 dry-run 통과. 로컬 링크 12개와 AC 식별자 8개·공백·마지막 개행 확인 |
-| P0/P1 `AC-01`, `AC-02`, `AC-05`~`AC-07` | #41, `82ef04b` | PASS — 새 스킬 fixture 변경 전 실패·변경 후 성공, 정규화 manifest 전역 11행·프로젝트 9행 일치, Bash 3.2.57에서 전체 검사 10개·문서 링크 14개 통과. GitHub CI 통과 |
-| 배포·환경 `AC-03`, `AC-12` | #44, `3f48093`, SHA256 검증한 chezmoi 2.74.1 | PASS — 실제 엔진 통합·8개 비교 시나리오·전체 검사 통과. 최초 충돌 확인 필요, 부분 적용·백업 복원 차이를 PR에 기록. OS 패키지 설치는 미실행 |
-| 프로젝트 지원 | #42, `a97681a` | PASS — 초기화·읽기 전용 점검·기존 파일·symlink·같은 Git 저장소 worktree 보호·실패 rollback fixture와 전체 검사·CI 통과. 다른 PR과 문서 조합 보강 중 |
-| 구현 `AC-01`~`AC-15` | 각 PR의 검사와 인계 증거 | 진행 중. 문서 결정·모델 리뷰를 실행 증거로 대체하지 않음 |
+| 기존 기준선 | 기준 `3b6145f`의 `make check` | PASS — 회귀 검사 9개·생성본·설치 dry-run 통과 |
+| P0/P1 `AC-01`, `AC-02`, `AC-05`~`AC-07` | #41, `82ef04b` | PASS — 새 스킬 fixture 변경 전 실패·변경 후 성공, 정규화 manifest 전역 11행·프로젝트 9행 일치. Bash 3.2.57에서 전체 검사 10개·문서 링크 14개·CI 통과 |
+| 배포·환경 `AC-03`, `AC-12` | #44, `c1e7594`, SHA256 검증한 chezmoi 2.74.1 | PASS — 실제 엔진 통합·8개 비교 시나리오·전체 검사·CI 통과. 비교 fixture의 설치기 공용 라이브러리 누락을 수정하고 정상 설치 확인 뒤 충돌을 검사하도록 보강. 최초 충돌·부분 적용·백업 복원의 차이는 PR에 기록 |
+| 프로젝트 지원 `AC-13` | #42, `aea8df6` | PASS — 초기화·읽기 전용 점검·기존 파일·symlink·동일 Git 저장소 worktree 보호·실패/INT/TERM 복구 fixture, 전체 검사 10개·CI 통과 |
+| 설치 소유 경계 `AC-09` | #46, `b3b6ef1` (#41 기반) | PASS — foreign 자산·기존 설정 보존, metadata 손상 8개, 실패/INT/TERM 12개 지점, ledger·sidecar 복구, 이행 거부·명시적 제거/재설치와 전체 검사 11개·CI 통과. 별도 에이전트의 읽기 전용 표적 리뷰에서 차단 이슈 없음 |
+| 외부 스킬 `AC-10` | #47, `a598d4a` | PASS — 실제 로컬 Git fixture의 설치·갱신·제거·출처·소유권·복구 13개 시나리오 그룹과 전체 검사 10개·CI 통과. 기록 게시 직후 실패/SIGTERM의 링크·기록 불일치를 재현 후 수정. 잠금 출처 6개 경로 확인과 3개 upstream 대표 스킬의 격리 전달도 통과 |
+| 표적 모델 평가 `AC-11` | #45, `f65e5e1`; baseline/candidate 각 실제 CLI 호출 1회 | PASS — `gpt-6.1-sol`·`high`, 도구 없는 4개 시나리오. 공통 안전 판단 baseline 4/4·candidate 4/4, candidate 인터페이스·한계 4/4. #42 `f1ce976`·#44 `3f48093` 문서 snapshot 기준이며 후속 보호·fixture 수정 전 평가임. 전체 검사 10개·CI 통과 |
+| 기능 조합 `AC-14` | 별도 detached worktree에 6개 기능과 계획 변경을 합성 | PASS — 전체 회귀 검사 15개·생성본·설치 dry-run·형식 검사와 실제 chezmoi 비교 8개 통과. 위 6개 기능 커밋을 합친 검증 tree: `335e660aefb3bafd42abe0b85fface1be2205a41` (최종 기록 갱신 전) |
+| 실제 명령 연동 | 임시 홈·외부 state·로컬 Git 소스·프로젝트 | PASS — managed 설치/재설치/제거 뒤에도 외부 스킬·사용자 소유 설정 보존. 이후 외부 스킬 inspect/remove 성공. 전역 제거 후 프로젝트 로컬 init/doctor 성공 |
+| 문서 조합 | #41/#42의 tooling 안내와 #43/#46의 문서 안내 | PASS — 독립 추가 문단의 위치를 조정해 기능을 바꾸지 않고 조합 충돌 해소. 최종 작업 기록은 문서 PR에서 검증 |
+| PR 전달 `AC-15` | 7개 PR의 base·assignee·auto-merge 상태 확인 | PASS — #46만 #41 기반, 나머지는 main. 모두 본인 할당, auto-merge 없음. main·실제 홈 미적용 |
 
-## 남은 위험과 참고
+기존 PR [#40](https://github.com/LeeByeongMuk/dotagents/pull/40) (`b0f8c85`)도 별도 detached worktree에서 위 조합에 적용해 확인했다. 공통 변경 파일은 `README.md` 하나이며 `Makefile`·`tooling/tests/install_test.sh`는 #40만 바꾼다. 모두 충돌 없이 자동 적용됐고 실제 chezmoi를 포함한 `make check` 15개 suite·staged diff 검사가 통과했다. 검증 tree는 `34dbeb7f5b2f1db93ce117a369104f9ee21b73ac`이다. 임시 홈에서 직접 `install.sh --global`은 충돌 시 종료 2·무변경, #40의 `make install`은 legacy `--force` 설치·백업 기록을 확인했다. 이 호환성 검사는 #40의 정책을 채택하거나 어느 PR에 포함했다는 의미가 아니다.
 
-- owned 디렉터리 열거는 #41의 새 fixture와 전체 검사로 확인했다. 실제 호스트 로딩·작업 품질은 그 증거에 포함되지 않는다.
-- 파일 검사만으로 호스트의 실제 로딩·훅 신뢰·모델 품질을 보증하지 않는다. 실제 홈에서의 실행·적용은 미수행이다.
-- `~/.agents` 전체 링크와 설정 파일 소유권의 현재 경계는 유지된다. 주 체크아웃의 기존 `settings.json` 수정 원인은 조사하지 않았다.
-- 별도 결함 후보: `uninstall.sh`의 백업 복원 조건은 끊어진 심볼릭 링크를 제외하지만 설치기의 retired 복원 조건은 포함한다. 코드 읽기로 확인한 차이이며 실행 재현·수정은 이번 P1에 묶지 않는다.
-- 리뷰가 언급한 chezmoi 세부 기능은 리뷰 안에서 공식 문서로 재검증하지 않았다. 이를 도입 불가의 근거로 쓰지 않고 T03 실행 때 확인한다.
+최종 문서 PR은 `make check`의 기준 회귀 검사 9개·생성본·설치 dry-run과 `git diff --check`를 통과했다. 변경한 문서의 로컬 링크 12개·AC 15개·PR 링크 7개·공백·마지막 개행도 확인했다. 기능 코드는 위 커밋 그대로이며 최종 갱신은 전체 결과 기록과 문서 링크 위치 조정이다.
+
+## 남은 범위와 한계
+
+- legacy 기본값은 유지된다. #46의 managed 구조는 선택형이며, 기존 설치에서 명시적 제거·재설치가 필요하다. managed 설정 seed는 사용자 소유로 남아 제거 시 지워지지 않는다. 파일 링크는 원본 변경을 계속 즉시 반영하므로 버전별 snapshot 배포가 아니다.
+- 환경 프로필은 선택형 shell/git fragment와 OS별 패키지 안내에서 시작한다. 실제 홈 적용·패키지 설치·Debian 실행은 하지 않았다. chezmoi의 뒤쪽 파일 충돌 전에 앞쪽 파일이 적용되는 동작을 관찰했으며 일괄 rollback·원본 백업 복원을 보장하지 않는다.
+- 외부 스킬은 선택 항목의 고정 버전 파일 전달과 출처·소유권을 관리한다. upstream 코드·설치 훅·gstack 환경 준비를 실행하지 않았다. 캐시 GC·다른 state로의 자동 이관·SIGKILL/전원 차단 복구는 범위 밖이다. 선택 CLI와 그 테스트에는 Python 3.11 이상이 필요하다.
+- 프로젝트 doctor의 성공은 지침·컨텍스트 위치·검증 안내의 존재를 뜻한다. 실제 프로젝트 검사 통과나 문서 완성도를 보증하지 않는다.
+- 실제 호스트의 지침 로딩·훅 신뢰·스킬 실행은 검증하지 않았다. 제한된 모델 평가 결과를 품질 향상·모델 우열로 해석하지 않으며, 실행 인자와 성공 기록을 공급자 측 독립 telemetry로 취급하지 않는다.
+- 기존 코드의 별도 결함 후보: 제거기의 백업 복원 조건은 끊어진 심볼릭 링크를 제외하지만 설치기의 retired 복원 조건은 포함한다. 이 차이는 코드 읽기로 확인했고 이번 작업에서는 실행 재현·수정하지 않았다.
+- 주 체크아웃은 기존 main을 유지하고 사용자의 기존 `agents/adapters/claude/settings.json` 수정은 그대로 보존했다. 원인·실제 설정값은 수집하지 않았다. 검증용 합성 worktree는 어떤 PR이나 main에도 병합하지 않았다.
 
 배포 검토의 참고 문서:
 
