@@ -55,6 +55,13 @@ check_components() {
   done
 }
 
+git_common_directory() {
+  local root="$1" common
+  common="$(git -C "$root" rev-parse --git-common-dir 2>/dev/null)" || return 1
+  case "$common" in /*) ;; *) common="$root/$common" ;; esac
+  (cd "$common" && pwd -P)
+}
+
 if [[ "$action" != init ]]; then
   missing=0
   instructions=0
@@ -134,6 +141,13 @@ check_components "$lexical"
 # Never turn the source checkout, home, filesystem root, or their ancestors into
 # a target project. Descendants of the checkout are also source-owned.
 case "$project/" in "$REPO_ROOT/"*) fail "project is inside the dotagents source checkout" ;; esac
+if command -v git >/dev/null 2>&1; then
+  source_common="$(git_common_directory "$REPO_ROOT" || true)"
+  project_common="$(git_common_directory "$project" || true)"
+  if [[ -n "$source_common" && "$source_common" == "$project_common" ]]; then
+    fail "project belongs to the dotagents source repository (including linked worktrees)"
+  fi
+fi
 for protected in / "$REPO_ROOT" "${HOME:-/}"; do
   case "$protected/" in "$project/"*) fail "project is a protected directory or its ancestor" ;; esac
 done

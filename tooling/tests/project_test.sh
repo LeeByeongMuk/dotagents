@@ -102,6 +102,27 @@ run 1 init / --apply
 run 1 init "$TEST_ROOT/not-created" --apply
 [[ ! -e "$TEST_ROOT/not-created" ]] || fail 'created unselected parent directory'
 
+echo 'scenario: another checkout and its descendants from the same repository are protected'
+source_main="$TEST_ROOT/source-main"
+source_worktree="$TEST_ROOT/source-worktree"
+mkdir -p "$source_main/tooling/scripts" "$source_main/agents/templates/context-docs" "$source_main/agents/templates/generic"
+cp "$CLI" "$source_main/tooling/scripts/project.sh"
+cp "$REPO_ROOT/agents/templates/generic/AGENTS.md" "$source_main/agents/templates/generic/AGENTS.md"
+cp "$REPO_ROOT/agents/templates/context-docs/project-readme.md" "$source_main/agents/templates/context-docs/project-readme.md"
+git -C "$source_main" init -q
+git -C "$source_main" add .
+git -C "$source_main" -c user.name=Fixture -c user.email=fixture@example.test -c core.hooksPath=/dev/null commit -qm fixture
+git -C "$source_main" worktree add --detach "$source_worktree" HEAD >/dev/null 2>&1
+snapshot "$source_main" "$TEST_ROOT/before"
+old_cli="$CLI"
+CLI="$source_worktree/tooling/scripts/project.sh"
+run 1 init "$source_main" --apply
+grep -q 'including linked worktrees' "$TEST_ROOT/output" || fail 'did not diagnose shared source repository'
+run 1 init "$source_main/agents" --apply
+snapshot "$source_main" "$TEST_ROOT/after"
+cmp "$TEST_ROOT/before" "$TEST_ROOT/after" || fail 'modified the primary source checkout'
+CLI="$old_cli"
+
 echo 'scenario: unsupported templates and context file conflicts make no partial changes'
 invalid="$TEST_ROOT/invalid"
 mkdir "$invalid"
