@@ -28,6 +28,8 @@
 
 [compare.sh](../../environment/compare.sh)는 source·destination·config·persistent state·cache를 모두 임시 경로로 분리한다. 직접 chezmoi 호출의 HOME도 임시 경로다. 기존 설치기에는 임시 `DOTAGENTS_HOME`·`XDG_STATE_HOME`을 전달한다. 종료 시 fixture를 지운다. 네트워크 호출은 스크립트 안에 없다.
 
+비교 fixture에는 현재 checkout의 `tooling/scripts/` 전체를 복사해 설치기의 runtime helper도 함께 포함한다. 충돌을 만들기 전에 빈 fixture의 dry-run·실제 설치·제거가 성공하는지 확인하고, 이후 예상 실패는 실제 충돌 메시지도 확인한다. 원래 `3b6145f` 기준의 비교 관찰과 별개로, helper를 도입한 설치기와 조합해도 이 비교가 실행되는지 확인하는 호환성 장치다.
+
 ```bash
 CHEZMOI_BIN=/absolute/path/to/verified/chezmoi ./environment/compare.sh
 CHEZMOI_BIN=/absolute/path/to/verified/chezmoi ./tooling/tests/environment_test.sh
@@ -63,6 +65,7 @@ git diff --check
 | 실제 `environment_test.sh` | PASS — 새 source 초기화, config 보존, 기존 source 재초기화 거부, 공백 경로, preview 무적용, 최초 기존 조각 충돌, 적용·반복·드리프트, source 변경의 명시적 반영, target 편집 보존, 기존 `.gitconfig`·`.zshrc`·`.bashrc` 보존 |
 | 엔진 없이 기본 검사 | PASS — 누락 경로 거부, preview 경로 전달·apply 미호출, 셸 사용자 선택·PATH 중복 방지, Git 조각 유효성·identity/auth 비소유. 실제 엔진 부분은 skip으로 표시 |
 | 실제 `compare.sh` | PASS — 표의 여덟 비교 시나리오, 임시 fixture만 사용 |
+| runtime helper 통합 호환성 | PASS — standalone 환경 브랜치와 `b3b6ef1`의 설치 스크립트·helper를 조합한 임시 사본에서 legacy 기본값 비교. helper를 일부러 제거한 사본은 최초 dry-run에서 실패하며 충돌 PASS를 출력하지 않음 |
 | 실제 엔진을 지정한 `make check`·`git diff --check` | PASS — 종료 0. 기존 회귀 검사 전체와 새 환경 검사, 생성본 최신 여부, 설치 dry-run 통과 |
 
 실제 호스트의 설정 로딩, 여러 기기 동기화, macOS Homebrew·Debian/Ubuntu apt 설치, Debian/Ubuntu에서의 프로필 실행은 미검증이다. 패키지 목록은 공식 패키지 정보와 기존 저장소 도구 목록으로 작성했으며 설치 성공을 주장하지 않는다. 명시적 적용의 INT/TERM/SIGKILL·전원 차단 복구나 disk-full 복구도 이 실험으로 보장하지 않는다. 기존 설치기의 INT/TERM 복구는 기존 회귀 검사가 담당하며, 제거 명령 자체의 중단 rollback과 SIGKILL·전원 차단은 기존 보장에도 포함되지 않는다.

@@ -14,9 +14,11 @@ printf 'Engine: %s\n' "$("$chezmoi_bin" --version)"
 # The current installer retains its full AI inventory. Compare just two identical
 # JSON payloads at the same relative paths; do not pretend this is a full migration.
 link_repo="$TEST_ROOT/link-repo"
-mkdir -p "$link_repo/tooling/scripts" "$TEST_ROOT/link-home/.claude" "$TEST_ROOT/link-state"
+mkdir -p "$link_repo/tooling" "$TEST_ROOT/link-home/.claude" "$TEST_ROOT/link-state"
 cp -R "$REPO_ROOT/agents" "$REPO_ROOT/dist" "$link_repo/"
-cp "$REPO_ROOT/tooling/scripts/install.sh" "$REPO_ROOT/tooling/scripts/uninstall.sh" "$link_repo/tooling/scripts/"
+# Keep the installer's runtime helpers with its entry points. The baseline has
+# no lib directory, while later installer versions source helpers from it.
+cp -R "$REPO_ROOT/tooling/scripts" "$link_repo/tooling/"
 printf '%s\n' '{"fixture": "v1"}' > "$link_repo/agents/adapters/claude/settings.json"
 printf '%s\n' '{"fixture": "v1"}' > "$link_repo/agents/adapters/codex/hooks.json"
 link_install() {
@@ -27,6 +29,17 @@ link_remove() {
   DOTAGENTS_HOME="$TEST_ROOT/link-home" XDG_STATE_HOME="$TEST_ROOT/link-state" \
     "$link_repo/tooling/scripts/uninstall.sh" --global > "$TEST_ROOT/link-log" 2>&1
 }
+# Prove this copied installer works before accepting any expected failure.
+# Missing runtime helpers must fail here, rather than masquerade as a conflict.
+for action in dry-run install remove; do
+  case "$action" in
+    dry-run) link_install --dry-run || { cat "$TEST_ROOT/link-log" >&2; fail 'clean link fixture dry-run failed'; } ;;
+    install) link_install || { cat "$TEST_ROOT/link-log" >&2; fail 'clean link fixture install failed'; } ;;
+    remove) link_remove || { cat "$TEST_ROOT/link-log" >&2; fail 'clean link fixture removal failed'; } ;;
+  esac
+done
+[[ ! -e "$TEST_ROOT/link-home/.agents" && ! -L "$TEST_ROOT/link-home/.agents" && ! -e "$TEST_ROOT/link-state/dotagents/install.tsv" ]] || fail 'clean fixture removal left managed links or a ledger'
+echo 'PASS clean link fixture: dry-run, install and uninstall succeeded with runtime helpers'
 apply_root="$TEST_ROOT/explicit"
 mkdir -p "$apply_root/source/dot_claude" "$apply_root/source/dot_codex" "$apply_root/destination/.claude" \
   "$apply_root/config" "$apply_root/state" "$apply_root/cache" "$apply_root/process-home"
@@ -46,6 +59,7 @@ apply_target="$apply_root/destination/.claude/settings.json"
 printf '%s\n' '{"fixture": "original-user-file"}' > "$link_target"
 cp "$link_target" "$apply_target"
 expect_failure link_install
+grep -q '^Conflicts detected; nothing was changed:$' "$TEST_ROOT/link-log" || fail 'link preflight failed for a reason other than the expected conflict'
 expect_failure cm apply
 grep -q original-user-file "$link_target" || fail 'link conflict changed user content'
 grep -q original-user-file "$apply_target" || fail 'apply conflict changed user content'
