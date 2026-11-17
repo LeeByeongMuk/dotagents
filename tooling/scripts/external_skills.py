@@ -352,6 +352,8 @@ def main():
     previous = os.readlink(target) if target.is_symlink() else None
     changed = False
     new_target = None
+    new_record = None
+    publication_started = False
 
     def unchanged():
         require((record_path.read_bytes() if record_path.exists() else None) == record_bytes,
@@ -363,13 +365,23 @@ def main():
             verify_cache(old_cache, record["source_id"], source_url(record["url"], check_local=False),
                          record["revision"], record["digest"])
 
+    def provenance_committed():
+        if not publication_started:
+            return False
+        if args.action == "remove":
+            return not os.path.lexists(record_path)
+        if record_path.is_symlink() or not record_path.is_file():
+            return False
+        return json.loads(record_path.read_bytes()) == new_record
+
     try:
         records.mkdir(exist_ok=True)
         if args.action == "remove":
             unchanged()
             if previous is not None:
-                target.unlink()
                 changed = True
+                target.unlink()
+            publication_started = True
             record_path.unlink()
         else:
             cache, digest = fetch_cache(state, source, url, revision)
@@ -380,6 +392,7 @@ def main():
                               source_id=source, revision=revision, path=str(path), url=url,
                               target=new_target, digest=digest)
             unchanged()
+            changed = True
             if previous is None:
                 target.symlink_to(new_target)
             else:
@@ -387,12 +400,17 @@ def main():
                     link = Path(temporary) / args.skill
                     link.symlink_to(new_target)
                     os.replace(link, target)
-            changed = True
+            publication_started = True
             write_record(record_path, new_record)
         changed = False
         print("applied: " + operation + "; cached revisions retained; no upstream code executed")
     except BaseException:
-        if changed:
+        # The filesystem record is the commit boundary, including a syscall that
+        # completed before raising or a signal before the next Python assignment.
+        # Rolling back just the link after this boundary would split the pair.
+        if provenance_committed():
+            print("committed: " + operation + "; provenance published before failure; link rollback skipped", file=sys.stderr)
+        elif changed:
             # Restore only this operation's link. A concurrent replacement is
             # user-owned and must survive even when record publication fails.
             ours = target.is_symlink() and os.readlink(target) == new_target

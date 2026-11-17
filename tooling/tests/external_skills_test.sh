@@ -219,6 +219,88 @@ with tempfile.TemporaryDirectory(prefix='dotagents-external-test-') as directory
     assert os.readlink(target) == previous_link
     run('remove', '--apply')
 
+    print('scenario: post-publication failures keep a committed link/provenance pair')
+    post_publication = root / 'post-publication.py'
+    post_publication.write_text('''import os, runpy, signal, sys
+from pathlib import Path
+real_replace, real_unlink = os.replace, Path.unlink
+def after_publication(message):
+    if os.environ.get("USER_REPLACEMENT"):
+        replacement = Path(os.environ["USER_REPLACEMENT"])
+        if os.path.lexists(replacement):
+            real_unlink(replacement)
+        replacement.write_text("concurrent user replacement\\n")
+    if os.environ.get("PUBLICATION_SIGTERM"):
+        os.kill(os.getpid(), signal.SIGTERM)
+    raise OSError(message)
+def fail_replace(source, target):
+    result = real_replace(source, target)
+    if str(target).endswith(".json"):
+        after_publication("injected after record publication")
+    return result
+def fail_unlink(path, *args, **kwargs):
+    result = real_unlink(path, *args, **kwargs)
+    if path.suffix == ".json" and path.parent.name == "installs":
+        after_publication("injected after record removal")
+    return result
+os.replace, Path.unlink = fail_replace, fail_unlink
+sys.argv = sys.argv[1:]
+runpy.run_path(sys.argv[0], run_name="__main__")
+''')
+    command[1] = str(post_publication)
+    command[3] = 'install'
+    registry(first)
+    result = subprocess.run(command, capture_output=True, text=True, env=env)
+    assert result.returncode != 0 and 'after record publication' in result.stderr
+    assert 'committed:' in result.stderr
+    committed = json.loads(record_path.read_text())
+    assert target.is_symlink() and os.readlink(target) == committed['target'] and committed['revision'] == first
+    run('inspect')
+    registry(second)
+    command[3] = 'update'
+    result = subprocess.run(command, capture_output=True, text=True, env=env)
+    assert result.returncode != 0 and 'after record publication' in result.stderr
+    assert 'committed:' in result.stderr
+    committed = json.loads(record_path.read_text())
+    assert target.is_symlink() and os.readlink(target) == committed['target'] and committed['revision'] == second
+    run('inspect')
+    command[3] = 'remove'
+    result = subprocess.run(command, capture_output=True, text=True, env=env)
+    assert result.returncode != 0 and 'after record removal' in result.stderr
+    assert 'committed:' in result.stderr
+    assert not os.path.lexists(target) and not record_path.exists()
+    run('inspect')
+
+    print('scenario: committed failures preserve concurrent user replacements')
+    replacement_env = dict(env, USER_REPLACEMENT=str(target))
+    registry(first)
+    for action, revision in [('install', first), ('update', second), ('remove', second)]:
+        registry(revision)
+        command[3] = action
+        result = subprocess.run(command, capture_output=True, text=True, env=replacement_env)
+        assert result.returncode != 0 and 'committed:' in result.stderr
+        assert target.is_file() and not target.is_symlink() and target.read_text() == 'concurrent user replacement\n'
+        if action != 'remove':
+            committed = json.loads(record_path.read_text())
+            assert committed['revision'] == revision
+            # Restore the recorded link only inside this fixture for the next case.
+            target.unlink()
+            target.symlink_to(committed['target'])
+        else:
+            assert not record_path.exists()
+            run('remove', '--apply', ok=False)
+            assert target.read_text() == 'concurrent user replacement\n'
+            target.unlink()
+
+    print('scenario: SIGTERM immediately after record publication keeps the new pair')
+    command[3] = 'install'
+    result = subprocess.run(command, capture_output=True, text=True, env=dict(env, PUBLICATION_SIGTERM='1'))
+    assert result.returncode != 0 and 'committed:' in result.stderr and 'terminated' in result.stderr
+    committed = json.loads(record_path.read_text())
+    assert target.is_symlink() and os.readlink(target) == committed['target']
+    run('inspect')
+    run('remove', '--apply')
+
     print('scenario: same-repository primary and linked worktree remain protected')
     primary = root / 'tool-source'
     (primary / 'tooling/scripts').mkdir(parents=True)
