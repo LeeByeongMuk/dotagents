@@ -47,12 +47,14 @@ git diff --check
 | target을 직접 편집 | 링크를 따라 checkout source가 바뀜 | source는 그대로. 다음 apply가 충돌 실패하고 target 편집 보존 |
 | 뒤 파일 충돌 | 충돌 preflight는 전체 변경 전에 수행 | 첫 파일을 새 버전으로 적용한 뒤 두 번째 파일 충돌로 실패. 첫 변경은 남음 |
 | 적용 도중 실행 오류 | 별도 임시 홈에서 두 번째 JSON 대상의 `ln` 실패를 주입. 앞 링크 제거, 두 원본 복원, 설치 manifest 미발행 확인 | 앞 행의 충돌 실패로 batch rollback 부재 관찰. 동일한 `ln` 주입은 사용하지 않음 |
-| 제거·반복 적용 | 소유 링크 제거 후 원래 사용자 백업 복원. 제거 반복 가능 | source 파일만 삭제하면 target은 남음. `destroy`는 source·target·state 모두 제거하며 원본 백업 복원 없음. 반복 destroy는 비관리 대상 오류. 이후 apply가 제거 대상을 되살리지 않음 |
+| 제거·반복 적용 | 소유 링크 제거 후 원래 사용자 백업 복원. 제거 반복 가능 | source 파일만 삭제하면 target은 남음. `destroy` 후 source·target이 없어지고 원본 백업 복원은 없었음. 반복 destroy는 비관리 대상 오류. 이후 apply가 제거 대상을 되살리지 않음 |
 | 사용자가 링크 대신 새 파일을 놓음 | uninstall이 사용자 대체 파일 보존 | 별도 대응 동작을 억지로 맞추지 않음. 기록된 target 편집 보존은 위에서 확인 |
 
 별도의 실제 CLI 확인에서 `--error-on-conflict`만 사용한 최초 적용은 기존 파일을 덮어썼다. 기록된 이전 내용이 없는 경우와 이미 관리한 파일의 충돌을 구분해야 한다. 따라서 프로필은 `--less-interactive`도 지정한다. 이 동작은 실험 버전에 대한 관찰이며 향후 버전도 실제 통합 검사로 확인한다.
 
 사용자 파일의 보존과 적용 전체의 원자성은 별개다. chezmoi의 [apply 문서](https://www.chezmoi.io/reference/commands/apply/)는 대상 상태로 맞추고 이전 적용 이후 수정된 파일에 확인을 요구한다고 설명한다. [전역 플래그 문서](https://www.chezmoi.io/reference/command-line-flags/global/)의 `--less-interactive`, `--error-on-conflict`, source/destination/config/cache/state 옵션과 실제 동작을 함께 확인했다. [destroy](https://www.chezmoi.io/reference/commands/destroy/)는 양쪽 파일을 영구 삭제하며 백업 복원 명령이 아니다.
+
+공식 destroy 문서의 state 제거는 해당 관리 대상의 persistent-state entry를 뜻하며 전체 state DB·config·cache를 삭제한다는 의미가 아니다. 이 실험의 직접 단언은 source·target 제거와 이후 apply의 비복원이며 DB 내부 entry 삭제 자체를 검사하지는 않았다.
 
 ## 검증 결과와 범위
 
