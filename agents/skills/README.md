@@ -2,7 +2,7 @@
 
 직접 만든 스킬은 `owned/<name>/SKILL.md`에 둡니다. 외부 스킬을 수정하지 않고 보정해야 하면 `wrappers/<name>/SKILL.md`를 그때 만듭니다.
 
-`owned/<name>/SKILL.md`가 있는 모든 디렉터리가 전역·프로젝트 설치 대상입니다. `tooling/scripts/lib/owned-skills.sh`가 이 집합을 한 번 정의하며, 설치기는 Claude의 개별 링크를 만들고 Codex·Gemini는 공통 `.agents/skills/` 별칭을 사용합니다. 진단기는 실제 설치된 `.agents` 원본의 디렉터리를 기준으로 아직 설치되지 않은 스킬도 검사합니다. 명령을 실행한 checkout이나 설치 기록의 목록으로 기대 집합을 대신하지 않습니다.
+`owned/<name>/SKILL.md`가 있는 모든 디렉터리가 전역·프로젝트 설치 대상입니다. `tooling/scripts/lib/owned-skills.sh`가 이 집합을 한 번 정의하며, 설치기는 Claude의 개별 링크를 만들고 Codex·Gemini는 공통 `.agents/skills/` 별칭을 사용합니다. 진단기는 [설치 layout](../../docs/designs/install-layouts.md)에 따라 확인한 실제 설치 원본의 디렉터리를 기준으로 아직 설치되지 않은 스킬도 검사합니다. 명령을 실행한 checkout이나 설치 기록의 목록으로 기대 집합을 대신하지 않습니다.
 
 스킬을 추가할 때는 다음 세 자산을 함께 만듭니다.
 

@@ -56,6 +56,9 @@ required=(
   tooling/scripts/check-sources.sh
   tooling/scripts/doctor.sh
   tooling/scripts/lib/owned-skills.sh
+  tooling/scripts/lib/install-layout.sh
+  agents/adapters/claude/hooks.example.json
+  tooling/tests/managed_install_test.sh
   tooling/scripts/check-owned-skills.sh
   tooling/tests/owned_skills_test.sh
   agents/templates/generic/AGENTS.md agents/templates/nextjs/AGENTS.md

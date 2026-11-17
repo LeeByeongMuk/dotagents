@@ -6,9 +6,11 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 # dist/ can be linked into every live session. All mutation tests run in a
 # disposable source/output copy, including deterministic regeneration.
 work="$(mktemp -d "${TMPDIR:-/tmp}/dotagents-build.XXXXXX")"
+work="$(cd "$work" && pwd -P)"
 trap 'rm -rf "$work"' EXIT
 mkdir -p "$work/agents" "$work/tooling/scripts"
-cp -R "$REPO_ROOT/agents/rules" "$REPO_ROOT/agents/adapters" "$work/agents/"
+cp -R "$REPO_ROOT/agents/." "$work/agents/"
+cp -R "$REPO_ROOT/tooling/scripts/lib" "$work/tooling/scripts/"
 cp -R "$REPO_ROOT/dist" "$work/"
 cp "$REPO_ROOT/tooling/scripts/build.sh" "$REPO_ROOT/tooling/scripts/install.sh" "$work/tooling/scripts/"
 REPO_ROOT="$work"
@@ -77,14 +79,17 @@ before="$(cat "$REPO_ROOT/dist/claude/CLAUDE.md")"
 "$BUILD" >/dev/null
 [[ "$before" == "$(cat "$REPO_ROOT/dist/claude/CLAUDE.md")" ]] || fail "build is not deterministic"
 
-# Install must link hosts at the generated output, not the thin source.
-for pair in 'claude/CLAUDE.md' 'codex/AGENTS.md' 'gemini/GEMINI.md'; do
-  grep -Fq "\$REPO_ROOT/dist/$pair" "$REPO_ROOT/tooling/scripts/install.sh" || fail "install does not link dist/$pair"
-done
-for pair in 'claude/CLAUDE.md' 'codex/AGENTS.md' 'gemini/GEMINI.md'; do
-  if grep -Fq "|\$REPO_ROOT/agents/adapters/$pair\"" "$REPO_ROOT/tooling/scripts/install.sh"; then
-    fail "install still links the thin adapter source for $pair"
-  fi
+# The declarations now live in a shared helper. Assert actual install behavior
+# for both layouts, rather than searching install.sh for the former literals.
+for layout in legacy managed; do
+  install_home="$work/home-$layout"
+  mkdir "$install_home"
+  DOTAGENTS_HOME="$install_home" XDG_STATE_HOME="$work/state-$layout" \
+    "$REPO_ROOT/tooling/scripts/install.sh" --global --layout "$layout" >/dev/null
+  for pair in 'claude/CLAUDE.md' 'codex/AGENTS.md' 'gemini/GEMINI.md'; do
+    target="$install_home/.$pair"
+    [[ -L "$target" && "$(readlink "$target")" == "$REPO_ROOT/dist/$pair" ]] || fail "$layout install does not link generated dist/$pair"
+  done
 done
 
 echo "Host file composition passed."

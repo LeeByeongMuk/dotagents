@@ -176,7 +176,7 @@ cd /path/to/dotagents
 ./tooling/scripts/install.sh --global
 ```
 
-전역 모드는 다음 링크를 만듭니다.
+기본 `legacy` 전역 모드는 다음 링크를 만듭니다.
 
 - `~/.agents` → 이 저장소의 `agents/`
 - `~/.claude/CLAUDE.md` → `dist/claude/CLAUDE.md`
@@ -189,6 +189,8 @@ cd /path/to/dotagents
 Codex와 Gemini는 `~/.agents/skills/` 별칭에서 같은 owned 스킬을 발견합니다. 추가·제거 절차의 원본은 [스킬 안내](agents/skills/README.md)이며, registry 메타데이터는 설치 입력이 아닙니다.
 
 Codex 모델 기본값 복원, 간단한 작업용 CLI 프로필과 로컬 승인 규칙 관리는 [Codex 설정 안내](agents/adapters/codex/README.md)를 참고하세요. `make doctor`는 전역 설치의 호스트 진입점, Claude 설정·스킬, Codex 커밋 훅과 공통 스킬 별칭을 검사합니다. 설치 기록이 있는데 `.agents` 연결이 없거나 깨진 경우, 잘못된 원본을 가리키는 경우도 알립니다. 진단은 실제 설치된 checkout의 owned 원본을 기준으로 새 선언의 미설치도 알리고, 설치 기록이 없는 기존 설치도 인식합니다. 진단은 기존 파일을 변경하지 않으며, 링크가 정상이어도 호스트의 실제 로딩·실행이나 Codex 훅 신뢰 상태까지 확인한 것은 아닙니다.
+
+공유 `~/.agents/skills`에 다른 도구의 스킬을 함께 두고 호스트 설정을 사용자 소유로 유지하려면 `--global --layout managed`를 선택합니다. 이 모드는 실제 공유 디렉터리에 owned 스킬별 링크를 만들고, 설정이 없을 때만 hook 전용 일반 파일을 seed하며 기존 설정은 보존합니다. 필수 hook이 없는 기존 설정은 doctor 안내에 따라 수동 통합합니다. layout 변경에는 명시적 제거 후 재설치가 필요합니다. 경로·기록 형식·이행·제거 후 남는 설정의 계약은 [설치 layout 안내](docs/designs/install-layouts.md)에 있습니다.
 
 실제 홈에 설치하는 전역 설치는 주 체크아웃이 main일 때만 실행됩니다. linked worktree나 다른 브랜치에서 실행하면 링크를 바꾸지 않고 중단하며, `--dry-run`은 경고만 표시합니다.
 

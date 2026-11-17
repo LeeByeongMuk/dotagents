@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+source "$SCRIPT_DIR/lib/install-layout.sh"
+
 DRY_RUN=0
 MODE="global"
 PROJECT_DIR=""
@@ -41,6 +44,14 @@ else
   manifest="$target_root/.dotagents-install.tsv"
 fi
 
+metadata="${manifest}.meta.tsv"
+read_install_layout "$manifest" "$target_root" || fail "invalid installation metadata; restore it before removal"
+if [[ "$recorded_layout" == managed ]]; then
+  while IFS=$'\t' read -r target _ _; do
+    [[ -z "$target" || "$target" == "$MANAGED_LEDGER_HEADER" ]] || managed_target_parent "$target_root" "$target" || fail "unsafe managed removal target: $target"
+  done < "$manifest"
+fi
+
 echo "Mode: $MODE"
 echo "Manifest: $manifest"
 if [[ ! -f "$manifest" ]]; then
@@ -50,7 +61,7 @@ fi
 
 echo "Recorded targets:"
 while IFS=$'\t' read -r target source backup; do
-  [[ -n "$target" ]] || continue
+  [[ -n "$target" && "$target" != "$MANAGED_LEDGER_HEADER" ]] || continue
   echo "  $target"
 done < "$manifest"
 
@@ -61,8 +72,11 @@ fi
 
 remaining="${manifest}.remaining.$$"
 : > "$remaining"
+if [[ "$recorded_layout" == managed ]]; then
+  printf '%s\n' "$MANAGED_LEDGER_HEADER" > "$remaining"
+fi
 while IFS=$'\t' read -r target source backup; do
-  [[ -n "$target" ]] || continue
+  [[ -n "$target" && "$target" != "$MANAGED_LEDGER_HEADER" ]] || continue
   if [[ -L "$target" && "$(readlink "$target")" == "$source" ]]; then
     unlink "$target"
     if [[ "$backup" != "-" && -e "$backup" && ! -e "$target" && ! -L "$target" ]]; then
@@ -75,12 +89,16 @@ while IFS=$'\t' read -r target source backup; do
   fi
 done < "$manifest"
 
-if [[ -s "$remaining" ]]; then
+if [[ -s "$remaining" ]] && { [[ "$recorded_layout" != managed ]] || grep -Fvxq -- "$MANAGED_LEDGER_HEADER" "$remaining"; }; then
   mv "$remaining" "$manifest"
   echo "Some entries were preserved; see $manifest" >&2
 else
   unlink "$remaining"
   unlink "$manifest"
+  if [[ "$recorded_layout" == managed ]]; then
+    unlink "$metadata"
+    echo "User-owned settings seeds and shared directories were preserved; remove the hook registration manually if no longer needed."
+  fi
   manifest_dir="$(dirname "$manifest")"
   if [[ "$MODE" == "global" && "$manifest_dir" == */dotagents ]]; then
     rmdir "$manifest_dir" 2>/dev/null || true

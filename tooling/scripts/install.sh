@@ -4,13 +4,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 source "$SCRIPT_DIR/lib/owned-skills.sh"
+source "$SCRIPT_DIR/lib/install-layout.sh"
 DRY_RUN=0
 FORCE=0
 MODE="global"
+LAYOUT="legacy"
 PROJECT_DIR=""
 
 usage() {
-  echo "Usage: $0 [--dry-run] [--force] [--global | --project PATH]"
+  echo "Usage: $0 [--dry-run] [--force] [--global [--layout legacy|managed] | --project PATH]"
 }
 
 fail() {
@@ -23,6 +25,11 @@ while [[ $# -gt 0 ]]; do
     --dry-run) DRY_RUN=1 ;;
     --force) FORCE=1 ;;
     --global) MODE="global" ;;
+    --layout)
+      [[ $# -ge 2 ]] || fail "--layout requires legacy or managed"
+      LAYOUT="$2"
+      shift
+      ;;
     --project)
       [[ $# -ge 2 ]] || fail "--project requires a path"
       MODE="project"
@@ -35,6 +42,9 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
+[[ "$LAYOUT" == legacy || "$LAYOUT" == managed ]] || fail "unknown layout: $LAYOUT"
+[[ "$MODE" == global || "$LAYOUT" == legacy ]] || fail "managed layout is global only"
+
 # Resolve and validate the complete desired set before target/manifest mutation.
 owned_skills="$(owned_skill_names "$REPO_ROOT/agents")" || exit 1
 
@@ -43,30 +53,44 @@ if [[ "$MODE" == "global" ]]; then
   target_root="${DOTAGENTS_HOME:-$HOME}"
   state_root="${XDG_STATE_HOME:-$target_root/.local/state}"
   manifest="$state_root/dotagents/install.tsv"
-  entries=(
-    "$target_root/.agents|$REPO_ROOT/agents"
-    "$target_root/.claude/CLAUDE.md|$REPO_ROOT/dist/claude/CLAUDE.md"
-    "$target_root/.claude/settings.json|$REPO_ROOT/agents/adapters/claude/settings.json"
-    "$target_root/.codex/AGENTS.md|$REPO_ROOT/dist/codex/AGENTS.md"
-    "$target_root/.codex/hooks.json|$REPO_ROOT/agents/adapters/codex/hooks.json"
-    "$target_root/.gemini/GEMINI.md|$REPO_ROOT/dist/gemini/GEMINI.md"
-  )
 else
   [[ -n "$PROJECT_DIR" ]] || fail "project path is required"
   [[ -d "$PROJECT_DIR" ]] || fail "project directory does not exist: $PROJECT_DIR"
   target_root="$(cd "$PROJECT_DIR" && pwd -P)"
   [[ "$target_root" != "$REPO_ROOT" ]] || fail "refusing to install project links into the dotagents repository itself"
   manifest="$target_root/.dotagents-install.tsv"
-  entries=(
-    "$target_root/.agents|$REPO_ROOT/agents"
-    "$target_root/AGENTS.md|$REPO_ROOT/dist/codex/AGENTS.md"
-    "$target_root/CLAUDE.md|$REPO_ROOT/dist/claude/CLAUDE.md"
-    "$target_root/GEMINI.md|$REPO_ROOT/dist/gemini/GEMINI.md"
-  )
 fi
 
+if [[ "$LAYOUT" == managed ]]; then
+  for path in "$target_root" "$REPO_ROOT"; do
+    [[ "$path" != *$'\t'* && "$path" != *$'\n'* && "$path" != *'|'* ]] || fail "managed paths cannot contain tabs, newlines or pipes"
+  done
+fi
+metadata="${manifest}.meta.tsv"
+read_install_layout "$manifest" "$target_root" || fail "invalid installation metadata; restore it before continuing"
+if [[ "$MODE" == global ]]; then
+  if [[ "$recorded_layout" != "$LAYOUT" && -f "$manifest" ]]; then
+    fail "layout changes require explicit uninstall, then reinstall with --layout $LAYOUT"
+  fi
+  if [[ "$LAYOUT" == managed && -L "$target_root/.agents" ]]; then
+    fail "managed layout refuses a symbolic .agents root; uninstall/review the legacy layout first"
+  fi
+fi
+entries=()
+seeds=()
+fixed="$(fixed_install_entries "$MODE" "$LAYOUT" "$REPO_ROOT/agents")"
+while IFS='|' read -r relative source kind label; do
+  if [[ "$kind" == seed ]]; then
+    seeds+=("$target_root/$relative|$source")
+  else
+    entries+=("$target_root/$relative|$source")
+  fi
+done <<< "$fixed"
 while IFS= read -r skill; do
   entries+=("$target_root/.claude/skills/$skill|$REPO_ROOT/agents/skills/owned/$skill")
+  if [[ "$LAYOUT" == managed ]]; then
+    entries+=("$target_root/.agents/skills/$skill|$REPO_ROOT/agents/skills/owned/$skill")
+  fi
 done <<< "$owned_skills"
 
 # A global install into the real home makes this checkout the live
@@ -90,6 +114,9 @@ fi
 
 validate_target_parent() {
   local target="$1"
+  if [[ "$LAYOUT" == managed ]]; then
+    managed_target_parent "$target_root" "$target" || fail "unsafe managed target: $target"
+  fi
   local parent relative current component
   local -a components
   [[ "$target" == "$target_root"/* ]] || fail "install target escapes the target root: $target"
@@ -114,13 +141,31 @@ for entry in "${entries[@]}"; do
   validate_target_parent "${entry%%|*}"
 done
 
+if [[ "$LAYOUT" == managed ]]; then
+  for entry in "${seeds[@]}"; do
+    validate_target_parent "${entry%%|*}"
+    [[ -f "${entry#*|}" ]] || fail "missing hook seed source: ${entry#*|}"
+    [[ ! -L "${entry%%|*}" ]] || fail "managed settings must be user-owned regular files: ${entry%%|*}; copy/review the existing symlink first"
+    [[ ! -e "${entry%%|*}" || -f "${entry%%|*}" ]] || fail "settings path is not a regular file: ${entry%%|*}"
+  done
+  if [[ -f "$manifest" ]]; then
+    while IFS=$'\t' read -r target _ _; do
+      [[ -z "$target" || "$target" == "$MANAGED_LEDGER_HEADER" ]] || validate_target_parent "$target"
+    done < "$manifest"
+  fi
+fi
+
 echo "Mode: $MODE"
+echo "Layout: $LAYOUT"
 echo "Repository: $REPO_ROOT"
 echo "Manifest: $manifest"
 echo "Targets:"
 for entry in "${entries[@]}"; do
   echo "  ${entry%%|*} -> ${entry#*|}"
 done
+if [[ "$LAYOUT" == managed ]]; then
+  echo "Settings: missing files get minimal hook seeds; existing files remain user-owned."
+fi
 
 previous_source() {
   local wanted="$1"
@@ -146,7 +191,7 @@ is_current_target() {
 retired=()
 if [[ -f "$manifest" ]]; then
   while IFS=$'\t' read -r target _ _; do
-    [[ -n "$target" ]] || continue
+    [[ -n "$target" && "$target" != "$MANAGED_LEDGER_HEADER" ]] || continue
     is_current_target "$target" || retired+=("$target")
   done < "$manifest"
 fi
@@ -197,6 +242,7 @@ transaction_dir="$(mktemp -d "${manifest}.transaction.XXXXXX")"
 temp_manifest="$transaction_dir/install.tsv"
 committed=0
 manifest_commit_started=0
+metadata_commit_started=0
 undo_kind=()
 undo_from=()
 undo_to=()
@@ -218,6 +264,13 @@ finish_install() {
           echo "Cannot roll back changed target: $destination" >&2
           rollback_failed=1
         fi
+      elif [[ "$kind" == seed ]]; then
+        if [[ -f "$destination" && ! -L "$destination" ]] && cmp -s "$original" "$destination"; then
+          unlink "$destination" || rollback_failed=1
+        elif [[ -e "$destination" || -L "$destination" ]]; then
+          echo "Cannot roll back changed user settings: $destination" >&2
+          rollback_failed=1
+        fi
       elif [[ -e "$destination" || -L "$destination" ]]; then
         if [[ -e "$original" || -L "$original" ]]; then
           echo "Cannot restore occupied target: $original" >&2
@@ -232,6 +285,13 @@ finish_install() {
         mv "$transaction_dir/previous-manifest" "$manifest" || rollback_failed=1
       else
         rm -f "$manifest" || rollback_failed=1
+      fi
+    fi
+    if [[ "$metadata_commit_started" -eq 1 ]]; then
+      if [[ -e "$transaction_dir/previous-metadata" ]]; then
+        mv "$transaction_dir/previous-metadata" "$metadata" || rollback_failed=1
+      else
+        rm -f "$metadata" || rollback_failed=1
       fi
     fi
   fi
@@ -249,7 +309,13 @@ trap 'exit 143' TERM
 if [[ -e "$manifest" || -L "$manifest" ]]; then
   cp -Pp "$manifest" "$transaction_dir/previous-manifest"
 fi
+if [[ -f "$metadata" ]]; then
+  cp -Pp "$metadata" "$transaction_dir/previous-metadata"
+fi
 : > "$temp_manifest"
+if [[ "$LAYOUT" == managed ]]; then
+  printf '%s\n' "$MANAGED_LEDGER_HEADER" >> "$temp_manifest"
+fi
 
 # Record undo operations before each mutation so errors and signals can also
 # recover the target whose replacement has not finished yet.
@@ -316,7 +382,32 @@ if [[ ${#retired[@]} -gt 0 ]]; then
   done
 fi
 
+if [[ "$LAYOUT" == managed ]]; then
+  for entry in "${seeds[@]}"; do
+    target="${entry%%|*}"
+    source="${entry#*|}"
+    validate_target_parent "$target"
+    if [[ -e "$target" || -L "$target" ]]; then
+      echo "Preserved user-owned settings: $target"
+      continue
+    fi
+    mkdir -p "$(dirname "$target")"
+    seed_file="$transaction_dir/seed.${#undo_kind[@]}"
+    cp "$source" "$seed_file"
+    undo_kind+=("seed") undo_from+=("$source") undo_to+=("$target")
+    mv "$seed_file" "$target"
+    echo "Seeded user-owned settings (preserved on uninstall): $target"
+  done
+  printf 'version\t1\nlayout\tmanaged\nagents\t%s\ntarget_root\t%s\n' "$REPO_ROOT/agents" "$target_root" > "$transaction_dir/metadata"
+fi
 manifest_commit_started=1
 mv "$temp_manifest" "$manifest"
+if [[ "$LAYOUT" == managed ]]; then
+  metadata_commit_started=1
+  mv "$transaction_dir/metadata" "$metadata"
+fi
 committed=1
 echo "Installation complete."
+if [[ "$LAYOUT" == managed ]]; then
+  echo "Run make doctor to check required hook registration; manually integrate existing user settings when reported."
+fi
