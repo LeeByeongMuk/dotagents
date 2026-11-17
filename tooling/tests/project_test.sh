@@ -146,5 +146,12 @@ cmp "$TEST_ROOT/before" "$TEST_ROOT/after" || fail 'inspect executed project scr
 printf '{invalid\n' > "$evidence/package.json"
 run 1 doctor "$evidence"
 grep -q 'package.json is invalid' "$TEST_ROOT/output" || fail 'invalid package metadata accepted'
+# A verification heading must not hide an explicitly malformed scripts field.
+printf '# Verification\n' > "$evidence/CLAUDE.md"
+for value in false null '[]'; do
+  printf '{"scripts":%s}\n' "$value" > "$evidence/package.json"
+  run 1 doctor "$evidence"
+  grep -q 'scripts is not an object' "$TEST_ROOT/output" || fail 'invalid scripts field accepted'
+done
 
 echo 'All project readiness scenarios passed.'

@@ -108,10 +108,10 @@ if [[ "$action" != init ]]; then
   elif [[ -f "$project/package.json" ]]; then
     command -v jq >/dev/null 2>&1 || fail "jq is required to inspect package.json"
     # Report only known script names, never command contents or arbitrary metadata.
-    if scripts="$(jq -er 'if type != "object" then error("object required") else (.scripts // {}) end | if type != "object" then error("scripts object required") else keys[] | select(test("^(build|check|lint|test|typecheck)(:[A-Za-z0-9_-]+)*$")) end' "$project/package.json" 2>/dev/null)"; then
+    if scripts="$(jq -er 'if type != "object" then error("object required") elif has("scripts") then .scripts else {} end | if type != "object" then error("scripts object required") else keys[] | select(test("^(build|check|lint|test|typecheck)(:[A-Za-z0-9_-]+)*$")) end' "$project/package.json" 2>/dev/null)"; then
       while IFS= read -r name; do echo "verification candidate: package.json script $name (not executed)"; done <<< "$scripts"
       verification=1
-    elif jq -e 'type == "object" and ((.scripts // {}) | type == "object")' "$project/package.json" >/dev/null 2>&1; then
+    elif jq -e 'type == "object" and (if has("scripts") then (.scripts | type == "object") else true end)' "$project/package.json" >/dev/null 2>&1; then
       echo 'gap: no recognized verification script names in package.json'
     else
       echo 'gap: package.json is invalid or scripts is not an object'
