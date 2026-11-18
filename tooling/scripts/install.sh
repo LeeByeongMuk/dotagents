@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
+source "$SCRIPT_DIR/lib/owned-skills.sh"
 DRY_RUN=0
 FORCE=0
 MODE="global"
@@ -34,6 +35,9 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
+# Resolve and validate the complete desired set before target/manifest mutation.
+owned_skills="$(owned_skill_names "$REPO_ROOT/agents")" || exit 1
+
 timestamp="$(date +%Y%m%d%H%M%S)"
 if [[ "$MODE" == "global" ]]; then
   target_root="${DOTAGENTS_HOME:-$HOME}"
@@ -43,11 +47,6 @@ if [[ "$MODE" == "global" ]]; then
     "$target_root/.agents|$REPO_ROOT/agents"
     "$target_root/.claude/CLAUDE.md|$REPO_ROOT/dist/claude/CLAUDE.md"
     "$target_root/.claude/settings.json|$REPO_ROOT/agents/adapters/claude/settings.json"
-    "$target_root/.claude/skills/product-development-workflow|$REPO_ROOT/agents/skills/owned/product-development-workflow"
-    "$target_root/.claude/skills/fsd-refactor|$REPO_ROOT/agents/skills/owned/fsd-refactor"
-    "$target_root/.claude/skills/dotagents-promote|$REPO_ROOT/agents/skills/owned/dotagents-promote"
-    "$target_root/.claude/skills/usage-guide|$REPO_ROOT/agents/skills/owned/usage-guide"
-    "$target_root/.claude/skills/repo-activity-review|$REPO_ROOT/agents/skills/owned/repo-activity-review"
     "$target_root/.codex/AGENTS.md|$REPO_ROOT/dist/codex/AGENTS.md"
     "$target_root/.codex/hooks.json|$REPO_ROOT/agents/adapters/codex/hooks.json"
     "$target_root/.gemini/GEMINI.md|$REPO_ROOT/dist/gemini/GEMINI.md"
@@ -62,14 +61,13 @@ else
     "$target_root/.agents|$REPO_ROOT/agents"
     "$target_root/AGENTS.md|$REPO_ROOT/dist/codex/AGENTS.md"
     "$target_root/CLAUDE.md|$REPO_ROOT/dist/claude/CLAUDE.md"
-    "$target_root/.claude/skills/product-development-workflow|$REPO_ROOT/agents/skills/owned/product-development-workflow"
-    "$target_root/.claude/skills/fsd-refactor|$REPO_ROOT/agents/skills/owned/fsd-refactor"
-    "$target_root/.claude/skills/dotagents-promote|$REPO_ROOT/agents/skills/owned/dotagents-promote"
-    "$target_root/.claude/skills/usage-guide|$REPO_ROOT/agents/skills/owned/usage-guide"
-    "$target_root/.claude/skills/repo-activity-review|$REPO_ROOT/agents/skills/owned/repo-activity-review"
     "$target_root/GEMINI.md|$REPO_ROOT/dist/gemini/GEMINI.md"
   )
 fi
+
+while IFS= read -r skill; do
+  entries+=("$target_root/.claude/skills/$skill|$REPO_ROOT/agents/skills/owned/$skill")
+done <<< "$owned_skills"
 
 # A global install into the real home makes this checkout the live
 # configuration for every session, so it runs only from the primary checkout

@@ -35,6 +35,8 @@ grep -Fq 'source_root = "agents"' "$REPO_ROOT/dotagents.toml" || fail "dotagents
 grep -Fq 'tooling_root = "tooling"' "$REPO_ROOT/dotagents.toml" || fail "dotagents tooling root is not tooling"
 grep -Fq 'output_root = "dist"' "$REPO_ROOT/dotagents.toml" || fail "dotagents output root is not dist"
 
+"$REPO_ROOT/tooling/scripts/check-owned-skills.sh" "$REPO_ROOT/agents"
+
 workflow_alias="$REPO_ROOT/agents/skills/product-development-workflow"
 [[ -L "$workflow_alias" ]] || fail "workflow discovery alias is not a symbolic link"
 [[ "$(readlink "$workflow_alias")" == "owned/product-development-workflow" ]] || fail "workflow discovery alias target is incorrect"

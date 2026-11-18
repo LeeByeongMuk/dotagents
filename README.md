@@ -181,18 +181,14 @@ cd /path/to/dotagents
 - `~/.agents` → 이 저장소의 `agents/`
 - `~/.claude/CLAUDE.md` → `dist/claude/CLAUDE.md`
 - `~/.claude/settings.json` → `agents/adapters/claude/settings.json`
-- `~/.claude/skills/product-development-workflow` → owned 워크플로우 스킬
-- `~/.claude/skills/fsd-refactor` → owned FSD 리팩터링 스킬
-- `~/.claude/skills/dotagents-promote` → owned 승격 스킬
-- `~/.claude/skills/usage-guide` → owned 사용 가이드 스킬
-- `~/.claude/skills/repo-activity-review` → owned 저장소 활동 정리 스킬
+- `~/.claude/skills/<name>` → `agents/skills/owned/<name>/SKILL.md`가 있는 모든 owned 스킬
 - `~/.codex/AGENTS.md` → `dist/codex/AGENTS.md`
 - `~/.codex/hooks.json` → `agents/adapters/codex/hooks.json`
 - `~/.gemini/GEMINI.md` → `dist/gemini/GEMINI.md`
 
-Codex와 Gemini는 `~/.agents/skills/` 별칭에서 같은 owned 스킬을 발견합니다.
+Codex와 Gemini는 `~/.agents/skills/` 별칭에서 같은 owned 스킬을 발견합니다. 추가·제거 절차의 원본은 [스킬 안내](agents/skills/README.md)이며, registry 메타데이터는 설치 입력이 아닙니다.
 
-Codex 모델 기본값 복원, 간단한 작업용 CLI 프로필과 로컬 승인 규칙 관리는 [Codex 설정 안내](agents/adapters/codex/README.md)를 참고하세요. `make doctor`는 전역 설치의 호스트 진입점, Claude 설정·스킬, Codex 커밋 훅과 공통 스킬 별칭을 검사합니다. 설치 기록이 있는데 `.agents` 연결이 없거나 깨진 경우, 잘못된 원본을 가리키는 경우도 알립니다. 진단은 기존 파일을 변경하지 않으며, 링크가 정상이어도 호스트의 실제 로딩·실행이나 Codex 훅 신뢰 상태까지 확인한 것은 아닙니다.
+Codex 모델 기본값 복원, 간단한 작업용 CLI 프로필과 로컬 승인 규칙 관리는 [Codex 설정 안내](agents/adapters/codex/README.md)를 참고하세요. `make doctor`는 전역 설치의 호스트 진입점, Claude 설정·스킬, Codex 커밋 훅과 공통 스킬 별칭을 검사합니다. 설치 기록이 있는데 `.agents` 연결이 없거나 깨진 경우, 잘못된 원본을 가리키는 경우도 알립니다. 진단은 실제 설치된 checkout의 owned 원본을 기준으로 새 선언의 미설치도 알리고, 설치 기록이 없는 기존 설치도 인식합니다. 진단은 기존 파일을 변경하지 않으며, 링크가 정상이어도 호스트의 실제 로딩·실행이나 Codex 훅 신뢰 상태까지 확인한 것은 아닙니다.
 
 실제 홈에 설치하는 전역 설치는 주 체크아웃이 main일 때만 실행됩니다. linked worktree나 다른 브랜치에서 실행하면 링크를 바꾸지 않고 중단하며, `--dry-run`은 경고만 표시합니다.
 
@@ -232,7 +228,7 @@ Next.js 프로젝트는 위 복사 원본을 `agents/templates/nextjs/AGENTS.md`
 ./tooling/scripts/install.sh --project /path/to/project
 ```
 
-프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`와 위 owned 스킬의 `.claude/skills/<스킬명>` 링크를 설치합니다. Codex와 Gemini는 프로젝트의 `.agents/skills` 별칭을 사용합니다. 기존 파일이 있으면 설치가 중단됩니다. `--force`는 기존 파일을 백업하고 링크로 교체하는 선택이므로, 고유 규칙을 유지할 프로젝트에는 위 권장 방식을 사용하세요.
+프로젝트 모드는 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`와 모든 owned 스킬의 `.claude/skills/<스킬명>` 링크를 설치합니다. Codex와 Gemini는 프로젝트의 `.agents/skills` 별칭을 사용합니다. 기존 파일이 있으면 설치가 중단됩니다. `--force`는 기존 파일을 백업하고 링크로 교체하는 선택이므로, 고유 규칙을 유지할 프로젝트에는 위 권장 방식을 사용하세요.
 
 설치된 `AGENTS.md` 등은 공통 `dist/`를 가리킵니다. 이 링크에 템플릿을 복사하거나 직접 편집하면 공유 생성 파일이 바뀌므로, 링크 상태에서 프로젝트 고유 규칙을 작성하지 않습니다. 이미 프로젝트 링크 설치를 사용 중이라면 [제거](#제거)의 dry-run으로 제거될 링크를 확인하고 제거한 뒤 로컬 파일 방식으로 전환합니다.
 
