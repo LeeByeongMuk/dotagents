@@ -154,6 +154,87 @@ with tempfile.TemporaryDirectory(prefix='dotagents-external-test-') as directory
     assert os.readlink(target) == str(root / 'foreign-missing')
     target.unlink()
 
+    print('scenario: replacements at lock acquisition preserve the target, record and cache')
+    acquisition = root / 'at-lock-acquisition.py'
+    acquisition.write_text('''import os, runpy, signal, sys
+from pathlib import Path
+real_mkdir = Path.mkdir
+def change_at_lock(path, *args, **kwargs):
+    real_mkdir(path, *args, **kwargs)
+    if path.name != ".external-skills.lock":
+        return
+    if os.environ.get("ACQUISITION_SIGTERM"):
+        os.kill(os.getpid(), signal.SIGTERM)
+        return
+    target = Path(os.environ["ACQUISITION_TARGET"])
+    target.unlink(missing_ok=True)
+    if foreign := os.environ.get("ACQUISITION_FOREIGN_LINK"):
+        target.symlink_to(foreign)
+    else:
+        target.write_text("user replacement at acquisition\\n")
+Path.mkdir = change_at_lock
+sys.argv = sys.argv[1:]
+runpy.run_path(sys.argv[0], run_name="__main__")
+''')
+    race_dest, race_state, foreign = (root / name for name in ('race-dest', 'race-state', 'foreign-skill'))
+    for directory in (race_dest, race_state, foreign):
+        directory.mkdir()
+    race_target = race_dest / 'external-sample'
+    (foreign / 'SKILL.md').write_text('user-owned skill\n')
+    race_command = ['python3', str(acquisition), str(ROOT / 'tooling/scripts/external_skills.py'), 'remove',
+                    'external-sample', '--host', 'codex', '--dest', str(race_dest), '--state-dir', str(race_state), '--apply']
+    for action, owned in [('remove', True), ('install', False), ('install', True), ('update', True)]:
+        for linked in (True, False):
+            registry(first)
+            if owned:
+                run('install', '--apply', target=race_dest, cache=race_state)
+                race_previous = os.readlink(race_target)
+            registry(second if action == 'update' else first)
+            before = snapshot(race_state), snapshot(foreign)
+            race_command[3] = action
+            race_env = dict(env, ACQUISITION_TARGET=str(race_target), ACQUISITION_FOREIGN_LINK=str(foreign) if linked else '')
+            result = subprocess.run(race_command, capture_output=True, text=True, env=race_env)
+            assert result.returncode != 0 and 'target changed during operation; preserved' in result.stderr, (action, linked, result)
+            if linked:
+                assert race_target.is_symlink() and os.readlink(race_target) == str(foreign)
+            else:
+                assert not race_target.is_symlink() and race_target.read_text() == 'user replacement at acquisition\n'
+            assert before == (snapshot(race_state), snapshot(foreign)), (action, linked)
+            race_target.unlink()
+            if owned:
+                race_target.symlink_to(race_previous)
+                run('remove', '--apply', target=race_dest, cache=race_state)
+
+    print('scenario: a linked install record is refused even if its bytes match')
+    registry(first)
+    run('install', '--apply', target=race_dest, cache=race_state)
+    race_record = next((race_state / 'installs').glob('*.json'))
+    record_copy = root / 'record-copy.json'
+    record_copy.write_bytes(race_record.read_bytes())
+    race_command[3] = 'remove'
+    result = subprocess.run(race_command, capture_output=True, text=True, env=dict(
+        env, ACQUISITION_TARGET=str(race_record), ACQUISITION_FOREIGN_LINK=str(record_copy)))
+    assert result.returncode != 0 and 'symlink path component refused' in result.stderr
+    assert race_record.is_symlink() and os.readlink(race_record) == str(record_copy)
+    assert race_target.is_symlink() and os.readlink(race_target) == json.loads(record_copy.read_bytes())['target']
+    assert not (race_state / '.external-skills.lock').exists()
+    race_record.unlink()
+    race_record.write_bytes(record_copy.read_bytes())
+    run('remove', '--apply', target=race_dest, cache=race_state)
+
+    print('scenario: SIGTERM during lock acquisition releases our lock; contention preserves another lock')
+    registry(first)
+    before = snapshot(race_state), snapshot(race_dest)
+    race_command[3] = 'install'
+    result = subprocess.run(race_command, capture_output=True, text=True, env=dict(env, ACQUISITION_SIGTERM='1'))
+    assert result.returncode != 0 and 'terminated' in result.stderr
+    assert before == (snapshot(race_state), snapshot(race_dest))
+    other_lock = race_state / '.external-skills.lock'
+    other_lock.mkdir()
+    before = snapshot(race_state), snapshot(race_dest)
+    run('install', '--apply', target=race_dest, cache=race_state, ok=False)
+    assert before == (snapshot(race_state), snapshot(race_dest))
+
     print('scenario: metadata and symlink boundaries fail before target mutation')
     for value in ('../outside/SKILL.md', '/absolute/SKILL.md', 'skills/../sample/SKILL.md'):
         registry(second, path=value)

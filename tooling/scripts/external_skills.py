@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Explicit pinned Git skill links. Never execute upstream checkout contents."""
 import argparse
+from contextlib import contextmanager
 import hashlib
 import io
 import json
@@ -265,6 +266,29 @@ def write_record(path, record):
             temporary.unlink(missing_ok=True)
 
 
+def read_record(path):
+    guarded(path)
+    if not path.exists():
+        return None
+    require(path.is_file(), "install record must be a regular file")
+    return path.read_bytes()
+
+
+@contextmanager
+def mutation_lock(path):
+    # Defer handled signals until a successful mkdir has registered cleanup.
+    mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT, signal.SIGTERM})
+    try:
+        path.mkdir()  # Refuse concurrent mutations using this state directory.
+        try:
+            signal.pthread_sigmask(signal.SIG_SETMASK, mask)
+            yield
+        finally:
+            path.rmdir()
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, mask)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=("list", "inspect", "plan", "install", "update", "remove"))
@@ -313,10 +337,11 @@ def main():
     target = dest / args.skill
     records = guarded(state / "installs")
     key = hashlib.sha256((str(dest) + "\0" + args.skill).encode()).hexdigest()
-    record_path = guarded(records / (key + ".json"))
-    record_bytes = record_path.read_bytes() if record_path.exists() else None
+    record_path = records / (key + ".json")
+    record_bytes = read_record(record_path)
     record = json.loads(record_bytes) if record_bytes is not None else None
     require(record is None or (isinstance(record, dict) and record), "invalid install record")
+    previous = None
     if record:
         require(record.get("version") == 1 and record.get("skill") == args.skill
                 and record.get("host") == args.host and record.get("destination") == str(target),
@@ -325,10 +350,14 @@ def main():
         old_path = safe_relative(record["path"])
         expected = old_cache / "payload" / old_path.parent
         require(record.get("target") == str(expected), "unsafe install record target")
-        verify_cache(old_cache, record["source_id"], source_url(record["url"], check_local=False), record["revision"], record["digest"])
-        require(not os.path.lexists(target) or (target.is_symlink() and os.readlink(target) == str(expected)),
-                "managed target was replaced; preserved")
-        status = "linked" if target.is_symlink() else "missing"
+        old_url = source_url(record["url"], check_local=False)
+        if not args.apply:
+            verify_cache(old_cache, record["source_id"], old_url, record["revision"], record["digest"])
+        if os.path.lexists(target):
+            require(target.is_symlink() and os.readlink(target) == str(expected),
+                    "managed target was replaced; preserved")
+            previous = str(expected)
+        status = "linked" if previous is not None else "missing"
         print(f"actual: managed status={status} host={args.host} revision={record['revision']} target={target}")
     else:
         require(not os.path.lexists(target), "unmanaged target exists; preserved")
@@ -348,22 +377,20 @@ def main():
         print("preview only: no fetch or writes; use install/update/remove with --apply")
         return
     lock = guarded(state / ".external-skills.lock")
-    lock.mkdir()  # Refuse concurrent mutations using this state directory.
-    previous = os.readlink(target) if target.is_symlink() else None
     changed = False
     new_target = None
     new_record = None
     publication_started = False
 
     def unchanged():
-        require((record_path.read_bytes() if record_path.exists() else None) == record_bytes,
+        if record:
+            verify_cache(old_cache, record["source_id"], old_url, record["revision"], record["digest"])
+        require(guarded(dest).is_dir(), "destination changed during operation; preserved")
+        require(read_record(record_path) == record_bytes,
                 "install record changed during operation; preserved")
         require((not os.path.lexists(target)) if previous is None else
                 (target.is_symlink() and os.readlink(target) == previous),
                 "target changed during operation; preserved")
-        if record:
-            verify_cache(old_cache, record["source_id"], source_url(record["url"], check_local=False),
-                         record["revision"], record["digest"])
 
     def provenance_committed():
         if not publication_started:
@@ -374,54 +401,53 @@ def main():
             return False
         return json.loads(record_path.read_bytes()) == new_record
 
-    try:
-        records.mkdir(exist_ok=True)
-        if args.action == "remove":
+    with mutation_lock(lock):
+        try:
             unchanged()
-            if previous is not None:
-                changed = True
-                target.unlink()
-            publication_started = True
-            record_path.unlink()
-        else:
-            cache, digest = fetch_cache(state, source, url, revision)
-            skill_file = guarded(cache / "payload" / path)
-            require(skill_file.is_file(), "pinned skill path is missing")
-            new_target = str(skill_file.parent)
-            new_record = dict(version=1, skill=args.skill, host=args.host, destination=str(target),
-                              source_id=source, revision=revision, path=str(path), url=url,
-                              target=new_target, digest=digest)
-            unchanged()
-            changed = True
-            if previous is None:
-                target.symlink_to(new_target)
-            else:
-                with tempfile.TemporaryDirectory(prefix=".link-", dir=dest) as temporary:
-                    link = Path(temporary) / args.skill
-                    link.symlink_to(new_target)
-                    os.replace(link, target)
-            publication_started = True
-            write_record(record_path, new_record)
-        changed = False
-        print("applied: " + operation + "; cached revisions retained; no upstream code executed")
-    except BaseException:
-        # The filesystem record is the commit boundary, including a syscall that
-        # completed before raising or a signal before the next Python assignment.
-        # Rolling back just the link after this boundary would split the pair.
-        if provenance_committed():
-            print("committed: " + operation + "; provenance published before failure; link rollback skipped", file=sys.stderr)
-        elif changed:
-            # Restore only this operation's link. A concurrent replacement is
-            # user-owned and must survive even when record publication fails.
-            ours = target.is_symlink() and os.readlink(target) == new_target
-            if ours or (args.action == "remove" and not os.path.lexists(target)):
-                if ours:
-                    target.unlink()
+            if args.action == "remove":
                 if previous is not None:
-                    target.symlink_to(previous)
-        raise
-    finally:
-        lock.rmdir()
+                    changed = True
+                    target.unlink()
+                publication_started = True
+                record_path.unlink()
+            else:
+                records.mkdir(exist_ok=True)
+                cache, digest = fetch_cache(state, source, url, revision)
+                skill_file = guarded(cache / "payload" / path)
+                require(skill_file.is_file(), "pinned skill path is missing")
+                new_target = str(skill_file.parent)
+                new_record = dict(version=1, skill=args.skill, host=args.host, destination=str(target),
+                                  source_id=source, revision=revision, path=str(path), url=url,
+                                  target=new_target, digest=digest)
+                unchanged()
+                changed = True
+                if previous is None:
+                    target.symlink_to(new_target)
+                else:
+                    with tempfile.TemporaryDirectory(prefix=".link-", dir=dest) as temporary:
+                        link = Path(temporary) / args.skill
+                        link.symlink_to(new_target)
+                        os.replace(link, target)
+                publication_started = True
+                write_record(record_path, new_record)
+            changed = False
+            print("applied: " + operation + "; cached revisions retained; no upstream code executed")
+        except BaseException:
+            # The filesystem record is the commit boundary, including a syscall that
+            # completed before raising or a signal before the next Python assignment.
+            # Rolling back just the link after this boundary would split the pair.
+            if provenance_committed():
+                print("committed: " + operation + "; provenance published before failure; link rollback skipped", file=sys.stderr)
+            elif changed:
+                # Restore only this operation's link. A concurrent replacement is
+                # user-owned and must survive even when record publication fails.
+                ours = target.is_symlink() and os.readlink(target) == new_target
+                if ours or (args.action == "remove" and not os.path.lexists(target)):
+                    if ours:
+                        target.unlink()
+                    if previous is not None:
+                        target.symlink_to(previous)
+            raise
 
 
 if __name__ == "__main__":
