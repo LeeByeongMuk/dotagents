@@ -14,7 +14,7 @@ case "${1:-}" in
   *) usage >&2; exit 2 ;;
 esac
 
-for tool in python3 node npx; do
+for tool in python3 node npm npx; do
   command -v "$tool" >/dev/null 2>&1 || { echo "error: $tool is required for Modern Web Guidance" >&2; exit 1; }
 done
 
@@ -45,5 +45,13 @@ if [[ ! "$node_major" =~ ^[0-9]+$ || "$node_major" -lt 22 ]]; then
   exit 1
 fi
 
-# Preserve the caller's project directory for .mwgrc discovery and relative scans.
-DISABLE_TELEMETRY=1 exec npx --yes "modern-web-guidance@$version" "$@"
+# Resolve the prefix with workspace discovery enabled so npx reads the root .npmrc.
+# At the root itself, workspaces=true can make npm prefix reject workspace mode.
+caller_dir="$(pwd -P)"
+npm_dir="$(npm prefix 2>/dev/null || npm prefix --workspaces=false)"
+cd -- "$npm_dir"
+
+# npm resolves the pinned package once. Restore the caller's directory for the CLI.
+DISABLE_TELEMETRY=1 exec npx --yes --workspaces=false --package="modern-web-guidance@$version" -- \
+  /bin/sh -c 'cd -- "$1" && shift && exec modern-web-guidance "$@"' \
+  modern-web-guidance "$caller_dir" "$@"
