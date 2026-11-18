@@ -93,12 +93,12 @@ grep -q 'user replacement' "$modified_home/.gemini/GEMINI.md" || fail "user-repl
 [[ ! -e "$modified_home/.claude/skills/repo-activity-review" && ! -L "$modified_home/.claude/skills/repo-activity-review" ]] || fail "activity skill link was not removed"
 [[ ! -e "$modified_home/.agents/skills/repo-activity-review" ]] || fail "activity shared discovery survived global removal"
 
-echo "scenario 6: force backup is restored on uninstall"
+echo "scenario 6: make install backs up conflicts and uninstall restores them"
 backup_home="$TEST_ROOT/backup-home"
 backup_state="$TEST_ROOT/backup-state"
 mkdir -p "$backup_home/.codex"
 printf '%s\n' 'preserve me' > "$backup_home/.codex/AGENTS.md"
-DOTAGENTS_HOME="$backup_home" XDG_STATE_HOME="$backup_state" "$REPO_ROOT/tooling/scripts/install.sh" --global --force >/dev/null
+DOTAGENTS_HOME="$backup_home" XDG_STATE_HOME="$backup_state" make -C "$REPO_ROOT" install >/dev/null
 assert_link "$backup_home/.codex/AGENTS.md"
 DOTAGENTS_HOME="$backup_home" XDG_STATE_HOME="$backup_state" "$REPO_ROOT/tooling/scripts/uninstall.sh" --global >/dev/null
 [[ -f "$backup_home/.codex/AGENTS.md" ]] || fail "backup was not restored"
