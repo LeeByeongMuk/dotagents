@@ -1,6 +1,14 @@
 # 프로젝트 로컬 준비와 점검
 
+[문서 목록](README.md) · [전역 설치](install.md)
+
 `tooling/scripts/project.sh`는 선택한 프로젝트의 로컬 지침·컨텍스트·검증 근거를 살피고, 없을 때 유지 중인 템플릿으로 시작할 수 있게 한다. 전역 dotagents 설치와 독립적으로 동작한다. Bash와 기본 파일 도구를 사용하고, `package.json`이 있을 때 점검에는 `jq`가 필요하다.
+
+## 프로젝트에 적용하는 기본 방식
+
+전역 설치로 공통 규칙·스킬을 사용하고, 프로젝트에는 고유한 `AGENTS.md`와 전용 스킬을 둔다. 프로젝트마다 전역 설치기를 다시 실행할 필요는 없다. 실제 빌드·검증 명령, 도메인 규칙과 프로젝트 고유 관례를 기록하고 공통 규칙은 복사하지 않는다. Claude·Gemini의 진입 파일이 필요하면 프로젝트의 기존 참조 방식을 따른다.
+
+프로젝트 전용 스킬은 프로젝트가 소유한 `.agents/skills/` 등에 둔다. `.agents`가 공유 원본을 가리키는 링크라면 그 안을 편집하지 않는다. 여러 프로젝트에서 재사용할 관례는 별도 요청으로 [dotagents-promote](../agents/skills/owned/dotagents-promote/SKILL.md)를 통해 반영한다.
 
 ## 읽기 전용 점검
 
@@ -33,6 +41,8 @@ dotagents 저장소에서 기존 프로젝트 디렉터리를 명시한다.
 
 지원하는 템플릿은 `generic`, `nextjs`다. 지정한 유형을 자동 판정하거나 스택·패키지 매니저·의존성을 선택하지 않는다. 적용하면 빠진 파일만 추가한다.
 
+FSD를 실제로 채택한 프로젝트만 [Next.js의 FSD 보조 안내](../agents/templates/nextjs/fsd-optional.md)를 참고한다.
+
 | 로컬 파일 | 원본과 역할 |
 |---|---|
 | `AGENTS.md` | [generic](../agents/templates/generic/AGENTS.md) 또는 [Next.js](../agents/templates/nextjs/AGENTS.md) 템플릿과 출처·로컬 검증 안내 |
@@ -63,7 +73,20 @@ verification: guidance or script names found; no commands executed and no passin
 # exit 0: 템플릿에 검증 제목이 생겼다는 근거이며 검사 성공을 뜻하지 않는다.
 ```
 
-## 경로 보호와 실패 처리
+## 공통 파일을 직접 링크하는 선택 방식
+
+로컬 파일을 만드는 `project.sh init`과 달리, `install.sh --project`는 공통 원본을 직접 연결한다. 고유 규칙이 필요한 프로젝트에는 위 기본 방식을 사용한다.
+
+```bash
+./tooling/scripts/install.sh --dry-run --project /path/to/project
+./tooling/scripts/install.sh --project /path/to/project
+```
+
+이 방식은 `.agents`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`와 owned 스킬의 `.claude/skills/<name>` 링크를 만든다. Codex·Gemini는 공통 `.agents/skills`를 사용하며 managed 옵션은 받지 않는다. 기존 파일과 충돌하면 중단하고, 선택적 `--force`는 백업 후 링크로 교체한다. 고유 지침을 생성하거나 병합하지 않는다.
+
+설치된 지침은 공통 `dist/`를 가리키므로 직접 편집하면 공유 생성물이 바뀐다. 기존 링크 설치를 로컬 파일 방식으로 전환하려면 [제거 안내](install.md#제거)로 대상과 백업을 확인하고 제거한 뒤 초기화한다.
+
+## 초기화의 경로 보호와 실패 처리
 
 초기화는 선택 경로와 그 상위에 심볼릭 링크가 있으면 거부한다. 운영체제의 `/tmp` 같은 별칭도 해당하므로 물리 경로를 선택한다. `.ai-context`가 링크이거나 디렉터리가 아닌 경우에도 파일 추가 전에 실패한다. 기존 `AGENTS.md` 자체가 링크인 경우에는 그 항목을 보존하고 대상에 쓰지 않는다. 홈·파일시스템 루트·dotagents 원본과 그 상위 디렉터리, 원본의 하위 디렉터리, 알려진 도구 설정 디렉터리는 대상으로 받지 않는다. Git을 사용할 수 있으면 공통 Git 디렉터리를 비교하여 같은 저장소의 주 체크아웃과 다른 linked worktree 및 그 하위 경로도 거부한다.
 
