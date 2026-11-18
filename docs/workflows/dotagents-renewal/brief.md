@@ -1,7 +1,7 @@
 # dotagents 개편 작업 절차서
 
 - Run ID: `dotagents-renewal`
-- Status: `EXECUTING`
+- Status: `VERIFYING`
 - Updated: `2026-11-18`
 - 작성 기준 커밋: `3b6145f`
 - 현재 범위는 P0~P3 병렬 구현·PR 전달에 이은 리뷰 반영과 병합이다. 2026-11-18 사용자 승인에 따라 리뷰 지적 4건을 해결하고, 통합 검증을 거쳐 현재 열린 PR #40~#47을 모두 main에 병합한 뒤 원격 브랜치가 사라진 로컬 브랜치와 남은 작업용 worktree를 정리한다.
@@ -178,7 +178,7 @@ T06은 잠긴 출처·선택한 항목·명시한 대상에 한정한 설치·�
 - [x] `AC-13` 프로젝트 준비·점검이 로컬 규칙·기존 파일·symlink 경계를 보존하고 전역 dotagents 없이 사용할 수 있음을 검증한다.
 - [x] `AC-14` PR별 필수 검사와 필요한 조합 검증이 통과하며 기존 PR #40과의 중복·의존·충돌을 표시한다.
 - [x] `AC-15` 모든 작업을 목적별 PR로 전달하고 본인 assignee와 의존 관계를 설정한다.
-- [ ] `AC-16` 리뷰 지적 4건을 수정하고, 수정 PR의 최종 변경 리뷰·회귀 검사와 #40을 포함한 통합 검증을 통과한다.
+- [x] `AC-16` 리뷰 지적 4건을 수정하고, 수정 PR의 최종 변경 리뷰·회귀 검사와 #40을 포함한 통합 검증을 통과한다.
 - [ ] `AC-17` 승인된 열린 PR #40~#47을 검증한 커밋으로 병합하고, 병합이 확인된 로컬 브랜치와 작업용 worktree를 정리한다. 주 체크아웃의 main과 기존 사용자 설정 변경을 보존한다.
 
 ## PR 분할과 병렬 실행
@@ -190,8 +190,8 @@ T06은 잠긴 출처·선택한 항목·명시한 대상에 한정한 설치·�
 | owned 스킬 통합 | `feat/owned-skill-discovery` | T01·T02·T04·T05 | main | [PR #41](https://github.com/LeeByeongMuk/dotagents/pull/41), CI 통과 |
 | 환경 프로필·배포 비교 | `feat/environment-profile` | T03, T08 환경 확장 | main | [PR #44](https://github.com/LeeByeongMuk/dotagents/pull/44), CI·실제 엔진 검사 통과 |
 | 프로젝트 준비 도구 | `feat/project-readiness` | T08 프로젝트 확장 | main | [PR #42](https://github.com/LeeByeongMuk/dotagents/pull/42), CI 통과 |
-| 설치 소유 경계 | `feat/managed-install-layout` | T09 | #41 선행 | [PR #46](https://github.com/LeeByeongMuk/dotagents/pull/46), 기존 CI 통과 및 리뷰 반영 중 |
-| 외부 스킬 관리 | `feat/external-skill-management` | T06 | main, managed 경로와 연동 가능 | [PR #47](https://github.com/LeeByeongMuk/dotagents/pull/47), 기존 CI 통과 및 리뷰 반영 중 |
+| 설치 소유 경계 | `feat/managed-install-layout` | T09 | #41 선행 | [PR #46](https://github.com/LeeByeongMuk/dotagents/pull/46), 수정 리뷰·CI 통과 |
+| 외부 스킬 관리 | `feat/external-skill-management` | T06 | main, managed 경로와 연동 가능 | [PR #47](https://github.com/LeeByeongMuk/dotagents/pull/47), 수정 리뷰·CI 통과 |
 | 표적 모델 평가 | `test/renewal-model-evaluation` | T07 | main, #42/#44의 명시한 문서 snapshot 평가 | [PR #45](https://github.com/LeeByeongMuk/dotagents/pull/45), CI 통과 |
 
 Herdr 안에서 실행 중임을 확인하고 사용자 허용에 따라 worktree 방식으로 격리했다. 세 구현 에이전트가 병렬 작업하고 완료된 슬롯에서 후속 작업을 수행했다. 새 PR 7개는 모두 `LeeByeongMuk`에게 할당했다. 기존 #40은 독립 PR로 유지하고 이번 최종 병합 대상에 포함한다. #41의 원격 브랜치가 squash 후 삭제되므로 먼저 #46의 base를 main으로 전환한다. #41 병합 후에는 #46에 갱신된 main을 병합하고, 관리형 설치 변경만 PR diff에 남는지 확인한 뒤 검사와 CI를 다시 확인한다.
@@ -227,6 +227,16 @@ Herdr 안에서 실행 중임을 확인하고 사용자 허용에 따라 worktre
 | #47 | 외부 출처의 이름 검사로 유효한 owned 이름 `valid--name`이 거절된다 | owned 이름 계약에 맞춰 조회·보호하고 외부 스킬과 출처 ID 검사는 각각의 기존 문법을 유지한다 |
 
 수정 PR의 리뷰와 CI를 마친 뒤 #40~#47을 한 번에 합성해 프로젝트의 `make check`, 실제 chezmoi 비교, managed·외부 스킬·프로젝트 초기화 연동을 확인한다. 병합은 GitHub squash 방식을 사용해 확인한 PR head SHA를 지정한다. 최종 main 검증과 각 병합 결과 확인 뒤 원격 브랜치가 없고 병합을 확인한 로컬 작업 브랜치와 검증 worktree를 정리한다.
+
+#### 2026-11-18 최종 변경 검증
+
+| 대상 | 확인한 근거 | 결과 |
+|---|---|---|
+| #46의 리뷰 지적 두 건 | `1e74d5c`, GPT-6.2-Astra `max`의 최종 diff 리뷰와 관리형 설치 시나리오 13개 재실행 | PASS — 설정 seed의 동시 생성·수정·교체 보존과 legacy·managed 승격 경로를 확인. 로컬 `make check` 11개 검사와 [GitHub CI](https://github.com/LeeByeongMuk/dotagents/actions/runs/44219727302) 통과 |
+| #47의 리뷰 지적 두 건 | `8316c2b`, GPT-6.2-Astra `max`의 최종 diff 리뷰와 외부 스킬 시나리오 17개 재실행 | PASS — 소유권 재확인과 교체된 symlink 보호, `valid--name`의 owned 선언 허용을 확인. 로컬 `make check` 10개 검사와 [GitHub CI](https://github.com/LeeByeongMuk/dotagents/actions/runs/44219557163) 통과 |
+| 전체 조합 | #40 `b0f8c85`, #41 `82ef04b`, #42 `aea8df6`, #43 `85bf848`, #44 `c1e7594`, #45 `f65e5e1`, #46 `1e74d5c`, #47 `8316c2b`를 합성한 격리 tree `9ed718cf0ad7083cbce5b85bb3b2957f570e76a4` | PASS — 실제 chezmoi 2.74.1을 포함한 `make check` 15개와 배포 비교 8개, `git diff --check` 통과 |
+| 설치 경로 연동 | 별도 임시 홈과 state, 고정 커밋을 가진 로컬 Git 스킬 소스와 프로젝트 | PASS — `valid--name`을 두 스킬 발견 경로에 연결하고 managed·legacy 승격 원본을 확인. managed 재설치·제거 뒤에도 사용자 설정과 외부 스킬 링크·기록을 보존했고 외부 스킬 조회·제거와 프로젝트 로컬 초기화·진단을 확인 |
+| #40 설치 기본값 | 별도 임시 홈에서 직접 설치와 `make install` 실행 | PASS — 직접 설치의 충돌 시 무변경, `make install`의 기존 파일 백업과 제거 시 복원 확인 |
 
 ### Model Fit
 
