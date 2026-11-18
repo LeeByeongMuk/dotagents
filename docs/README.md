@@ -18,7 +18,7 @@
 
 ## 유지보수
 
-- [저장소 구조와 원본의 역할](../agents/README.md)
+- [저장소 구조와 새 자산의 위치](../agents/README.md#새-자산의-위치-정하기)
 - [관리 명령과 변경 검증](../tooling/README.md)
 - [스킬 추가·제거 절차](../agents/skills/README.md)
 - [레지스트리와 소스 잠금](../agents/registry/README.md)
@@ -43,6 +43,7 @@
 
 작업별 범위·수용 조건·검증·재개 지점은 채택한 PRD·이슈·스펙에서 관리하며, 별도 원본이 없을 때 `workflows/<run-id>/brief.md`를 사용합니다.
 
+- [dotagents 역할 정리 절차와 후속 TODO](workflows/dotagents-scope/brief.md)
 - [dotagents 개편 작업](workflows/dotagents-renewal/brief.md)
 - [Brief 중심 제품 개발 워크플로우](workflows/lean-product-workflow/brief.md)
 - [Model Fit 라우팅](workflows/model-fit-routing/brief.md)

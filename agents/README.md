@@ -33,6 +33,16 @@ dotagents/
 
 작업 라우팅은 해당 `SKILL.md`의 description과 라우팅 절이 원본입니다. 별도 라우팅 문서로 복제하지 않습니다. 외부 스킬을 보정할 wrapper나 종류별 연동 디렉터리는 실제 소비자가 생길 때 추가합니다. [빈 자리표시자를 두지 않는 이유](../docs/decisions/0004-test-scope-and-placeholders.md)
 
+## 새 자산의 위치 정하기
+
+| 새로 추가할 내용 | 둘 곳과 판단 기준 |
+| --- | --- |
+| 기술 스택과 관계없이 적용할 개인 기준 | `agents/rules/`의 해당 주제. 도구별 진입 형식과 설정은 `agents/adapters/<host>/`에 둡니다. [규칙 작성 기준](../docs/decisions/0002-rule-authoring-criterion.md) |
+| 여러 프로젝트에서 선택해 쓸 작업 절차 | `agents/skills/owned/`에 실행 조건과 지원 환경을 명시합니다. 스택 전용 스킬도 조건이 맞는 여러 프로젝트에서 재사용할 수 있습니다. 외부 스킬의 원본은 공급자가 관리하며, 레지스트리에 출처와 검토한 커밋을 기록하고 필요한 사용법은 연동 안내에 둡니다. [스킬 추가](skills/README.md#추가) · [레지스트리와 잠금](registry/README.md) · [외부 연동](integrations/README.md) |
+| 한 프로젝트의 스택·버전, 빌드·검증 명령, 도메인 관례·전용 스킬 | 해당 프로젝트의 로컬 지침·컨텍스트·스킬에 둡니다. 여러 프로젝트에서 재사용할 근거가 생긴 관례는 별도 요청으로 반영합니다. [프로젝트 준비](../docs/project-readiness.md) · [공통 관례 반영](skills/owned/dotagents-promote/SKILL.md) |
+| 프로젝트를 위한 에이전트 지침·컨텍스트 초안 | 현재 `agents/templates/`의 유지 중인 템플릿에서 시작합니다. 신규 프로젝트마다 같은 지침·PR 양식·골격을 준비하는 작업이 반복되면 선택형 `base`를 검토합니다. [초기화 지원](../docs/project-readiness.md#미리보기와-명시적-초기화) |
+| 개인 셸·Git·앱 설정과 기기별 패키지 구성 | 기기 설정의 범위로 두고, 향후 `dotfiles` 저장소가 마련되면 이관 대상을 검토합니다. 현재 dotagents의 `environment/`는 명시적으로 적용하는 공용 예제를 제공합니다. [선택 개발 환경 프로필](../environment/README.md) · [전환 절차와 후속 TODO](../docs/workflows/dotagents-scope/brief.md#후속-todo) |
+
 ## 원본에서 설치까지
 
 ```text

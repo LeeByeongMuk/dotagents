@@ -1,8 +1,12 @@
 # dotagents
 
-Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 설정 저장소입니다. 공통 규칙, 스킬, 훅과 프로젝트 템플릿을 한곳에서 관리하고 여러 프로젝트에 재사용합니다.
+Claude Code, Codex, Gemini에서 함께 쓰는 스택 독립적인 개인 에이전트 기본값과 공유 도구를 관리합니다.
 
 적용 우선순위는 **프로젝트 고유 규칙 → 도구 전용 설정 → 개인 공통 규칙**입니다. 각 프로젝트의 기술 선택과 검증 명령은 프로젝트가 정합니다.
+
+- 전역 설치로 공통 규칙과 호스트 지침, 직접 만든 스킬을 연결하고 지원하는 호스트에 커밋 메시지 훅을 준비합니다. 각 스킬은 해당 작업에서 실행 조건에 맞춰 사용합니다. [전역 설치](docs/install.md) · [스킬 선택](agents/skills/README.md#용도별-선택-목록)
+- 외부 스킬과 셸·Git 환경 예제는 필요할 때 각각 선택해 적용합니다. [외부 스킬 관리](docs/external-skills.md) · [선택 개발 환경 프로필](environment/README.md)
+- 프로젝트의 기술 스택, 빌드·검증 명령과 관례는 로컬 지침에 둡니다. 기존 지침을 점검하고 지침이 없으면 로컬 템플릿으로 시작할 수 있습니다. [프로젝트 준비](docs/project-readiness.md)
 
 ## 빠른 시작
 
@@ -38,9 +42,9 @@ make doctor
 | 셸·Git 설정 조각을 선택적으로 적용 | [개발 환경 프로필](environment/README.md) |
 | Codex 모델·권한·CLI 프로필 설정 | [Codex 설정](agents/adapters/codex/README.md) |
 
-외부 스킬과 개발 환경 프로필은 별도 명령으로 선택해 적용합니다. 기본 전역 설치에는 포함되지 않습니다. MCP·플러그인 자동 설치, AI 자산 프로필 합성, Gemini 커밋 훅 연결은 아직 제공하지 않습니다.
+호스트별 훅과 MCP·플러그인·AI 자산 프로필의 지원 범위는 각 안내에서 확인할 수 있습니다. [훅](agents/hooks/README.md#진입점과-설치) · [외부 연동](agents/integrations/README.md) · [AI 자산 프로필](agents/profiles/README.md)
 
-전체 문서는 [문서 목록](docs/README.md)에서, 원본의 위치와 역할은 [저장소 구조](agents/README.md)에서 확인할 수 있습니다.
+전체 문서는 [문서 목록](docs/README.md), 원본의 위치와 새 자산을 둘 곳은 [저장소 구조](agents/README.md#새-자산의-위치-정하기)에서 확인할 수 있습니다.
 
 ## 수정과 검증
 

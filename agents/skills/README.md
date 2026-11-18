@@ -19,7 +19,7 @@
 | 프론트엔드 | 브라우저에서 사용자 흐름 검증 | 선택형 외부 스킬 `gstack-qa` |
 | 백엔드 | API, 데이터, 서버 작업 | 공통 스킬을 사용하고, 전용 스킬은 검토와 실제 사용을 거친 뒤 등록합니다. |
 
-즐겨찾기와 환경 분류는 선택을 돕는 표시입니다. 외부 스킬을 사용할 때는 대상 호스트와 프로젝트를 지정해 연결합니다. 등록 정보는 [skills.toml](../registry/skills.toml), 출처와 고정 버전은 [sources.lock](../registry/sources.lock), 설치·갱신·제거 절차는 [외부 스킬 관리 안내](../../docs/external-skills.md)에서 확인할 수 있습니다.
+즐겨찾기와 환경 분류는 선택을 돕는 표시입니다. 전역·프로젝트 링크 설치로 발견되는 owned 스킬은 작업과 프로젝트가 `SKILL.md`의 실행 조건을 충족할 때 사용합니다. 예를 들어 `fsd-refactor`는 FSD를 이미 쓰는 프로젝트에서 선택합니다. 외부 스킬은 대상 호스트와 설치 경로를 골라 별도로 설치합니다. 등록 정보는 [skills.toml](../registry/skills.toml), 출처와 고정 버전은 [sources.lock](../registry/sources.lock), 설치·갱신·제거 절차는 [외부 스킬 관리 안내](../../docs/external-skills.md)에서 확인할 수 있습니다.
 
 ## 원본과 설치 대상
 
