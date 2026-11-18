@@ -29,6 +29,58 @@ if grep -Fq '/contents/.agents/skills/gstack-' "$request_log"; then
   fail "host installation path leaked into source-relative registry path"
 fi
 
+verify_sources="$REPO_ROOT/tooling/scripts/check-sources.sh"
+fixture_skills="$TEST_ROOT/skills.toml"
+fixture_sources="$TEST_ROOT/sources.lock"
+revision=0123456789abcdef0123456789abcdef01234567
+cat > "$fixture_sources" <<EOF
+  [[sources]] # Formatting and comments are part of TOML.
+  id='example'
+  url = 'https://github.com/Example/repo.git' # Verify the Contents API path.
+  revision="$revision"
+EOF
+cat > "$fixture_skills" <<'EOF'
+[[skills]]
+id = "first"
+kind = "external"
+source_id = "example"
+path = "first/SKILL.md"
+
+  [[skills]] # This entry used to be silently skipped.
+  id='second'
+  kind="external"
+  source_id="example" # Use the same TOML rules as the installer.
+  path = 'second with spaces/SKILL.md'
+EOF
+
+run_fixture() {
+  DOTAGENTS_SKILLS_FILE="$fixture_skills" DOTAGENTS_SOURCES_FILE="$fixture_sources" \
+    SOURCE_CHECK_LOG="$request_log" GH_BIN="$fake_gh" "$verify_sources"
+}
+
+: > "$request_log"
+run_fixture >/dev/null
+[[ "$(wc -l < "$request_log" | tr -d ' ')" -eq 2 ]] || fail "valid TOML formatting skipped a source check"
+grep -Fq "repos/Example/repo/contents/second%20with%20spaces/SKILL.md?ref=$revision" "$request_log" \
+  || fail "source path or revision was not decoded from TOML"
+cp "$fixture_skills" "$TEST_ROOT/valid-skills.toml"
+
+for malformed_entry in \
+  'path = "third/SKILL.md"' \
+  'source_id = "example"' \
+  $'source_id = ["example"]\npath = "third/SKILL.md"' \
+  $'source_id = "missing"\npath = "third/SKILL.md"' \
+  $'source_id = "example"\npath = "../third/SKILL.md"' \
+  $'source_id = "example"\npath = ['; do
+  cp "$TEST_ROOT/valid-skills.toml" "$fixture_skills"
+  printf '\n[[skills]]\nid = "third"\nkind = "external"\n%s\n' "$malformed_entry" >> "$fixture_skills"
+  : > "$request_log"
+  if run_fixture >/dev/null 2>&1; then
+    fail "source verification accepted a malformed external entry: $malformed_entry"
+  fi
+  [[ ! -s "$request_log" ]] || fail "source verification contacted GitHub before validating the registry"
+done
+
 failing_gh="$TEST_ROOT/gh-fail"
 failure_output="$TEST_ROOT/failure-output"
 {

@@ -10,7 +10,8 @@
 | --- | --- |
 | 기본 설치·진단·커밋 훅 | Git, Bash, make, jq, ripgrep(`rg`) |
 | 전체 검사(`make check`·`make test`), 외부 스킬 명령 | 위 도구와 Python 3.11 이상 |
-| 외부 소스의 GitHub 경로 검증, PR 작업 | 인증된 GitHub CLI(`gh`) |
+| 외부 소스의 GitHub 경로 검증 (`check-sources.sh`) | Python 3.11 이상, 인증된 GitHub CLI(`gh`) |
+| PR 작업 | 인증된 GitHub CLI(`gh`) |
 | 선택 개발 환경 프로필 | 별도 chezmoi. [준비 방법](../environment/README.md) |
 
 macOS Homebrew에서는 `make deps`로 Git·jq·ripgrep·gh를 설치합니다. Python과 chezmoi는 이 명령이 설치하지 않습니다. `make doctor`는 기본 도구와 전역 설치 상태를 점검하며 Python 버전이나 chezmoi 준비 여부는 검사하지 않습니다.
