@@ -38,6 +38,47 @@ for value in "$TEST_ROOT/source with spaces" "$TEST_ROOT/destination" "$TEST_ROO
 done
 ! grep -Fxq apply "$ENVIRONMENT_TEST_ARGS" || fail 'preview invoked apply'
 
+echo 'scenario: source-local profile state and overlapping deployment paths are rejected before setup'
+overlap_root="$TEST_ROOT/overlap"
+overlap_source="$overlap_root/source"
+mkdir "$overlap_root"
+cp "$ENVIRONMENT_TEST_ARGS" "$TEST_ROOT/previous-args"
+for nested in config state cache; do
+  overlap_config="$overlap_root/config/chezmoi.toml"
+  overlap_state="$overlap_root/state/db"
+  overlap_cache="$overlap_root/cache"
+  case "$nested" in
+    config) overlap_config="$overlap_source/config/chezmoi.toml" ;;
+    state) overlap_state="$overlap_source/state/db" ;;
+    cache) overlap_cache="$overlap_source/cache" ;;
+  esac
+  ! CHEZMOI_BIN="$TEST_ROOT/chezmoi-stub" "$profile" init \
+    --source "$overlap_source" --destination "$TEST_ROOT/destination" \
+    --config "$overlap_config" --state "$overlap_state" --cache "$overlap_cache" > "$TEST_ROOT/error" 2>&1 || fail "init accepted $nested below source"
+  grep -Fq 'must be outside the source directory' "$TEST_ROOT/error" || fail 'source overlap diagnostic missing'
+  [[ -z "$(ls -A "$overlap_root")" ]] || fail 'overlap validation created directories or files'
+done
+if [[ "$TEST_ROOT/OVERLAP" -ef "$overlap_root" ]]; then
+  ! CHEZMOI_BIN="$TEST_ROOT/chezmoi-stub" "$profile" init \
+    --source "$overlap_source" --destination "$TEST_ROOT/destination" \
+    --config "$overlap_root/config/chezmoi.toml" --state "$overlap_root/SOURCE/state/db" \
+    --cache "$overlap_root/cache" > "$TEST_ROOT/error" 2>&1 || fail 'init accepted state below an alternate-case source'
+  grep -Fq 'must be outside the source directory' "$TEST_ROOT/error" || fail 'alternate-case overlap diagnostic missing'
+  [[ -z "$(ls -A "$overlap_root")" ]] || fail 'alternate-case overlap left source or runtime directories'
+fi
+ln -s "$TEST_ROOT/source with spaces" "$overlap_root/source-alias"
+! CHEZMOI_BIN="$TEST_ROOT/chezmoi-stub" "$profile" preview \
+  --source "$TEST_ROOT/source with spaces" --destination "$TEST_ROOT/destination" \
+  --config "$TEST_ROOT/config.toml" --state "$overlap_root/source-alias/db" --cache "$TEST_ROOT/cache" > "$TEST_ROOT/error" 2>&1 || fail 'preview accepted state through a source alias'
+grep -Fq 'must be outside the source directory' "$TEST_ROOT/error" || fail 'aliased overlap diagnostic missing'
+! CHEZMOI_BIN="$TEST_ROOT/chezmoi-stub" "$profile" init \
+  --source "$overlap_source" --destination "$TEST_ROOT/destination" \
+  --config "$TEST_ROOT/config.toml" --state "$TEST_ROOT/state/db" \
+  --cache "$TEST_ROOT/destination/.config/dotagents-environment/runtime" > "$TEST_ROOT/error" 2>&1 || fail 'init accepted a cache in the deployment directory'
+grep -Fq 'overlaps the deployment directory' "$TEST_ROOT/error" || fail 'deployment overlap diagnostic missing'
+[[ ! -e "$overlap_source" && ! -e "$TEST_ROOT/destination/.config" ]] || fail 'overlap validation mutated source or destination'
+cmp -s "$ENVIRONMENT_TEST_ARGS" "$TEST_ROOT/previous-args" || fail 'overlap invoked chezmoi'
+
 echo 'scenario: shell defaults preserve choices and add local bin only once'
 mkdir -p "$TEST_ROOT/shell-home/.local/bin"
 HOME="$TEST_ROOT/shell-home" bash -c '
@@ -68,21 +109,22 @@ fi
 command -v "$real_chezmoi" >/dev/null || fail 'CHEZMOI_BIN is not executable'
 echo "scenario: real chezmoi integration ($("$real_chezmoi" --version))"
 integration="$TEST_ROOT/real integration"
-mkdir -p "$integration/destination" "$integration/config"
-printf '%s\n' '# existing profile config' > "$integration/config/chezmoi.toml"
-cp "$integration/config/chezmoi.toml" "$integration/config-before"
+profile_directory="$integration/destination/.local/profile"
+mkdir -p "$profile_directory/config"
+printf '%s\n' '# existing profile config' > "$profile_directory/config/chezmoi.toml"
+cp "$profile_directory/config/chezmoi.toml" "$integration/config-before"
 for name in .gitconfig .zshrc .bashrc; do
   printf '%s\n' 'existing user configuration' > "$integration/destination/$name"
 done
 run_profile() {
-  CHEZMOI_BIN="$real_chezmoi" "$profile" "$1" \
-    --source "$integration/source" --destination "$integration/destination" \
-    --config "$integration/config/chezmoi.toml" --state "$integration/state/db" --cache "$integration/cache"
+  HOME="$integration/destination" CHEZMOI_BIN="$real_chezmoi" "$profile" "$1" \
+    --source "$profile_directory/source" --destination "$integration/destination" \
+    --config "$profile_directory/config/chezmoi.toml" --state "$profile_directory/state/db" --cache "$profile_directory/cache"
 }
 run_profile init > /dev/null
-[[ -d "$integration/source/.git" ]] || fail 'init did not initialize the source repository'
+[[ -d "$profile_directory/source/.git" ]] || fail 'init did not initialize the source repository'
 [[ ! -e "$integration/destination/.config" ]] || fail 'init applied files'
-cmp -s "$integration/config-before" "$integration/config/chezmoi.toml" || fail 'init overwrote user config'
+cmp -s "$integration/config-before" "$profile_directory/config/chezmoi.toml" || fail 'init overwrote user config'
 if run_profile init > /dev/null 2>&1; then fail 'init accepted an existing source'; fi
 run_profile preview > "$TEST_ROOT/diff"
 grep -q git.inc "$TEST_ROOT/diff" || fail 'preview missed the Git fragment'
@@ -98,13 +140,13 @@ cmp -s "$git_fragment" "$deployed/git.inc" || fail 'apply did not deploy the Git
 [[ ! -L "$deployed/git.inc" ]] || fail 'explicit apply unexpectedly linked the source'
 run_profile apply
 [[ -z "$(run_profile status)" ]] || fail 'repeat apply left drift'
-printf '%s\n' '# source change' >> "$integration/source/dot_config/dotagents-environment/git.inc"
+printf '%s\n' '# source change' >> "$profile_directory/source/dot_config/dotagents-environment/git.inc"
 ! grep -q 'source change' "$deployed/git.inc" || fail 'source edit became live without apply'
 [[ -n "$(run_profile status)" ]] || fail 'source change was not detected'
 run_profile apply
 grep -q 'source change' "$deployed/git.inc" || fail 'apply did not update an unedited target'
 printf '%s\n' '# user edit' >> "$deployed/git.inc"
-printf '%s\n' '# next source change' >> "$integration/source/dot_config/dotagents-environment/git.inc"
+printf '%s\n' '# next source change' >> "$profile_directory/source/dot_config/dotagents-environment/git.inc"
 cp "$deployed/git.inc" "$TEST_ROOT/edited-before"
 if run_profile apply > "$TEST_ROOT/conflict" 2>&1; then fail 'apply did not fail on a user edit'; fi
 cmp -s "$TEST_ROOT/edited-before" "$deployed/git.inc" || fail 'conflict overwrote the user edit'
