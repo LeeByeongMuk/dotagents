@@ -53,7 +53,7 @@ A typical guide runs 10 to 18 pages. The skeleton script adds the footer and pag
 
 - Prefer real captures. Ask the user to log in to the browser or simulator session; never enter credentials yourself.
 - Do not save, submit, or delete anything only to get a capture. Fill forms and capture without saving unless the user approves the action on a non-production environment.
-- Never show real personal data such as names, phone numbers, emails, or addresses. Pick another screen or record, or mask it.
+- Prefer screens and records containing only example data. Inspect each capture for personal data, credentials, and other sensitive content. Before adding a capture to the guide, remove the sensitive pixels or replace them with an opaque fill and export a flattened copy. Reopen that image file and verify the redaction. CSS cropping and overlays leave the original pixels available in the standalone HTML. Reference only the verified image file.
 - Capture web screens at a 1440x900 viewport. If the capture tool can save only inside the workspace, save to a git-ignored path, move the files to the working directory, and delete the temporary folder.
 - Place a capture with `.fit` (the whole image scaled to a width) or `.crop` (a window into a larger image, set with the image's `width`, `left`, and `top`). Place markers with `.num.pin` at percentage `left` and `top` of the container.
 - Without captures, build mockups from the `guide.css` components with the real UI strings and caption them 예시 화면 (or its translation). Web: `.apanel`, `.atbl`, `.dlg`, `.fld`, `.btn`. Mobile: `.phone`, `.mcard`, `.mchip`, `.mbtn`, `.mtabs`, `.mrow`, `.sheet`, `.opt`.
