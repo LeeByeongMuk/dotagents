@@ -28,18 +28,18 @@ git init -q "$work/repo"
 repo="$work/repo"
 
 expect_msg() {
-  local want="$1" msg="$2" got
+  local want="$1" msg="$2" directory="${3:-$repo}" got
   set +e
-  printf '%s\n' "$msg" | DOTAGENTS_REPO_DIR="$repo" "$HOOK_DIR/check.sh" >/dev/null 2>&1
+  printf '%s\n' "$msg" | DOTAGENTS_REPO_DIR="$directory" "$HOOK_DIR/check.sh" >/dev/null 2>&1
   got=$?
   set -e
   [[ "$got" -eq "$want" ]] || fail "check.sh expected $want got $got for: $msg"
 }
 
 expect_cmd() {
-  local want="$1" cmd="$2" got
+  local want="$1" cmd="$2" directory="${3:-$repo}" got
   set +e
-  jq -cn --arg c "$cmd" --arg d "$repo" '{tool_name:"Bash",tool_input:{command:$c},cwd:$d}' \
+  jq -cn --arg c "$cmd" --arg d "$directory" '{tool_name:"Bash",tool_input:{command:$c},cwd:$d}' \
     | "$HOOK_DIR/pre-tool-use.sh" >/dev/null 2>&1
   got=$?
   set -e
@@ -59,6 +59,14 @@ expect_msg 1 $'feat: x\nbody without blank line'
 expect_msg 1 $'feat: x\n\nThis commit introduces a robust helper'
 expect_msg 1 $'feat: x\n\n- bullet list'
 expect_msg 1 $'feat: x\n\n**bold**'
+for length in {65..72}; do
+  original_header="fix: x$(printf '%*s' "$((length - 6))" '' | tr ' ' x)"
+  expect_msg 0 "$original_header"
+  expect_msg 0 "revert: $original_header"$'\n\nThis reverts commit 0123456789abcdef.\nRestore the previous behavior.'
+done
+expect_msg 1 "${original_header}x"
+expect_msg 1 "revert: ${original_header}x"
+expect_msg 1 "revert: ${original_header#fix: } while investigating"
 
 git -C "$repo" config dotagents.commitCheck false
 expect_msg 0 'project convention wins'
@@ -66,15 +74,74 @@ git -C "$repo" config --unset dotagents.commitCheck
 touch "$repo/.gitlint"
 expect_msg 0 'project linter wins'
 rm "$repo/.gitlint"
+mkdir "$repo/.husky"
+touch "$repo/.husky/commit-msg"
+expect_msg 0 'project Husky policy wins'
+rm "$repo/.husky/commit-msg"
 
 # Installed as the repository's own commit-msg hook, the wrapper still checks.
 ln -s "$HOOK_DIR/commit-msg" "$repo/.git/hooks/commit-msg"
+expect_msg 1 'Add thing'
+expect_cmd 2 'git commit -m "Add thing"'
 if git -C "$repo" -c user.name=t -c user.email=t@example.com commit -q --allow-empty -m 'Add thing' >/dev/null 2>&1; then
   fail "commit-msg hook accepted an invalid message"
 fi
 git -C "$repo" -c user.name=t -c user.email=t@example.com commit -q --allow-empty -m 'chore: verify the commit hook' >/dev/null 2>&1 \
   || fail "commit-msg hook rejected a valid message"
 rm "$repo/.git/hooks/commit-msg"
+
+# Git runs the wrapper from the repository root even when the first link is
+# relative to the hooks directory and the target is itself a relative link.
+mkdir "$work/wrapper"
+ln -s "$HOOK_DIR/commit-msg" "$work/wrapper/commit-msg"
+ln -s commit-msg "$work/wrapper/relay"
+ln -s ../../../wrapper/relay "$repo/.git/hooks/commit-msg"
+git -C "$repo" -c user.name=t -c user.email=t@example.com commit -q --allow-empty -m 'chore: resolve a relative hook link' >/dev/null 2>&1 \
+  || fail "relative commit-msg symlink chain rejected a valid message"
+expect_msg 1 'Add thing'
+rm "$repo/.git/hooks/commit-msg"
+
+# The active hook path follows Git, including worktree-local relative paths
+# and the default shared hooks directory of a linked worktree.
+linked="$work/linked worktree"
+git -C "$repo" worktree add -q --detach "$linked"
+mkdir "$linked/custom hooks" "$linked/nested"
+printf '#!/bin/sh\nexit 0\n' > "$linked/custom hooks/commit-msg"
+chmod +x "$linked/custom hooks/commit-msg"
+git -C "$repo" config core.hooksPath 'custom hooks'
+expect_cmd 0 'git commit -m "project convention wins"' "$linked/nested"
+expect_msg 1 'project convention is absent here' "$repo"
+git -C "$repo" config core.hooksPath "$linked/custom hooks"
+expect_cmd 0 'git commit -m "project convention wins"'
+cp "$HOOK_DIR/commit-msg" "$HOOK_DIR/check.sh" "$linked/custom hooks/"
+expect_cmd 2 'git commit -m "Add thing"' "$linked/nested"
+git -C "$repo" config --unset core.hooksPath
+printf '#!/bin/sh\nexit 0\n' > "$repo/.git/hooks/commit-msg"
+chmod +x "$repo/.git/hooks/commit-msg"
+expect_cmd 0 'git commit -m "common Git hook wins"' "$linked/nested"
+rm "$repo/.git/hooks/commit-msg"
+
+# Husky 9 generates commit-msg even when the project only defines pre-commit.
+# Test both stock wrapper formats, including the directory of a linked worktree.
+husky_dir="$linked/.husky"
+mkdir -p "$husky_dir/_"
+: > "$husky_dir/_/h"
+printf '#!/bin/sh\nexit 0\n' > "$husky_dir/pre-commit"
+git -C "$repo" config core.hooksPath .husky/_
+for dispatch in '. "$(dirname "$0")/h"' '. "${0%/*}/h"'; do
+  printf '%s\n%s' '#!/usr/bin/env sh' "$dispatch" > "$husky_dir/_/commit-msg"
+  chmod +x "$husky_dir/_/commit-msg"
+  expect_cmd 2 'git commit -m "Add thing"' "$linked/nested"
+  printf '#!/bin/sh\nexit 0\n' > "$husky_dir/commit-msg"
+  expect_cmd 0 'git commit -m "project convention wins"' "$linked/nested"
+  rm "$husky_dir/commit-msg"
+done
+ln -s "$HOOK_DIR/commit-msg" "$husky_dir/commit-msg"
+expect_cmd 2 'git commit -m "Add thing"' "$linked/nested"
+rm "$husky_dir/commit-msg"
+printf '#!/bin/sh\nexit 0\n' > "$husky_dir/_/commit-msg"
+expect_cmd 0 'git commit -m "custom hook under underscore wins"' "$linked/nested"
+git -C "$repo" config --unset core.hooksPath
 
 expect_cmd 0 'git status'
 expect_cmd 0 "printf '%s\\n' 'git' 'commit'"
@@ -95,18 +162,33 @@ expect_cmd 2 'while git commit -m "Add thing"; do echo done; done'
 expect_cmd 2 'until git commit -m "Add thing"; do echo retry; done'
 expect_cmd 0 'git commit -m "feat: add thing"'
 expect_cmd 0 'git commit -am "fix: handle empty input"'
+expect_cmd 0 'git commit -m"feat: add thing"'
+expect_cmd 0 "git commit -am'fix: handle empty input'"
 expect_cmd 0 'git commit --message="chore: bump deps"'
 expect_cmd 0 'git add -A && git commit -m "fix(x): handle empty"'
 expect_cmd 0 'git -C sub commit -m "chore: bump"'
 expect_cmd 0 'git commit --amend --no-edit'
 expect_cmd 0 $'git commit -m "$(cat <<\'EOF\'\nfeat: add thing\n\nWhy it changed.\nEOF\n)"'
 expect_cmd 2 'git commit -m "Add thing"'
+expect_cmd 2 'git commit -m"Add thing"'
 expect_cmd 2 "git commit -m 'Add thing'"
 expect_cmd 2 'git commit -am "handle empty input"'
 expect_cmd 2 'git commit -m "feat: x" -m "This commit introduces things"'
 expect_cmd 2 $'git commit -m "$(cat <<\'EOF\'\nAdd thing\nEOF\n)"'
 expect_cmd 2 'git commit'
 expect_cmd 2 'git commit -F missing.txt'
+
+# A long non-Git command should fit the host's 30-second hook budget on Bash
+# 3.2. Include the words "git commit" in plain data and verify a following
+# commit is still recognized after the same payload.
+long_text="$(printf '%60000s' '' | tr ' ' x)"
+long_command="printf '%s' 'git commit $long_text'"
+word_list="$(awk 'BEGIN { for (i = 0; i < 12000; i++) printf " data" }')"
+started_at="$SECONDS"
+expect_cmd 0 "$long_command"
+expect_cmd 0 "printf '%s'$word_list"
+[[ $((SECONDS - started_at)) -lt 30 ]] || fail "long non-Git command exceeded the hook timeout"
+expect_cmd 2 "$long_command; git commit -m 'Add thing'"
 
 # Only the commit's own arguments can skip the check.
 expect_cmd 2 'git -c commit.gpgsign=false commit -m "Add thing"'

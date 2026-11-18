@@ -6,6 +6,7 @@ set -euo pipefail
 
 message_file="${1:-/dev/stdin}"
 repo_dir="${DOTAGENTS_REPO_DIR:-$PWD}"
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 for candidate in C.UTF-8 en_US.UTF-8; do
   if locale -a 2>/dev/null | grep -qix "${candidate//UTF-8/utf8}\|$candidate"; then
@@ -20,6 +21,14 @@ fail() {
   exit 1
 }
 
+is_husky_dispatcher() {
+  local path="$1"
+  [[ "$path" == */_/commit-msg && -f "${path%/*}/h" ]] || return 1
+  # Husky 9 writes a dispatcher for each Git hook, even with no project hook.
+  cmp -s "$path" <(printf '%s\n%s' '#!/usr/bin/env sh' '. "$(dirname "$0")/h"') ||
+    cmp -s "$path" <(printf '%s\n%s' '#!/usr/bin/env sh' '. "${0%/*}/h"')
+}
+
 # Project policy comes first: skip when the project enforces its own convention.
 if [[ -d "$repo_dir" ]]; then
   if [[ "$(git -C "$repo_dir" config --bool --get dotagents.commitCheck 2>/dev/null || echo true)" == "false" ]]; then
@@ -28,10 +37,22 @@ if [[ -d "$repo_dir" ]]; then
   top="$(git -C "$repo_dir" rev-parse --show-toplevel 2>/dev/null || echo "$repo_dir")"
   for marker in commitlint.config.js commitlint.config.cjs commitlint.config.mjs commitlint.config.ts \
                 .commitlintrc .commitlintrc.json .commitlintrc.yml .commitlintrc.yaml .commitlintrc.js \
-                .gitlint .husky/commit-msg .git/hooks/commit-msg; do
-    # The git hook wrapper below may itself be installed as .git/hooks/commit-msg.
-    [[ "$marker" == .git/hooks/commit-msg && "${DOTAGENTS_COMMIT_HOOK:-}" == git ]] && continue
+                .gitlint; do
     [[ -f "$top/$marker" ]] && exit 0
+  done
+  # Run from the worktree root so relative core.hooksPath values resolve as
+  # they do for Git. The default hook can live in a linked worktree's common dir.
+  hook="$(git -C "$top" rev-parse --git-path hooks/commit-msg 2>/dev/null || echo .git/hooks/commit-msg)"
+  [[ "$hook" == /* ]] || hook="$top/$hook"
+  if [[ -f "$hook" ]] && is_husky_dispatcher "$hook"; then
+    hook="${hook%/_/commit-msg}/commit-msg"
+  fi
+  for candidate in "$hook" "$top/.husky/commit-msg"; do
+    [[ -f "$candidate" ]] || continue
+    # A symlink or copy of our own wrapper still uses the shared convention.
+    [[ "$candidate" -ef "$here/commit-msg" ]] && continue
+    cmp -s "$candidate" "$here/commit-msg" && continue
+    exit 0
   done
 fi
 
@@ -52,7 +73,11 @@ types='feat|fix|refactor|perf|docs|test|build|ci|chore|revert'
 header_re="^($types)(\([^()[:space:]]+\))?!?: [^[:space:]].*$"
 
 [[ "$header" =~ $header_re ]] || fail "header must match '<type>(<scope>)!: <summary>' with type in {${types//|/, }}: '$header'"
-[[ ${#header} -le 72 ]] || fail "header exceeds 72 characters (${#header})"
+if [[ ${#header} -gt 72 ]]; then
+  original_header="${header#revert: }"
+  [[ "$header" == 'revert: '* && "$original_header" =~ $header_re && ${#original_header} -le 72 ]] \
+    || fail "header exceeds 72 characters (${#header})"
+fi
 [[ "$header" != *. ]] || fail "header must not end with a period"
 summary="${header#*: }"
 [[ ! "$summary" =~ ^[A-Z] ]] || fail "English summary must start with a lowercase letter"

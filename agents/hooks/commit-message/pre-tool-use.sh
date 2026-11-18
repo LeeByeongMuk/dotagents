@@ -10,6 +10,11 @@ command="$(printf '%s' "$input" | jq -r '.tool_input.command // empty')"
 cwd="$(printf '%s' "$input" | jq -r '.cwd // empty')"
 [[ -n "$command" ]] || exit 0
 
+# The lexer and awk share byte offsets. In particular, Bash 3.2 walks from
+# the start of a multibyte string for each substring operation.
+message_locale="${LC_ALL:-}"
+export LC_ALL=C
+
 # A heredoc body is data, not command text. Blank those lines out, preserving
 # offsets, so a `git commit` or an -m flag written inside a heredoc body is not
 # mistaken for the command being run.
@@ -42,20 +47,37 @@ block() {
 # decoded word and its source offsets; quote removal alone would split -C and
 # -F paths containing spaces. Expansions stay marked as nonliteral.
 words=() ends=() literals=() operators=()
-word="" quote="" active=0 literal=1 i=0
+word="" quote="" active=0 literal=1 i=0 token_count=0
+code_length="${#code_only}"
+blank_re='^[[:blank:]]+'
+single_quote_text_re="^[^']+"
+double_quote_text_re='^[^"\\$`]+'
+unquoted_text_re="^[^][[:space:];&|()<>'\"\\\\\$\`*?~{}]+"
+comment_text_re=$'^[^\n]+'
+scan_size=4096
+scan="" scan_start=0 scan_end=0
+refresh_scan() {
+  scan_start="$i"
+  scan_end=$((i + scan_size))
+  # Include one lookahead byte for escapes and substitutions at the boundary.
+  scan="${code_only:$i:$((scan_size + 1))}"
+}
 push_word() {
   [[ "$active" -eq 1 ]] || return 0
-  words+=("$word") ends+=("$i")
-  literals+=("$literal") operators+=(0)
+  words[token_count]="$word" ends[token_count]="$i"
+  literals[token_count]="$literal" operators[token_count]=0
+  token_count=$((token_count + 1))
   word="" active=0 literal=1
 }
 # Keep substitutions opaque even when unquoted: their spaces and operators are
 # part of one nonliteral argument, never commands for this hook to execute.
 skip_substitution() {
-  local delimiter="$1" depth=1 inner_quote="" ch next
+  local delimiter="$1" depth=1 inner_quote="" offset ch next
   i=$((i + ${#delimiter}))
-  while [[ "$i" -lt "${#code_only}" ]]; do
-    ch="${code_only:$i:1}" next="${code_only:$((i + 1)):1}"
+  while [[ "$i" -lt "$code_length" ]]; do
+    [[ "$i" -lt "$scan_end" ]] || refresh_scan
+    offset=$((i - scan_start))
+    ch="${scan:$offset:1}" next="${scan:$((offset + 1)):1}"
     if [[ "$inner_quote" == "'" ]]; then
       [[ "$ch" != "'" ]] || inner_quote=""
     elif [[ "$ch" == '\' ]]; then
@@ -77,19 +99,20 @@ skip_substitution() {
     i=$((i + 1))
   done
 }
-while [[ "$i" -lt "${#code_only}" ]]; do
+while [[ "$i" -lt "$code_length" ]]; do
+  [[ "$i" -lt "$scan_end" ]] || refresh_scan
+  offset=$((i - scan_start))
+  ch="${scan:$offset:1}" next="${scan:$((offset + 1)):1}"
   # Heredoc bodies are blanked above to retain source offsets. Skip each run
   # at once so a large file-writing command does not exhaust the hook timeout.
-  if [[ -z "$quote" && "${code_only:$i}" =~ ^([[:blank:]]+) ]]; then
-    blank_length="${#BASH_REMATCH[1]}"
-    push_word
-    i=$((i + blank_length))
-    continue
-  fi
-  ch="${code_only:$i:1}"
-  next="${code_only:$((i + 1)):1}"
   if [[ "$quote" == "'" ]]; then
-    if [[ "$ch" == "'" ]]; then quote=""; else word+="$ch"; fi
+    if [[ "$ch" == "'" ]]; then
+      quote=""
+    elif [[ "${scan:$offset}" =~ $single_quote_text_re ]]; then
+      word+="${BASH_REMATCH[0]}"
+      i=$((i + ${#BASH_REMATCH[0]}))
+      continue
+    fi
   elif [[ "$ch" == '\' && "$quote" != "'" ]]; then
     if [[ "$quote" == '"' && "$next" != [\$\`\"\\] && "$next" != $'\n' ]]; then
       word+="$ch"
@@ -108,24 +131,43 @@ while [[ "$i" -lt "${#code_only}" ]]; do
   elif [[ "$quote" == '"' ]]; then
     if [[ "$ch" == '"' ]]; then
       quote=""
+    elif [[ "${scan:$offset}" =~ $double_quote_text_re ]]; then
+      word+="${BASH_REMATCH[0]}"
+      i=$((i + ${#BASH_REMATCH[0]}))
+      continue
     else
       [[ "$ch" != '$' && "$ch" != '`' ]] || literal=0
       word+="$ch"
     fi
   elif [[ "$ch" == "'" || "$ch" == '"' ]]; then
     active=1 quote="$ch"
+  elif [[ "$ch" == [[:blank:]] && "$next" == [[:blank:]] && "${scan:$offset}" =~ $blank_re ]]; then
+    push_word
+    i=$((i + ${#BASH_REMATCH[0]}))
+    continue
   elif [[ "$ch" == [[:space:]] && "$ch" != $'\n' ]]; then
     push_word
   elif [[ "$ch" == [\;\&\|\(\)\<\>] || "$ch" == $'\n' ]]; then
     push_word
-    words+=("$ch") ends+=("$((i + 1))")
-    literals+=(1) operators+=(1)
+    words[token_count]="$ch" ends[token_count]="$((i + 1))"
+    literals[token_count]=1 operators[token_count]=1
+    token_count=$((token_count + 1))
   elif [[ "$ch" == '#' && "$active" -eq 0 ]]; then
-    while [[ "$i" -lt "${#code_only}" && "${code_only:$i:1}" != $'\n' ]]; do i=$((i + 1)); done
+    while [[ "$i" -lt "$code_length" ]]; do
+      [[ "$i" -lt "$scan_end" ]] || refresh_scan
+      offset=$((i - scan_start))
+      [[ "${scan:$offset}" =~ $comment_text_re ]] || break
+      i=$((i + ${#BASH_REMATCH[0]}))
+    done
     continue
   else
     active=1
     case "$ch" in '$'|'`'|'*'|'?'|'['|'~'|'{'|'}') literal=0 ;; esac
+    if [[ "${scan:$offset}" =~ $unquoted_text_re ]]; then
+      word+="${BASH_REMATCH[0]}"
+      i=$((i + ${#BASH_REMATCH[0]}))
+      continue
+    fi
     word+="$ch"
   fi
   i=$((i + 1))
@@ -136,7 +178,7 @@ push_word
 # -C is a different option (reuse-message) and must not change the target.
 commit_index="" repo_dir="${cwd:-$PWD}" unresolved_dir=0
 command_position=1 prefix="" redirect_operand=0
-for ((i = 0; i < ${#words[@]}; i++)); do
+for ((i = 0; i < token_count; i++)); do
   arg="${words[i]}"
   if [[ "${operators[i]}" -eq 1 ]]; then
     case "$arg" in
@@ -166,7 +208,7 @@ for ((i = 0; i < ${#words[@]}; i++)); do
   [[ "$arg" == git && "${literals[i]}" -eq 1 ]] || continue
   candidate_dir="${cwd:-$PWD}" candidate_unresolved=0
   j=$((i + 1))
-  while [[ "$j" -lt "${#words[@]}" && "${operators[j]}" -eq 0 ]]; do
+  while [[ "$j" -lt "$token_count" && "${operators[j]}" -eq 0 ]]; do
     arg="${words[j]}"
     case "$arg" in
       commit)
@@ -174,7 +216,7 @@ for ((i = 0; i < ${#words[@]}; i++)); do
         break ;;
       -C)
         j=$((j + 1))
-        [[ "$j" -lt "${#words[@]}" && "${operators[j]}" -eq 0 ]] || break
+        [[ "$j" -lt "$token_count" && "${operators[j]}" -eq 0 ]] || break
         dir="${words[j]}"
         [[ "${literals[j]}" -eq 1 ]] || candidate_unresolved=1 ;;
       -C?*)
@@ -221,7 +263,7 @@ read_heredoc_body() {
 }
 
 message_source=""
-if [[ "$segment" =~ (^|[[:space:]])(-[a-zA-Z]*m|--message)([[:space:]]|=) ]]; then
+if [[ "$segment" =~ (^|[[:space:]])(-[a-zA-Z]*m([[:space:]]|=|[\'\"])|--message([[:space:]]|=)) ]]; then
   rest="$segment"
   count=0
   literal=1
@@ -247,12 +289,12 @@ if [[ "$segment" =~ (^|[[:space:]])(-[a-zA-Z]*m|--message)([[:space:]]|=) ]]; th
 fi
 
 if [[ -z "$message_source" ]]; then
-  for ((i = commit_index + 1; i < ${#words[@]}; i++)); do
+  for ((i = commit_index + 1; i < token_count; i++)); do
     [[ "${operators[i]}" -eq 0 ]] || break
     case "${words[i]}" in
       -F|--file)
         i=$((i + 1))
-        [[ "$i" -lt "${#words[@]}" ]] || break
+        [[ "$i" -lt "$token_count" ]] || break
         file="${words[i]}" ;;
       -F?*) file="${words[i]#-F}" ;;
       --file=*) file="${words[i]#--file=}" ;;
@@ -278,7 +320,7 @@ fi
 
 [[ -n "$message_source" ]] || block "could not find the commit message in the command. Pass it with -m \"...\" or -m \"\$(cat <<'EOF' ... EOF)\" so it can be validated against agents/rules/git.md."
 
-if ! DOTAGENTS_REPO_DIR="$repo_dir" "$here/check.sh" "$tmp" 2> "$tmp.err"; then
+if ! LC_ALL="$message_locale" DOTAGENTS_REPO_DIR="$repo_dir" "$here/check.sh" "$tmp" 2> "$tmp.err"; then
   block "$(cat "$tmp.err")"
 fi
 exit 0
