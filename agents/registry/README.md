@@ -14,6 +14,8 @@
 
 `skills.toml`의 `workflows`는 워크플로우 자체에 `product-development`, lean 검증 후보에 `product-development:verify`를 사용합니다. 연결되지 않은 외부 스킬은 빈 목록입니다.
 
+Modern Web Guidance의 Git 커밋은 스킬 파일을 고정하고 `sources.lock`의 `npm_version`은 실행 CLI와 그 안의 가이드를 고정합니다. 별도 실행 스크립트가 `npm_version`을 사용합니다. [Modern Web Guidance 연동](../integrations/skills/modern-web-guidance/README.md)
+
 ## 설치에서의 사용
 
 | 명령 | 대상 선택 |

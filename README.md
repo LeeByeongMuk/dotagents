@@ -30,6 +30,7 @@ make doctor
 | --- | --- |
 | 전역 설치, 갱신, 제거와 새 컴퓨터 복원 | [설치 안내](docs/install.md) |
 | 프로젝트 지침·컨텍스트 점검과 초기화 | [프로젝트 준비](docs/project-readiness.md) |
+| 환경과 작업에 맞는 스킬 선택 | [용도별 선택 목록](agents/skills/README.md#용도별-선택-목록) |
 | 제품 개발, FSD 리팩터링, 공통 관례 반영, 사용 가이드, 저장소 활동 정리 | [직접 만든 스킬과 사용 예](agents/skills/owned/README.md) |
 | 기획은 Plan, 구현은 Brief → Execute → Verify로 진행 | [제품 개발 워크플로우](agents/workflows/product-development/WORKFLOW.md) |
 | 커밋 메시지 검사와 프로젝트별 예외 설정 | [훅 안내](agents/hooks/README.md) |

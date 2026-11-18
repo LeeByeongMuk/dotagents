@@ -1,6 +1,13 @@
 lock_version = 1
 
 [[sources]]
+id = "googlechrome-modern-web-guidance"
+url = "https://github.com/GoogleChrome/modern-web-guidance"
+revision = "64a6d708f5a43f2cd3fde5d4d7db3905ba1bdf65"
+reviewed_at = "2026-11-18"
+npm_version = "1.0.1"
+
+[[sources]]
 id = "gstack"
 url = "https://github.com/garrytan/gstack"
 revision = "a3259400a366593e0c909dd9ac3e59752efd2488"

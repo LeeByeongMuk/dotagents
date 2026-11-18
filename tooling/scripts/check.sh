@@ -47,6 +47,8 @@ required=(
   agents/skills/owned/repo-activity-review/agents/openai.yaml
   agents/profiles/README.md
   agents/integrations/README.md
+  agents/integrations/skills/modern-web-guidance/README.md
+  agents/integrations/skills/modern-web-guidance/run.sh
   agents/adapters/claude/CLAUDE.md agents/adapters/claude/settings.json agents/adapters/codex/AGENTS.md
   agents/adapters/codex/hooks.json
   agents/adapters/gemini/GEMINI.md agents/registry/README.md
@@ -69,6 +71,7 @@ required=(
   tooling/tests/eval_test.sh
   tooling/tests/model_fit_test.sh
   tooling/tests/sources_test.sh
+  tooling/tests/modern_web_guidance_test.sh
   tooling/tests/hooks_test.sh
   tooling/tests/build_test.sh
   tooling/evals/product-development/README.md

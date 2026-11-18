@@ -2,6 +2,25 @@
 
 [직접 만든 스킬과 사용 예](owned/README.md) · [외부 스킬 관리](../../docs/external-skills.md) · [문서 목록](../../docs/README.md)
 
+## 용도별 선택 목록
+
+프로젝트 환경과 지금 필요한 작업을 기준으로 스킬을 고릅니다. ★는 사용자가 자주 쓴다고 확인한 스킬에 붙입니다. 현재 즐겨찾기는 비어 있습니다.
+
+| 환경 | 작업 | 스킬 |
+| --- | --- | --- |
+| 공통 | 제품 기획, 구현과 검증 | [product-development-workflow](owned/product-development-workflow/SKILL.md) |
+| 공통 | 아이디어 검토, 요구사항 구체화 | 선택형 외부 스킬 `gstack-office-hours`, `mattpocock-grilling` |
+| 공통 | 구현 계획 정리 | 선택형 외부 스킬 `superpowers-writing-plans`, `gstack-autoplan` |
+| 공통 | 코드 변경 검토 | 선택형 외부 스킬 `gstack-review` |
+| 공통 | 저장소 활동 요약, 사용자 가이드 작성 | [repo-activity-review](owned/repo-activity-review/SKILL.md), [usage-guide](owned/usage-guide/SKILL.md) |
+| 공통 | 여러 프로젝트에서 쓸 관례를 dotagents에 반영 | [dotagents-promote](owned/dotagents-promote/SKILL.md) |
+| 프론트엔드 | 웹 UI, 브라우저 API와 호환성 가이드 조회 | 선택형 외부 스킬 [modern-web-guidance](../integrations/skills/modern-web-guidance/README.md) |
+| 프론트엔드 | FSD를 이미 채택한 프로젝트의 구조 정리 | [fsd-refactor](owned/fsd-refactor/SKILL.md) |
+| 프론트엔드 | 브라우저에서 사용자 흐름 검증 | 선택형 외부 스킬 `gstack-qa` |
+| 백엔드 | API, 데이터, 서버 작업 | 공통 스킬을 사용하고, 전용 스킬은 검토와 실제 사용을 거친 뒤 등록합니다. |
+
+즐겨찾기와 환경 분류는 선택을 돕는 표시입니다. 외부 스킬을 사용할 때는 대상 호스트와 프로젝트를 지정해 연결합니다. 등록 정보는 [skills.toml](../registry/skills.toml), 출처와 고정 버전은 [sources.lock](../registry/sources.lock), 설치·갱신·제거 절차는 [외부 스킬 관리 안내](../../docs/external-skills.md)에서 확인할 수 있습니다.
+
 ## 원본과 설치 대상
 
 | 자산 | 역할 |

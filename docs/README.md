@@ -8,6 +8,7 @@
 | --- | --- |
 | 전역 설치·갱신·제거·복원 | [설치 안내](install.md) |
 | 프로젝트 점검과 로컬 지침 초기화 | [프로젝트 준비](project-readiness.md) |
+| 환경과 작업에 맞는 스킬 선택 | [용도별 선택 목록](../agents/skills/README.md#용도별-선택-목록) |
 | 직접 만든 스킬 선택과 요청 예시 | [스킬 목록](../agents/skills/owned/README.md) |
 | 제품 기획과 구현 진행 | [제품 개발 워크플로우](../agents/workflows/product-development/WORKFLOW.md) |
 | 커밋 메시지 검사 | [훅 안내](../agents/hooks/README.md) |
