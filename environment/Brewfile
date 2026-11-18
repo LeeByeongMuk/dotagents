@@ -1,0 +1,7 @@
+# Optional development tools from the repository's existing make deps.
+brew "git"
+brew "jq"
+brew "ripgrep"
+brew "gh"
+# Optional engine used only by environment/profile.sh.
+brew "chezmoi"

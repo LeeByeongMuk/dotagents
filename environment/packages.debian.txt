@@ -1,0 +1,8 @@
+# Debian/Ubuntu package names; inspect before installing.
+# chezmoi is installed separately; see README.md.
+git
+jq
+ripgrep
+gh
+ca-certificates
+curl
