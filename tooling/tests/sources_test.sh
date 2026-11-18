@@ -17,13 +17,14 @@ request_log="$TEST_ROOT/requests"
 chmod +x "$fake_gh"
 
 SOURCE_CHECK_LOG="$request_log" GH_BIN="$fake_gh" "$REPO_ROOT/tooling/scripts/check-sources.sh" >/dev/null
-[[ "$(wc -l < "$request_log" | tr -d ' ')" -eq 6 ]] || fail "expected six external source path checks"
+[[ "$(wc -l < "$request_log" | tr -d ' ')" -eq 7 ]] || fail "expected seven external source path checks"
 grep -Fq 'repos/garrytan/gstack/contents/office-hours/SKILL.md?ref=' "$request_log" || fail "office-hours source path is incorrect"
 grep -Fq 'repos/garrytan/gstack/contents/autoplan/SKILL.md?ref=' "$request_log" || fail "autoplan source path is incorrect"
 grep -Fq 'repos/garrytan/gstack/contents/review/SKILL.md?ref=' "$request_log" || fail "review source path is incorrect"
 grep -Fq 'repos/garrytan/gstack/contents/qa/SKILL.md?ref=' "$request_log" || fail "qa source path is incorrect"
 grep -Fq 'repos/obra/superpowers/contents/skills/writing-plans/SKILL.md?ref=' "$request_log" || fail "Superpowers source path is incorrect"
 grep -Fq 'repos/mattpocock/skills/contents/skills/productivity/grilling/SKILL.md?ref=' "$request_log" || fail "grilling source path is incorrect"
+grep -Fq 'repos/GoogleChrome/modern-web-guidance/contents/skills/modern-web-guidance/SKILL.md?ref=' "$request_log" || fail "Modern Web Guidance source path is incorrect"
 if grep -Fq '/contents/.agents/skills/gstack-' "$request_log"; then
   fail "host installation path leaked into source-relative registry path"
 fi

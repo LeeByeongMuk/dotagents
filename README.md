@@ -39,6 +39,8 @@ Claude Code, Codex, Gemini에서 함께 쓰는 개인 AI 개발 운영체계의 
 
 gstack 같은 외부 스킬은 [스킬 레지스트리](agents/registry/skills.toml)에 출처를 기록한 연동 대상입니다. 직접 만든 위 스킬과 구분하며, 이 저장소의 설치기가 외부 스킬을 다운로드하지는 않습니다.
 
+작업에 맞는 스킬은 [용도별 선택 목록](agents/skills/README.md#용도별-선택-목록)에서 찾을 수 있습니다. 선택한 외부 스킬은 [별도 관리 명령](docs/external-skills.md)으로 연결합니다. 웹 UI·브라우저 호환성 가이드를 조회하는 [Modern Web Guidance](agents/integrations/skills/modern-web-guidance/README.md)는 검토한 CLI 버전과 통계 비활성화를 적용하는 실행 경로를 함께 제공합니다.
+
 ## 저장소 구조
 
 루트는 원본, 관리 도구, 문서, 생성 결과만 드러내도록 작게 유지합니다.

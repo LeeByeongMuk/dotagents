@@ -8,3 +8,7 @@
 - 도구: 브라우저, CLI와 기타 외부 개발 도구의 설치·검증 정보를 둡니다.
 
 출처와 고정 버전의 원본은 `../registry/skills.toml`과 `../registry/sources.lock`입니다.
+
+## 공급자별 사용 안내
+
+- [Modern Web Guidance](skills/modern-web-guidance/README.md): 웹 UI·브라우저 API·호환성 가이드 조회와 선택적 현대화 조사. 검토한 CLI 버전과 통계 비활성화를 적용하는 실행 스크립트, 프로젝트별 적용 지침을 제공합니다.

@@ -68,6 +68,18 @@ optional = true
 enabled_by_default = false
 
 [[skills]]
+id = "modern-web-guidance"
+kind = "external"
+source_id = "googlechrome-modern-web-guidance"
+path = "skills/modern-web-guidance/SKILL.md"
+license = "Apache-2.0 AND CC-BY-4.0"
+hosts = ["claude", "codex", "gemini"]
+profiles = ["full"]
+workflows = []
+optional = true
+enabled_by_default = false
+
+[[skills]]
 id = "gstack-office-hours"
 kind = "external"
 source_id = "gstack"
