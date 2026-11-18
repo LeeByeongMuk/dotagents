@@ -102,11 +102,26 @@ run 1 init / --apply
 run 1 init "$TEST_ROOT/not-created" --apply
 [[ ! -e "$TEST_ROOT/not-created" ]] || fail 'created unselected parent directory'
 
+echo 'scenario: home aliases and case aliases do not bypass protected directory checks'
+protected_parent="$TEST_ROOT/protected-home-parent"
+protected_home="$protected_parent/HomeFolder"
+mkdir -p "$protected_home" "$TEST_ROOT/tool-config/.claude/child"
+ln -s "$protected_home" "$TEST_ROOT/home-link"
+HOME="$TEST_ROOT/home-link" run 1 init "$protected_home" --apply
+HOME="$TEST_ROOT/home-link" run 1 init "$protected_parent" --apply
+[[ ! -e "$protected_home/AGENTS.md" && ! -e "$protected_parent/AGENTS.md" ]] || fail 'initialized home behind a symlink alias'
+if [[ "$protected_parent/homefolder" -ef "$protected_home" ]]; then
+  HOME="$protected_home" run 1 init "$protected_parent/homefolder" --apply
+  run 1 init "$TEST_ROOT/tool-config/.CLAUDE/child" --apply
+  [[ ! -e "$protected_home/AGENTS.md" && ! -e "$TEST_ROOT/tool-config/.claude/child/AGENTS.md" ]] || fail 'initialized protected directory through alternate case'
+fi
+
 echo 'scenario: another checkout and its descendants from the same repository are protected'
 source_main="$TEST_ROOT/source-main"
 source_worktree="$TEST_ROOT/source-worktree"
-mkdir -p "$source_main/tooling/scripts" "$source_main/agents/templates/context-docs" "$source_main/agents/templates/generic"
+mkdir -p "$source_main/tooling/scripts/lib" "$source_main/agents/templates/context-docs" "$source_main/agents/templates/generic"
 cp "$CLI" "$source_main/tooling/scripts/project.sh"
+cp "$REPO_ROOT/tooling/scripts/lib/paths.sh" "$source_main/tooling/scripts/lib/paths.sh"
 cp "$REPO_ROOT/agents/templates/generic/AGENTS.md" "$source_main/agents/templates/generic/AGENTS.md"
 cp "$REPO_ROOT/agents/templates/context-docs/project-readme.md" "$source_main/agents/templates/context-docs/project-readme.md"
 git -C "$source_main" init -q
@@ -133,6 +148,18 @@ snapshot "$invalid" "$TEST_ROOT/before"
 run 1 init "$invalid" --apply
 snapshot "$invalid" "$TEST_ROOT/after"
 cmp "$TEST_ROOT/before" "$TEST_ROOT/after" || fail 'context conflict wrote files'
+
+echo 'scenario: failed staging before the first publication removes the temporary directory'
+mkdir "$TEST_ROOT/staging-failure" "$TEST_ROOT/staging-bin"
+cat > "$TEST_ROOT/staging-bin/cat" <<'EOF'
+#!/usr/bin/env bash
+exit 9
+EOF
+chmod +x "$TEST_ROOT/staging-bin/cat"
+snapshot "$TEST_ROOT/staging-failure" "$TEST_ROOT/before"
+PATH="$TEST_ROOT/staging-bin:$PATH" run 9 init "$TEST_ROOT/staging-failure" --apply
+snapshot "$TEST_ROOT/staging-failure" "$TEST_ROOT/after"
+cmp "$TEST_ROOT/before" "$TEST_ROOT/after" || fail 'failed staging left temporary files or directories'
 
 echo 'scenario: failed second publication rolls back newly created files and directories'
 mkdir "$TEST_ROOT/failure" "$TEST_ROOT/bin"
@@ -164,6 +191,15 @@ grep -q 'package manager evidence: pnpm-lock.yaml' "$TEST_ROOT/output" || fail '
 ! grep -Eq 'PRIVATE_COMMAND_CONTENT|SHOULD_NOT_EXIST|script dev' "$TEST_ROOT/output" || fail 'exposed command contents or unrelated metadata'
 snapshot "$evidence" "$TEST_ROOT/after"
 cmp "$TEST_ROOT/before" "$TEST_ROOT/after" || fail 'inspect executed project scripts'
+cat > "$evidence/package.json" <<'EOF'
+{"scripts":{"test":null,"build":false,"check":[],"typecheck":{},"lint":" \t\n"}}
+EOF
+run 1 doctor "$evidence"
+grep -Fq 'no recognized verification script names with nonblank commands' "$TEST_ROOT/output" || fail 'no command evidence gap was reported'
+! grep -Fq 'verification candidate:' "$TEST_ROOT/output" || fail 'invalid or blank script was accepted as evidence'
+printf '{"scripts":{"lint":"echo command"}}\n{}\n' > "$evidence/package.json"
+run 1 doctor "$evidence"
+grep -q 'package.json is invalid' "$TEST_ROOT/output" || fail 'multiple JSON values counted as package metadata'
 printf '{invalid\n' > "$evidence/package.json"
 run 1 doctor "$evidence"
 grep -q 'package.json is invalid' "$TEST_ROOT/output" || fail 'invalid package metadata accepted'

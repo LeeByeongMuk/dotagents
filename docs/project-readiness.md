@@ -23,7 +23,7 @@ dotagents 저장소에서 기존 프로젝트 디렉터리를 명시한다.
 
 - 루트의 일반 파일 `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` 중 하나
 - `.ai-context`, `docs/context`, `docs/architecture` 중 디렉터리 하나
-- 지침 파일의 Verification·Validation·검증 제목, 또는 `package.json`의 `build`, `check`, `lint`, `test`, `typecheck` 및 `lint:ci` 같은 하위 이름
+- 지침 파일의 Verification·Validation·검증 제목, 또는 `package.json`에서 비어 있지 않은 명령 문자열이 있는 `build`, `check`, `lint`, `test`, `typecheck` 및 `lint:ci` 같은 하위 이름
 
 `package.json`에서는 해당 스크립트 이름만 출력한다. 명령 본문·임의 메타데이터는 출력하거나 실행하지 않는다. 알려진 lockfile의 존재도 패키지 매니저 근거로 표시하되, 도구나 의존성을 설치하지 않는다.
 
