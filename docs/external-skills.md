@@ -13,6 +13,8 @@
 
 원하는 항목·호스트·경로는 [skills.toml](../agents/registry/skills.toml), 출처와 검토한 40자리 커밋은 [sources.lock](../agents/registry/sources.lock)의 원본이다. `profiles`나 `enabled_by_default`를 다운로드 정책으로 해석하지 않는다. 테스트나 검토한 별도 레지스트리는 `DOTAGENTS_SKILLS_FILE`, `DOTAGENTS_SOURCES_FILE`로 명시할 수 있다.
 
+외부 스킬과 잠금 출처의 ID에는 소문자 영문·숫자와 단일 구분 하이픈을 쓴다. `kind = "owned"` 선언의 ID는 저장소의 [소유 스킬 이름 규칙](../agents/skills/README.md)을 따른다. 스킬 ID는 종류에 관계없이 같은 레지스트리에서 고유해야 한다.
+
 ## 미리보기와 설치
 
 목적지는 사용자가 준비한 **기존 일반 디렉터리**이며 선택 호스트가 스킬을 읽는 위치여야 한다. 상태 디렉터리도 별도로 준비하고 두 경로를 겹치지 않게 한다. 프로젝트의 `.agents/skills` 또는 `.claude/skills`를 사용할 수 있지만, 그 상위가 공유 원본으로 이어지는 링크이면 거부한다. 격리된 일반 디렉터리로도 파일 전달을 검증할 수 있다.

@@ -75,10 +75,20 @@ with tempfile.TemporaryDirectory(prefix='dotagents-external-test-') as directory
         return result.stdout + result.stderr
 
     registry()
-    print('scenario: previews and list/inspect do not fetch or write')
+    skills_file = root / 'skills.toml'
+    sources_file = root / 'sources.lock'
+    external_declaration = skills_file.read_text()
+    owned_declaration = '''
+[[skills]]
+id = "valid--name"
+kind = "owned"
+source = "agents/skills/owned/valid--name"
+'''
+    skills_file.write_text(external_declaration + owned_declaration)
+    print('scenario: external previews accept the owned naming contract without fetching or writing')
     before = snapshot(state), snapshot(dest)
-    run('list')
-    run('inspect')
+    assert run('list') == 'external-sample\tfixture\tcodex\n'
+    assert 'desired: external-sample' in run('inspect')
     run('plan')
     run('install')
     assert before == (snapshot(state), snapshot(dest))
@@ -98,6 +108,17 @@ with tempfile.TemporaryDirectory(prefix='dotagents-external-test-') as directory
     assert before == (snapshot(state), snapshot(dest))
     record_path = next((state / 'installs').glob('*.json'))
     assert json.loads(record_path.read_text())['revision'] == first
+
+    print('scenario: strict external/source IDs, owned path safety and shared duplicate checks')
+    skills_file.write_text(external_declaration.replace('external-sample', 'external--sample') + owned_declaration)
+    assert 'invalid registry ID' in run('list', ok=False)
+    skills_file.write_text(external_declaration + owned_declaration.replace('valid--name', '../invalid'))
+    assert 'invalid registry ID' in run('list', ok=False)
+    skills_file.write_text(external_declaration + owned_declaration.replace('valid--name', 'external-sample'))
+    assert 'duplicate registry ID' in run('list', ok=False)
+    skills_file.write_text(external_declaration + owned_declaration)
+    sources_file.write_text(sources_file.read_text().replace('id = "fixture"', 'id = "invalid--source"\nkind = "owned"'))
+    assert 'invalid registry ID' in run('list', ok=False)
 
     print('scenario: explicit update follows changed lock, retaining old cache and unrelated skills')
     (dest / 'user-skill').mkdir()

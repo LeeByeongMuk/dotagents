@@ -21,6 +21,7 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[2]
 ID = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
+OWNED_ID = re.compile(r"[a-z0-9][a-z0-9-]*\Z")
 REVISION = re.compile(r"[0-9a-f]{40}\Z")
 
 
@@ -35,13 +36,14 @@ def read_toml(path):
         return tomllib.load(stream)
 
 
-def keyed(entries):
+def keyed(entries, *, allow_owned_ids=False):
     require(isinstance(entries, list), "registry entries must be a list")
     result = {}
     for entry in entries:
         require(isinstance(entry, dict), "registry entry must be a table")
         name = entry.get("id", "")
-        require(isinstance(name, str) and ID.fullmatch(name), "invalid registry ID")
+        pattern = OWNED_ID if allow_owned_ids and entry.get("kind") == "owned" else ID
+        require(isinstance(name, str) and pattern.fullmatch(name), "invalid registry ID")
         require(name not in result, "duplicate registry ID")
         result[name] = entry
     return result
@@ -305,7 +307,8 @@ def main():
     # declaration is retired or the source becomes unavailable.
     skills, sources = {}, {}
     if args.action != "remove":
-        skills = keyed(read_toml(Path(os.environ.get("DOTAGENTS_SKILLS_FILE", ROOT / "agents/registry/skills.toml")))["skills"])
+        skills_file = Path(os.environ.get("DOTAGENTS_SKILLS_FILE", ROOT / "agents/registry/skills.toml"))
+        skills = keyed(read_toml(skills_file)["skills"], allow_owned_ids=True)
         sources = keyed(read_toml(Path(os.environ.get("DOTAGENTS_SOURCES_FILE", ROOT / "agents/registry/sources.lock")))["sources"])
     if args.action == "list":
         require(not args.skill and not any((args.host, args.dest, args.state_dir)), "list does not take a target")
