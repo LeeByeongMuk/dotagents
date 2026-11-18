@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 source "$SCRIPT_DIR/lib/owned-skills.sh"
 source "$SCRIPT_DIR/lib/install-layout.sh"
+source "$SCRIPT_DIR/lib/paths.sh"
 DRY_RUN=0
 FORCE=0
 MODE="global"
@@ -57,7 +58,7 @@ else
   [[ -n "$PROJECT_DIR" ]] || fail "project path is required"
   [[ -d "$PROJECT_DIR" ]] || fail "project directory does not exist: $PROJECT_DIR"
   target_root="$(cd "$PROJECT_DIR" && pwd -P)"
-  [[ "$target_root" != "$REPO_ROOT" ]] || fail "refusing to install project links into the dotagents repository itself"
+  [[ ! "$target_root" -ef "$REPO_ROOT" ]] || fail "refusing to install project links into the dotagents repository itself"
   manifest="$target_root/.dotagents-install.tsv"
 fi
 
@@ -75,6 +76,10 @@ if [[ "$MODE" == global ]]; then
   if [[ "$LAYOUT" == managed && -L "$target_root/.agents" ]]; then
     fail "managed layout refuses a symbolic .agents root; uninstall/review the legacy layout first"
   fi
+fi
+previous_legacy_repo=""
+if [[ "$LAYOUT" == legacy ]]; then
+  previous_legacy_repo="$(legacy_recorded_repository "$manifest" "$target_root")"
 fi
 entries=()
 seeds=()
@@ -96,7 +101,7 @@ done <<< "$owned_skills"
 # A global install into the real home makes this checkout the live
 # configuration for every session, so it runs only from the primary checkout
 # on main. A dry run reports the problem instead of stopping.
-if [[ "$MODE" == "global" && "$target_root" == "$HOME" ]] && git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+if [[ "$MODE" == "global" && ( "$target_root" == "$HOME" || "$target_root" -ef "$HOME" ) ]] && git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   live_problem=""
   git_dir="$(cd "$REPO_ROOT" && cd "$(git rev-parse --git-dir)" && pwd -P)"
   common_dir="$(cd "$REPO_ROOT" && cd "$(git rev-parse --git-common-dir)" && pwd -P)"
@@ -116,6 +121,8 @@ validate_target_parent() {
   local target="$1"
   if [[ "$LAYOUT" == managed ]]; then
     managed_target_parent "$target_root" "$target" || fail "unsafe managed target: $target"
+  else
+    legacy_target_parent "$target_root" "$target" "$REPO_ROOT" "$previous_legacy_repo" || fail "unsafe legacy install target: $target; check for a parent through .agents or a source checkout"
   fi
   local parent relative current component
   local -a components
@@ -184,6 +191,12 @@ previous_backup() {
   awk -F '\t' -v target="$wanted" '$1 == target { print $3; found=1; exit } END { if (!found) exit 1 }' "$manifest"
 }
 
+is_managed_link() {
+  local target="$1" current="$2" recorded
+  recorded="$(previous_source "$target" 2>/dev/null || true)"
+  [[ -n "$recorded" && "$current" == "$recorded" ]] || [[ "$LAYOUT" == legacy && "$current" == "$REPO_ROOT"/* ]]
+}
+
 is_current_target() {
   local wanted="$1" entry
   for entry in "${entries[@]}"; do
@@ -197,7 +210,12 @@ retired=()
 if [[ -f "$manifest" ]]; then
   while IFS=$'\t' read -r target _ _; do
     [[ -n "$target" && "$target" != "$MANAGED_LEDGER_HEADER" ]] || continue
-    is_current_target "$target" || retired+=("$target")
+    if ! is_current_target "$target"; then
+      if [[ "$LAYOUT" == legacy ]]; then
+        legacy_target_parent "$target_root" "$target" "$REPO_ROOT" "$previous_legacy_repo" || fail "unsafe legacy retirement target: $target; check for a parent through .agents or a source checkout"
+      fi
+      retired+=("$target")
+    fi
   done < "$manifest"
 fi
 if [[ ${#retired[@]} -gt 0 ]]; then
@@ -208,20 +226,9 @@ fi
 conflicts=()
 for entry in "${entries[@]}"; do
   target="${entry%%|*}"
-  source="${entry#*|}"
-  if [[ -L "$target" && "$(readlink "$target")" == "$source" ]]; then
-    continue
-  fi
   if [[ -e "$target" || -L "$target" ]]; then
-    if [[ -L "$target" ]]; then
-      current="$(readlink "$target")"
-      recorded="$(previous_source "$target" 2>/dev/null || true)"
-      if [[ -n "$recorded" && "$current" == "$recorded" ]]; then
-        continue
-      fi
-      case "$current" in
-        "$REPO_ROOT"/*) continue ;;
-      esac
+    if [[ -L "$target" ]] && is_managed_link "$target" "$(readlink "$target")"; then
+      continue
     fi
     conflicts+=("$target")
   fi
@@ -352,19 +359,17 @@ for entry in "${entries[@]}"; do
   validate_target_parent "$target"
   backup="$(previous_backup "$target" 2>/dev/null || echo '-')"
 
-  if [[ -L "$target" && "$(readlink "$target")" == "$source" ]]; then
-    printf '%s\t%s\t%s\n' "$target" "$source" "$backup" >> "$temp_manifest"
-    continue
-  fi
-
   if [[ -L "$target" ]]; then
     current="$(readlink "$target")"
-    recorded="$(previous_source "$target" 2>/dev/null || true)"
-    case "$current" in
-      "$recorded") move_for_install "$target" "$transaction_dir/link.${#undo_kind[@]}" ;;
-      "$REPO_ROOT"/*) move_for_install "$target" "$transaction_dir/link.${#undo_kind[@]}" ;;
-      *) backup_target "$target" ;;
-    esac
+    if is_managed_link "$target" "$current"; then
+      if [[ "$current" == "$source" ]]; then
+        printf '%s\t%s\t%s\n' "$target" "$source" "$backup" >> "$temp_manifest"
+        continue
+      fi
+      move_for_install "$target" "$transaction_dir/link.${#undo_kind[@]}"
+    else
+      backup_target "$target"
+    fi
   elif [[ -e "$target" ]]; then
     backup_target "$target"
   fi
@@ -379,6 +384,9 @@ done
 # would. A target changed since install is left alone.
 if [[ ${#retired[@]} -gt 0 ]]; then
   for target in "${retired[@]}"; do
+    if [[ "$LAYOUT" == legacy ]]; then
+      legacy_target_parent "$target_root" "$target" "$REPO_ROOT" "$previous_legacy_repo" || fail "unsafe legacy retirement target: $target; check for a parent through .agents or a source checkout"
+    fi
     source="$(previous_source "$target" 2>/dev/null || true)"
     backup="$(previous_backup "$target" 2>/dev/null || echo '-')"
     if [[ -L "$target" && "$(readlink "$target")" == "$source" ]]; then

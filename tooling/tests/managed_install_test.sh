@@ -150,6 +150,37 @@ rm "$metadata"
 ! remove || fail 'partial managed ledger lost its layout guard'
 mv "$TEST_ROOT/partial-metadata" "$metadata"
 
+echo 'scenario: unrecorded exact, alternate, and dangling links into the checkout are user-owned'
+use_home unrecorded-links
+mkdir -p "$home_dir/.agents/skills" "$home_dir/.claude/skills" "$home_dir/.gemini"
+shared_skill="$home_dir/.agents/skills/fsd-refactor"
+claude_skill="$home_dir/.claude/skills/fsd-refactor"
+gemini_rules="$home_dir/.gemini/GEMINI.md"
+expected_skill="$source_repo/agents/skills/owned/fsd-refactor"
+alternate_skill="$source_repo/agents/skills/owned/usage-guide"
+missing_rules="$source_repo/missing-rules"
+ln -s "$alternate_skill" "$shared_skill"
+ln -s "$expected_skill" "$claude_skill"
+ln -s "$missing_rules" "$gemini_rules"
+snapshot "$home_dir" "$state_dir" > "$TEST_ROOT/before"
+install_managed --dry-run
+grep -Fq '3 conflict(s) found' "$TEST_ROOT/output" || fail 'preview missed an unrecorded symlink conflict'
+! install_managed || fail 'unrecorded links were adopted without force'
+snapshot "$home_dir" "$state_dir" > "$TEST_ROOT/after"
+cmp -s "$TEST_ROOT/before" "$TEST_ROOT/after" || fail 'conflict handling changed unrecorded links'
+install_managed --force
+[[ "$(readlink "$shared_skill")" == "$expected_skill" ]] || fail 'force did not install the owned shared skill'
+[[ "$(readlink "$gemini_rules")" == "$source_repo/dist/gemini/GEMINI.md" ]] || fail 'force did not install the host rules'
+for target in "$shared_skill" "$claude_skill" "$gemini_rules"; do
+  backup="$(awk -F '\t' -v target="$target" '$1 == target { print $3 }' "$manifest")"
+  [[ -L "$backup" ]] || fail "force did not record an original link backup: $target"
+done
+install_managed
+remove
+[[ "$(readlink "$shared_skill")" == "$alternate_skill" ]] || fail 'uninstall lost original alternate-source link'
+[[ "$(readlink "$claude_skill")" == "$expected_skill" ]] || fail 'uninstall lost original exact-source link'
+[[ "$(readlink "$gemini_rules")" == "$missing_rules" ]] || fail 'uninstall lost original dangling link'
+
 echo 'scenario: host-only partial ledgers still require managed metadata'
 use_home partial-host
 install_managed
