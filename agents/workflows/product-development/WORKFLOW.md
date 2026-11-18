@@ -1,5 +1,7 @@
 # 제품 개발 워크플로우
 
+[문서 목록](../../../docs/README.md) · [스킬 목록](../../skills/owned/README.md)
+
 `product-development-workflow` 스킬의 사람용 사용 안내입니다. 경로 선택, Brief·Execute·Verify, Model Fit, 호스트별 검증의 원본은 스킬의 [`SKILL.md`](../../skills/owned/product-development-workflow/SKILL.md)와 `references/`이며, 이 문서는 그 내용을 다시 적지 않습니다.
 
 ## 경로

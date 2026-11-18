@@ -1,5 +1,7 @@
 # 전역 설치 layout과 소유권
 
+[설치 사용 안내](../install.md) · [문서 목록](../README.md)
+
 전역 설치의 기본값은 `legacy`이며 `--layout managed`가 공유 스킬 디렉터리와 사용자 설정의 소유권을 분리하는 선택입니다. 프로젝트 설치는 기존 legacy 링크 방식을 유지하며 managed 옵션을 받지 않습니다. owned 스킬 선택·추가·제거 절차는 [스킬 안내](../../agents/skills/README.md)가 소유합니다.
 
 | 대상 | legacy 기본값 | managed 선택 |

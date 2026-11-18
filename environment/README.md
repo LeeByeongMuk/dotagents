@@ -1,6 +1,8 @@
 # 선택 개발 환경 프로필
 
-기존 AI 설치와 별개로 셸·Git 설정 조각을 **명시적으로 적용**하는 작은 프로필이다. `make install`과 기본 AI 링크는 그대로다. 이 디렉터리를 사용하지 않으면 chezmoi도 필요 없다.
+[문서 목록](../docs/README.md) · [AI 설정 설치](../docs/install.md)
+
+셸·Git 설정 조각을 **명시적으로 적용**하는 선택 기능이다. `make install`에 포함되지 않으며 사용하지 않으면 chezmoi도 필요 없다. [AI 자산 조합 프로필](../agents/profiles/README.md)과는 별도다.
 
 | 파일 | 적용 내용 | 활성화 |
 |---|---|---|
@@ -58,11 +60,15 @@ source의 파일을 고친 뒤 `preview` → `apply`를 반복한다. 적용은 
     path = ~/.config/dotagents-environment/git.inc
 ```
 
-include를 제거하면 즉시 비활성화된다. 적용 파일을 보존하면서 관리만 중단하려면 동일한 격리 경로 인자로 [chezmoi forget](https://www.chezmoi.io/reference/commands/forget/)을 사용한다. `destroy`는 source와 destination 양쪽을 삭제하며, 기존 AI 제거기의 백업 복원과 다르다. 일반 제거 명령으로 권하지 않는다.
+### 비활성화와 관리 중단
+
+Git은 include를 제거하면 이후 실행부터 해당 조각을 읽지 않는다. 셸은 시작 파일의 source 행을 제거하고 새 세션에서 확인한다. 이미 열린 셸의 환경 변수·PATH는 source 행을 제거해도 되돌아가지 않는다.
+
+적용 파일을 보존하면서 관리만 중단하려면 동일한 격리 경로 인자로 [chezmoi forget](https://www.chezmoi.io/reference/commands/forget/)을 사용한다. `destroy`는 source와 destination 양쪽을 삭제하며, 기존 AI 제거기의 백업 복원과 다르다. 일반 제거 명령으로 권하지 않는다.
 
 ## 패키지 준비도 별도 선택
 
-다음 명령은 네트워크·패키지 상태를 바꾸므로 필요할 때만 사용자가 실행한다. 프로필 init·preview·apply에서는 실행하지 않는다. 언어 런타임, Node/Python 버전, GUI 앱, 로그인은 프로젝트 또는 로컬 환경이 소유한다.
+아래 목록을 확인한 뒤 필요한 설치 명령만 실행한다. 프로필 init·preview·apply가 패키지 설치를 실행하지는 않는다. 언어 런타임, Node/Python 버전, GUI 앱, 로그인은 프로젝트 또는 로컬 환경이 소유한다. 전체 `make check`에 필요한 Python 3.11 이상도 패키지 목록에 포함되지 않는다.
 
 macOS에서 이미 Homebrew를 사용하는 경우:
 
@@ -88,7 +94,7 @@ printf '%s\n' "$apt_packages" | xargs sudo apt-get install --no-install-recommen
 
 `gh`는 [Debian stable](https://packages.debian.org/stable/gh)과 [Ubuntu 24.04의 universe](https://packages.ubuntu.com/noble/gh)에 있다. 배포판·저장소별 가용성은 위 simulate로 확인한다. chezmoi는 apt 목록에서 분리했으며, [공식 사전 빌드 패키지·바이너리와 검증 안내](https://www.chezmoi.io/install/#verify-your-download)에 따라 해당 OS/아키텍처를 골라 설치한다. 로컬 바이너리라면 `CHEZMOI_BIN`으로 선택할 수 있다.
 
-macOS arm64에서 격리 적용을 검증했다. Homebrew 설치와 Debian/Ubuntu 패키지 설치·셸 로그인은 이 작업에서 실행하지 않았다.
+검증된 범위와 실행하지 않은 설치 작업은 [배포 비교의 검증 결과](../docs/designs/environment-profile.md#검증-결과와-범위)에 기록되어 있다.
 
 ## 검사
 
