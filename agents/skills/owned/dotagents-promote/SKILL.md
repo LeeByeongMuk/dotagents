@@ -19,8 +19,8 @@ Move durable, project-agnostic learnings into the dotagents single source delibe
 
 ## Apply on an isolated worktree
 
-1. Resolve the dotagents repository root from the `~/.agents` symlink target's parent directory. Abort when the symlink or the repository is missing.
-2. Never edit the primary checkout. The symlink serves the live configuration for every project, so the primary checkout must stay on a clean `main`.
+1. Run [scripts/resolve-source.sh](scripts/resolve-source.sh) from the installed skill directory and use its output as `<repo>`. It verifies the legacy `.agents` link or the managed installation record and live rules link. Abort if the resolver fails.
+2. Never edit the primary checkout. It provides the live configuration for every project and must stay on a clean `main`.
 3. Create a worktree: `git -C <repo> worktree add <scratch>/promote-<slug> -b promote/<slug> main`.
 4. Edit inside the worktree only. Follow the repository's conventions: Korean human-readable docs, the existing rule and template styles, and no rule text duplicated into adapters.
 5. When a change adds required files or edits contract lines, update `tooling/scripts/check.sh` and the `tooling/tests/` assertions in the same branch.

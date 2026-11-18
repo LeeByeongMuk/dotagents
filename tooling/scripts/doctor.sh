@@ -5,6 +5,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 source "$SCRIPT_DIR/lib/owned-skills.sh"
+source "$SCRIPT_DIR/lib/install-layout.sh"
 
 missing=0
 link_issue=0
@@ -33,30 +34,43 @@ target_root="${DOTAGENTS_HOME:-$HOME}"
 agents_target="$target_root/.agents"
 state_root="${XDG_STATE_HOME:-$target_root/.local/state}"
 manifest="$state_root/dotagents/install.tsv"
-recorded_agents=""
-if [[ -f "$manifest" ]]; then
-  recorded_agents="$(awk -F '\t' -v target="$agents_target" '$1 == target { print $2; exit }' "$manifest")"
-fi
-
 installed_repo=""
-if [[ -n "$recorded_agents" ]] && ! [[ -L "$agents_target" && "$agents_target" -ef "$recorded_agents" ]]; then
-  if [[ -L "$agents_target" && ! -e "$agents_target" ]]; then
-    echo "broken: managed .agents link ($agents_target); review the global install dry-run, then reinstall from the primary checkout" >&2
-  elif [[ ! -e "$agents_target" && ! -L "$agents_target" ]]; then
-    echo "missing: managed .agents link ($agents_target); review the global install dry-run, then reinstall from the primary checkout" >&2
+if ! read_install_layout "$manifest" "$target_root"; then
+  echo "invalid: installation metadata; restore the managed metadata/ledger before reinstalling" >&2
+  link_issue=1
+elif [[ "$recorded_layout" == managed ]]; then
+  installed_agents="$recorded_agents"
+  if [[ -f "$installed_agents/rules/git.md" ]]; then
+    installed_repo="$(dirname "$installed_agents")"
   else
-    echo "conflict: managed .agents link ($agents_target) does not link $recorded_agents; review the existing path before changing it" >&2
+    echo "missing: dotagents source rules ($installed_agents/rules/git.md); restore the recorded source checkout" >&2
+    link_issue=1
   fi
-  # Only the record says an install exists here, so name it: after a partial
-  # uninstall the leftover row is the whole reason for this error.
-  echo "note: this install is recorded in $manifest" >&2
-  link_issue=1
-elif [[ -f "$agents_target/rules/git.md" ]]; then
-  installed_agents="$(cd "$target_root/.agents" && pwd -P)"
-  installed_repo="$(dirname "$installed_agents")"
-elif [[ -n "$recorded_agents" ]]; then
-  echo "missing: dotagents source rules ($agents_target/rules/git.md); restore the source checkout before reinstalling" >&2
-  link_issue=1
+else
+  recorded_agents=""
+  if [[ -f "$manifest" ]]; then
+    recorded_agents="$(awk -F '\t' -v target="$agents_target" '$1 == target { print $2; exit }' "$manifest")"
+  fi
+  installed_repo=""
+  if [[ -n "$recorded_agents" ]] && ! [[ -L "$agents_target" && "$agents_target" -ef "$recorded_agents" ]]; then
+    if [[ -L "$agents_target" && ! -e "$agents_target" ]]; then
+      echo "broken: managed .agents link ($agents_target); review the global install dry-run, then reinstall from the primary checkout" >&2
+    elif [[ ! -e "$agents_target" && ! -L "$agents_target" ]]; then
+      echo "missing: managed .agents link ($agents_target); review the global install dry-run, then reinstall from the primary checkout" >&2
+    else
+      echo "conflict: managed .agents link ($agents_target) does not link $recorded_agents; review the existing path before changing it" >&2
+    fi
+    # Only the record says an install exists here, so name it: after a partial
+    # uninstall the leftover row is the whole reason for this error.
+    echo "note: this install is recorded in $manifest" >&2
+    link_issue=1
+  elif [[ -L "$agents_target" && -f "$agents_target/rules/git.md" ]]; then
+    installed_agents="$(cd "$target_root/.agents" && pwd -P)"
+    installed_repo="$(dirname "$installed_agents")"
+  elif [[ -n "$recorded_agents" ]]; then
+    echo "missing: dotagents source rules ($agents_target/rules/git.md); restore the source checkout before reinstalling" >&2
+    link_issue=1
+  fi
 fi
 
 check_link() {
@@ -80,34 +94,64 @@ check_link() {
 }
 
 if [[ -n "$installed_repo" ]]; then
-  for entry in 'claude/CLAUDE.md' 'codex/AGENTS.md' 'gemini/GEMINI.md'; do
-    target="$target_root/.$entry"
-    source="$installed_repo/dist/$entry"
-    adapter="$installed_agents/adapters/$entry"
-    if [[ ! -f "$source" ]]; then
-      echo "missing: generated host entry point ($source); run make build in the primary checkout" >&2
-    elif [[ -L "$target" && "$target" -ef "$source" ]]; then
-      echo "ok: host entry point ($target)"
+  fixed="$(fixed_install_entries global "$recorded_layout" "$installed_agents")"
+  while IFS='|' read -r relative source kind label; do
+    target="$target_root/$relative"
+    [[ "$kind" != root ]] || continue # legacy root already diagnosed above
+    if [[ "$recorded_layout" == managed ]] && ! managed_target_parent "$target_root" "$target"; then
+      link_issue=1
       continue
-    elif [[ ! -e "$target" && ! -L "$target" ]]; then
-      echo "missing: host entry point ($target); review the global install dry-run, then reinstall from the primary checkout" >&2
-    elif [[ -L "$target" && ! -e "$target" ]]; then
-      echo "broken: host entry point ($target); review the global install dry-run, then reinstall from the primary checkout" >&2
-    elif [[ -L "$target" && "$target" -ef "$adapter" ]]; then
-      echo "stale: host entry point ($target) links the thin adapter without common rules; review the global install dry-run, then reinstall from the primary checkout" >&2
-    else
-      echo "conflict: host entry point ($target) does not link $source; review the existing file before changing it" >&2
     fi
-    entry_issue=1
-  done
-
-  check_link "$target_root/.codex/hooks.json" "$installed_agents/adapters/codex/hooks.json" "Codex commit hook link"
-  check_link "$target_root/.claude/settings.json" "$installed_agents/adapters/claude/settings.json" "Claude settings link"
+    if [[ "$kind" == seed ]]; then
+      # User-owned settings are deliberately not link targets or ledger rows.
+      # Inspect only the required command and matcher; do not print config data.
+      matcher=Bash
+      [[ "$relative" != .codex/* ]] || matcher='^Bash$'
+      if [[ -f "$target" && ! -L "$target" ]] && jq -e --arg matcher "$matcher" --arg command '"$HOME"/.agents/hooks/commit-message/pre-tool-use.sh' '
+        any(.hooks.PreToolUse[]?; .matcher == $matcher and any(.hooks[]?; .type == "command" and .command == $command))
+      ' "$target" >/dev/null 2>&1; then
+        echo "ok: $label registration (user-owned $target)"
+      else
+        echo "missing: $label registration ($target); manually integrate the PreToolUse hook from $source into a regular user-owned file, then rerun doctor" >&2
+        link_issue=1
+      fi
+    elif [[ "$kind" == host ]]; then
+      adapter="$installed_agents/adapters/${relative#.}"
+      if [[ ! -f "$source" ]]; then
+        echo "missing: generated host entry point ($source); run make build in the primary checkout" >&2
+      elif [[ -L "$target" && "$target" -ef "$source" ]]; then
+        echo "ok: host entry point ($target)"
+        continue
+      elif [[ ! -e "$target" && ! -L "$target" ]]; then
+        echo "missing: host entry point ($target); review the global install dry-run, then reinstall from the primary checkout" >&2
+      elif [[ -L "$target" && ! -e "$target" ]]; then
+        echo "broken: host entry point ($target); review the global install dry-run, then reinstall from the primary checkout" >&2
+      elif [[ -L "$target" && "$target" -ef "$adapter" ]]; then
+        echo "stale: host entry point ($target) links the thin adapter without common rules; review the global install dry-run, then reinstall from the primary checkout" >&2
+      else
+        echo "conflict: host entry point ($target) does not link $source; review the existing file before changing it" >&2
+      fi
+      entry_issue=1
+    else
+      check_link "$target" "$source" "$label"
+    fi
+  done <<< "$fixed"
   # Diagnose the installed checkout's desired set, including declarations not
   # yet present in its install ledger. Do not use the calling worktree's set.
   if owned_skills="$(owned_skill_names "$installed_agents")"; then
     while IFS= read -r skill; do
-      check_link "$target_root/.claude/skills/$skill" "$installed_agents/skills/owned/$skill" "Claude skill link ($skill)"
+      if [[ "$recorded_layout" != managed ]] || managed_target_parent "$target_root" "$target_root/.claude/skills/$skill"; then
+        check_link "$target_root/.claude/skills/$skill" "$installed_agents/skills/owned/$skill" "Claude skill link ($skill)"
+      else
+        link_issue=1
+      fi
+      if [[ "$recorded_layout" == managed ]]; then
+        if managed_target_parent "$target_root" "$target_root/.agents/skills/$skill"; then
+          check_link "$target_root/.agents/skills/$skill" "$installed_agents/skills/owned/$skill" "shared skill link ($skill)"
+        else
+          link_issue=1
+        fi
+      fi
       # The alias is a tracked link inside the source checkout; the installer
       # does not create it, so a reinstall cannot bring it back.
       check_link "$installed_agents/skills/$skill" "$installed_agents/skills/owned/$skill" "shared skill alias ($skill)" "restore the alias in the source checkout"
