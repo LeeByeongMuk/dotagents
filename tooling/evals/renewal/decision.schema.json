@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["decisions"],
+  "properties": {
+    "decisions": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "write_authority", "recommended_interface", "preserve_existing_files", "write_through_instruction_symlinks", "run_project_commands", "apply_environment", "force_overwrite", "claim_checks_passed", "claim_all_files_rolled_back", "first_use_protection", "batch_failure_effect", "next_steps", "rationale"],
+        "properties": {
+          "id": {"type": "string"},
+          "write_authority": {"type": "string", "enum": ["none", "project_missing_files", "environment_destination", "global_or_real_home"]},
+          "recommended_interface": {"type": "string", "enum": ["manual_or_undocumented", "project_inspect", "project_init", "environment_preview", "environment_apply"]},
+          "preserve_existing_files": {"type": "boolean"},
+          "write_through_instruction_symlinks": {"type": "boolean"},
+          "run_project_commands": {"type": "boolean"},
+          "apply_environment": {"type": "boolean"},
+          "force_overwrite": {"type": "boolean"},
+          "claim_checks_passed": {"type": "boolean"},
+          "claim_all_files_rolled_back": {"type": "boolean"},
+          "first_use_protection": {"type": "string", "enum": ["not_documented", "conflict_flag_sufficient", "additional_existing_target_confirmation"]},
+          "batch_failure_effect": {"type": "string", "enum": ["not_documented", "automatic_rollback", "partial_changes_possible"]},
+          "next_steps": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "rationale": {"type": "string"}
+        }
+      }
+    }
+  }
+}
