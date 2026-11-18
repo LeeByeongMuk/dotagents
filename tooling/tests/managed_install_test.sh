@@ -250,6 +250,48 @@ doctor || fail 'doctor used caller instead of recorded relocated source'
 remove
 source_repo="$old_repo"
 
+echo 'scenario: the installed promotion skill resolves the primary checkout in both layouts'
+source_repo="$TEST_ROOT/promotion-source"
+mkdir "$source_repo"
+cp -R "$REPO_ROOT/agents" "$REPO_ROOT/dist" "$REPO_ROOT/tooling" "$REPO_ROOT/dotagents.toml" "$source_repo/"
+git -C "$source_repo" init -q --initial-branch=main
+promote_resolver='scripts/resolve-source.sh'
+resolve_promote() {
+  DOTAGENTS_HOME="$home_dir" XDG_STATE_HOME="$state_dir" "$1/$promote_resolver" 2> "$TEST_ROOT/output"
+}
+use_home promote-managed
+install_managed
+managed_skill="$home_dir/.agents/skills/dotagents-promote"
+[[ "$(resolve_promote "$managed_skill")" == "$source_repo" ]] || fail 'managed promotion did not resolve the installed checkout'
+[[ "$(resolve_promote "$home_dir/.claude/skills/dotagents-promote")" == "$source_repo" ]] || fail 'Claude promotion did not resolve the managed checkout'
+cp "$metadata" "$TEST_ROOT/promotion-metadata"
+while IFS=$'\t' read -r key value; do
+  [[ "$key" != agents ]] || value="$moved_repo/agents"
+  printf '%s\t%s\n' "$key" "$value"
+done < "$TEST_ROOT/promotion-metadata" > "$metadata"
+! resolve_promote "$managed_skill" || fail 'managed promotion accepted a mismatched recorded source'
+mv "$TEST_ROOT/promotion-metadata" "$metadata"
+unlink "$home_dir/.agents/rules"
+ln -s "$moved_repo/agents/rules" "$home_dir/.agents/rules"
+! resolve_promote "$managed_skill" || fail 'managed promotion accepted a mismatched live rules link'
+unlink "$home_dir/.agents/rules"
+ln -s "$source_repo/agents/rules" "$home_dir/.agents/rules"
+rm "$metadata"
+! resolve_promote "$managed_skill" || fail 'managed promotion accepted an incomplete installation record'
+use_home promote-legacy
+install_legacy
+rm "$manifest"
+legacy_skill="$home_dir/.agents/skills/dotagents-promote"
+[[ "$(resolve_promote "$legacy_skill")" == "$source_repo" ]] || fail 'promotion did not resolve a legacy install without a ledger'
+git -C "$source_repo" symbolic-ref HEAD refs/heads/not-main
+! resolve_promote "$legacy_skill" || fail 'promotion accepted a primary checkout off main'
+git -C "$source_repo" symbolic-ref HEAD refs/heads/main
+use_home promote-foreign
+mkdir "$home_dir/.agents"
+ln -s "$source_repo/agents/rules" "$home_dir/.agents/rules"
+! resolve_promote "$source_repo/agents/skills/owned/dotagents-promote" || fail 'promotion inferred ownership from an unrecorded shared directory'
+source_repo="$old_repo"
+
 failure_bin="$TEST_ROOT/failure-bin"
 mkdir "$failure_bin"
 export MANAGED_TEST_LN="$(command -v ln)" MANAGED_TEST_MV="$(command -v mv)"
@@ -260,7 +302,22 @@ set -euo pipefail
 operation="${0##*/}"
 real="$MANAGED_TEST_MV"
 [[ "$operation" != ln ]] || real="$MANAGED_TEST_LN"
-if [[ "$operation" == "$FAIL_OPERATION" && "${@: -1}" == "$FAIL_TARGET" && "$1" != */previous-* ]]; then
+target="${@: -1}"
+if [[ "$operation" == ln && "$1" != -s ]]; then
+  target="${target%/}/${1##*/}"
+fi
+if [[ "$target" == "${HOST_CREATE_TARGET:-}" ]]; then
+  case "$HOST_CREATE_KIND" in
+    file) printf '%s\n' '{"createdByHost":true}' > "$target" ;;
+    directory) mkdir "$target" ;;
+    symlink) "$MANAGED_TEST_LN" -s "$HOST_OUTSIDE" "$target" ;;
+  esac
+fi
+if [[ "$operation" == "${FAIL_OPERATION:-}" && "$target" == "$FAIL_TARGET" && "$1" != */previous-* ]]; then
+  case "${HOST_CHANGE_SEED:-}" in
+    replace) cp "$HOST_SETTINGS" "$HOST_SETTINGS.replacement"; "$MANAGED_TEST_MV" "$HOST_SETTINGS.replacement" "$HOST_SETTINGS" ;;
+    edit) printf '%s\n' '{"editedByHost":true}' > "$HOST_SETTINGS" ;;
+  esac
   if [[ "$FAIL_SIGNAL" != error ]]; then
     "$real" "$@"
     kill -s "$FAIL_SIGNAL" "$PPID"
@@ -273,6 +330,45 @@ WRAPPER
   chmod +x "$failure_bin/$operation"
 done
 
+echo 'scenario: a host can publish its own settings at the same instant as the seed'
+for kind in file directory symlink; do
+  use_home "late-settings-$kind"
+  target="$home_dir/.claude/settings.json"
+  outside="$home_dir/other-settings"
+  mkdir "$outside"
+  printf '%s\n' 'unrelated content' > "$outside/note"
+  if PATH="$failure_bin:$PATH" HOST_CREATE_TARGET="$target" HOST_CREATE_KIND="$kind" HOST_OUTSIDE="$outside" install_managed; then
+    [[ "$kind" == file ]] || fail "installer accepted a concurrent settings $kind"
+    jq -e '.createdByHost == true' "$target" >/dev/null || fail 'seed overwrote settings created concurrently by the host'
+    [[ -f "$manifest" && -f "$metadata" ]] || fail 'concurrent regular settings prevented install'
+  else
+    [[ "$kind" != file ]] || fail 'concurrent regular settings prevented install'
+    [[ ! -e "$manifest" && ! -e "$metadata" ]] || fail 'settings conflict committed partial state'
+    [[ ! -e "$home_dir/.codex/hooks.json" && ! -L "$home_dir/.claude/CLAUDE.md" ]] || fail 'settings conflict left installed targets'
+    case "$kind" in
+      directory) [[ -d "$target" && -z "$(ls -A "$target")" ]] || fail 'seed wrote into the concurrent settings directory' ;;
+      symlink) [[ "$(readlink "$target")" == "$outside" ]] || fail 'seed replaced the concurrent settings symlink' ;;
+    esac
+  fi
+  [[ "$(ls -A "$outside")" == note ]] || fail 'seed followed a concurrent settings symlink'
+  [[ -z "$(find "$home_dir" -name '.dotagents-seed.*')" ]] || fail 'seed staging directory survived publication'
+done
+
+echo 'scenario: rollback preserves host edits and same-byte replacement inodes'
+for change in replace edit; do
+  use_home "rollback-user-settings-$change"
+  target="$home_dir/.claude/settings.json"
+  if PATH="$failure_bin:$PATH" FAIL_OPERATION=mv FAIL_TARGET="$metadata" FAIL_SIGNAL=TERM HOST_CHANGE_SEED="$change" HOST_SETTINGS="$target" install_managed; then
+    fail 'metadata interruption did not fail installation'
+  fi
+  [[ ! -e "$manifest" && ! -e "$metadata" ]] || fail 'metadata interruption committed partial state'
+  [[ ! -e "$home_dir/.codex/hooks.json" ]] || fail 'unchanged Codex seed survived rollback'
+  case "$change" in
+    replace) cmp -s "$source_repo/agents/adapters/claude/hooks.example.json" "$target" || fail 'rollback removed the host replacement with the same bytes' ;;
+    edit) jq -e '.editedByHost == true' "$target" >/dev/null || fail 'rollback removed the host edit' ;;
+  esac
+done
+
 echo 'scenario: failure, INT, and TERM recover links, settings seeds, manifest, and metadata'
 for signal in error INT TERM; do
   for stage in link seed ledger metadata; do
@@ -281,7 +377,7 @@ for signal in error INT TERM; do
     printf '%s\n' 'original host rules' > "$home_dir/.claude/CLAUDE.md"
     case "$stage" in
       link) operation=ln; target="$home_dir/.agents/skills/fsd-refactor" ;;
-      seed) operation=mv; target="$home_dir/.codex/hooks.json" ;;
+      seed) operation=ln; target="$home_dir/.codex/hooks.json" ;;
       ledger) operation=mv; target="$manifest" ;;
       metadata) operation=mv; target="$metadata" ;;
     esac
@@ -293,7 +389,7 @@ for signal in error INT TERM; do
     [[ ! -e "$home_dir/.claude/settings.json" && ! -e "$home_dir/.codex/hooks.json" ]] || fail "$stage $signal left uncommitted seeds"
     [[ -d "$home_dir/.agents/skills/foreign" ]] || fail "$stage $signal lost foreign content"
     [[ -z "$(find "$home_dir" -type l -print)" ]] || fail "$stage $signal left installed links"
-    [[ -z "$(find "$home_dir" "$state_dir" -name '*.dotagents-backup.*' -o -name '*.transaction.*')" ]] || fail "$stage $signal left recovery files after successful rollback"
+    [[ -z "$(find "$home_dir" "$state_dir" -name '*.dotagents-backup.*' -o -name '*.transaction.*' -o -name '.dotagents-seed.*')" ]] || fail "$stage $signal left recovery files after successful rollback"
   done
 done
 

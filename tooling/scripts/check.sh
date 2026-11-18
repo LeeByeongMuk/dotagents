@@ -35,6 +35,7 @@ required=(
   agents/skills/owned/fsd-refactor/agents/openai.yaml
   agents/skills/owned/dotagents-promote/SKILL.md
   agents/skills/owned/dotagents-promote/agents/openai.yaml
+  agents/skills/owned/dotagents-promote/scripts/resolve-source.sh
   agents/skills/owned/usage-guide/SKILL.md
   agents/skills/owned/usage-guide/agents/openai.yaml
   agents/skills/owned/usage-guide/assets/guide.css

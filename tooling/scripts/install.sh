@@ -137,6 +137,12 @@ validate_target_parent() {
   done
 }
 
+validate_seed_target() {
+  local target="$1"
+  [[ ! -L "$target" ]] || fail "managed settings must be user-owned regular files: $target; copy/review the existing symlink first"
+  [[ ! -e "$target" || -f "$target" ]] || fail "settings path is not a regular file: $target"
+}
+
 for entry in "${entries[@]}"; do
   validate_target_parent "${entry%%|*}"
 done
@@ -145,8 +151,7 @@ if [[ "$LAYOUT" == managed ]]; then
   for entry in "${seeds[@]}"; do
     validate_target_parent "${entry%%|*}"
     [[ -f "${entry#*|}" ]] || fail "missing hook seed source: ${entry#*|}"
-    [[ ! -L "${entry%%|*}" ]] || fail "managed settings must be user-owned regular files: ${entry%%|*}; copy/review the existing symlink first"
-    [[ ! -e "${entry%%|*}" || -f "${entry%%|*}" ]] || fail "settings path is not a regular file: ${entry%%|*}"
+    validate_seed_target "${entry%%|*}"
   done
   if [[ -f "$manifest" ]]; then
     while IFS=$'\t' read -r target _ _; do
@@ -246,6 +251,7 @@ metadata_commit_started=0
 undo_kind=()
 undo_from=()
 undo_to=()
+seed_dirs=()
 
 finish_install() {
   local status=$? index kind original destination rollback_failed=0
@@ -265,11 +271,12 @@ finish_install() {
           rollback_failed=1
         fi
       elif [[ "$kind" == seed ]]; then
-        if [[ -f "$destination" && ! -L "$destination" ]] && cmp -s "$original" "$destination"; then
-          unlink "$destination" || rollback_failed=1
-        elif [[ -e "$destination" || -L "$destination" ]]; then
-          echo "Cannot roll back changed user settings: $destination" >&2
-          rollback_failed=1
+        if [[ -e "$destination" || -L "$destination" ]]; then
+          if cmp -s "$original.before" "$original" && [[ ! -L "$destination" && "$original" -ef "$destination" ]]; then
+            unlink "$destination" || rollback_failed=1
+          else
+            echo "Preserved user-owned settings: $destination" >&2
+          fi
         fi
       elif [[ -e "$destination" || -L "$destination" ]]; then
         if [[ -e "$original" || -L "$original" ]]; then
@@ -295,6 +302,11 @@ finish_install() {
       fi
     fi
   fi
+  for ((index=0; index<${#seed_dirs[@]}; index++)); do
+    if [[ -n "${seed_dirs[$index]}" ]]; then
+      rm -r "${seed_dirs[$index]}"
+    fi
+  done
   if [[ "$rollback_failed" -eq 0 ]]; then
     rm -r "$transaction_dir"
   else
@@ -388,15 +400,32 @@ if [[ "$LAYOUT" == managed ]]; then
     source="${entry#*|}"
     validate_target_parent "$target"
     if [[ -e "$target" || -L "$target" ]]; then
+      validate_seed_target "$target"
       echo "Preserved user-owned settings: $target"
       continue
     fi
-    mkdir -p "$(dirname "$target")"
-    seed_file="$transaction_dir/seed.${#undo_kind[@]}"
+    seed_parent="${target%/*}"
+    mkdir -p "$seed_parent"
+    # Stage beside the target so hard-link publication works across separate
+    # home and state filesystems. Keep the staged inode pinned for rollback.
+    seed_index="${#seed_dirs[@]}"
+    seed_dirs[$seed_index]="$(mktemp -d "$seed_parent/.dotagents-seed.XXXXXX")"
+    seed_file="${seed_dirs[$seed_index]}/${target##*/}"
     cp "$source" "$seed_file"
-    undo_kind+=("seed") undo_from+=("$source") undo_to+=("$target")
-    mv "$seed_file" "$target"
-    echo "Seeded user-owned settings (preserved on uninstall): $target"
+    cp "$seed_file" "$seed_file.before"
+    validate_target_parent "$target"
+    undo_kind+=("seed") undo_from+=("$seed_file") undo_to+=("$target")
+    # With an explicit parent operand, ln uses the staged basename as the
+    # destination entry and fails if anything already occupies that name.
+    if ln "$seed_file" "$seed_parent/" 2> "$transaction_dir/seed-error"; then
+      echo "Seeded user-owned settings (preserved on uninstall): $target"
+    elif [[ ! "$seed_file" -ef "$target" && ( -e "$target" || -L "$target" ) ]]; then
+      validate_seed_target "$target"
+      echo "Preserved user-owned settings: $target"
+    else
+      cat "$transaction_dir/seed-error" >&2
+      fail "could not seed user settings: $target"
+    fi
   done
   printf 'version\t1\nlayout\tmanaged\nagents\t%s\ntarget_root\t%s\n' "$REPO_ROOT/agents" "$target_root" > "$transaction_dir/metadata"
 fi
