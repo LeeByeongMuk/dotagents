@@ -6,6 +6,8 @@ Content inside HTML comments is left untouched.
 
 import argparse
 import base64
+from html import escape, unescape
+from html.parser import HTMLParser
 import mimetypes
 import pathlib
 import re
@@ -13,10 +15,9 @@ import sys
 from urllib.parse import unquote, urlparse
 
 COMMENT = re.compile(r"<!--.*?-->", re.S)
-STYLESHEET = re.compile(r"<link\b[^>]*\brel=[\"']stylesheet[\"'][^>]*>", re.I)
-HREF = re.compile(r"\bhref=[\"']([^\"']+)[\"']", re.I)
-IMG_SRC = re.compile(r"(<img\b[^>]*?\bsrc=)([\"'])([^\"']+)\2", re.I)
-IMG_SRC_BARE = re.compile(r"(<img\b[^>]*?\bsrc=)()([^\s\"'>]+)", re.I)
+ATTRIBUTE = re.compile(r"""([^\s=/>]+)(?:(\s*=\s*)("[^"]*"|'[^']*'|[^\s>]+))?""")
+SRCSET_URL = re.compile(r"[^, \t\n\f\r][^ \t\n\f\r]*")
+SRCSET_DESCRIPTORS = re.compile(r"(?:[^,(]|\([^)]*(?:\)|$))*")
 STYLE_BLOCK = re.compile(r"(<style\b[^>]*>)(.*?)(</style>)", re.I | re.S)
 STYLE_ATTR = re.compile(r"(\bstyle=)([\"'])(.*?)\2", re.I | re.S)
 CSS_URL = re.compile(r"url\(\s*((?:[\"']|&quot;|&#39;)?)([^)\"']+?)\1\s*\)")
@@ -25,8 +26,10 @@ FONT_FORMATS = {".ttf": "truetype", ".otf": "opentype", ".woff2": "woff2", ".wof
 
 
 def is_local(ref: str) -> bool:
-    scheme = urlparse(ref).scheme
-    return scheme in ("", "file") and not ref.startswith("#")
+    parsed = urlparse(ref)
+    return parsed.scheme == "file" or (
+        not parsed.scheme and not parsed.netloc and not ref.startswith("#")
+    )
 
 
 def resolve(ref: str, base: pathlib.Path) -> pathlib.Path:
@@ -54,46 +57,97 @@ def main() -> int:
     html = source.read_text(encoding="utf-8")
     missing: list[str] = []
 
+    def inline_url(ref: str, asset_base: pathlib.Path) -> str:
+        if not ref or not is_local(ref):
+            return ref
+        path = resolve(ref, asset_base)
+        if not path.is_file():
+            missing.append(str(path))
+            return ref
+        return data_uri(path)
+
     def inline_css_urls(css: str, css_base: pathlib.Path) -> str:
         def replace(match: re.Match) -> str:
             ref = match.group(2)
-            if not is_local(ref):
-                return match.group(0)
-            path = resolve(ref, css_base)
-            if not path.is_file():
-                missing.append(str(path))
-                return match.group(0)
-            return f"url({data_uri(path)})"
+            inlined = inline_url(ref, css_base)
+            return f"url({inlined})" if inlined != ref else match.group(0)
 
         return CSS_URL.sub(replace, css)
 
-    def replace_stylesheet(match: re.Match) -> str:
-        href = HREF.search(match.group(0))
-        if not href or not is_local(href.group(1)):
-            return match.group(0)
-        path = resolve(href.group(1), base)
-        if not path.is_file():
-            missing.append(str(path))
-            return match.group(0)
-        css = inline_css_urls(path.read_text(encoding="utf-8"), path.parent)
-        return f"<style>\n{css}\n</style>"
+    def inline_srcset(value: str) -> str:
+        # URL tokens may contain commas (especially data URLs). A trailing
+        # comma, or a comma after descriptors outside parentheses, ends a candidate.
+        parts = []
+        cursor = 0
+        while match := SRCSET_URL.search(value, cursor):
+            ref = match.group().rstrip(",")
+            url_end = match.start() + len(ref)
+            parts.extend((value[cursor:match.start()], inline_url(ref, base), value[url_end:match.end()]))
+            cursor = match.end()
+            if url_end == cursor:
+                descriptors = SRCSET_DESCRIPTORS.match(value, cursor)
+                parts.append(descriptors.group())
+                cursor = descriptors.end()
+        parts.append(value[cursor:])
+        return "".join(parts)
 
-    def replace_img(match: re.Match) -> str:
-        ref = match.group(3)
-        if not is_local(ref):
-            return match.group(0)
-        path = resolve(ref, base)
-        if not path.is_file():
-            missing.append(str(path))
-            return match.group(0)
-        return f"{match.group(1)}{match.group(2)}{data_uri(path)}{match.group(2)}"
+    def inline_tag(tag: str, original: str, attributes: dict) -> str:
+        if tag == "link":
+            href = attributes.get("href")
+            if (attributes.get("rel") or "").strip().lower() != "stylesheet" or not href or not is_local(href):
+                return original
+            path = resolve(href, base)
+            if not path.is_file():
+                missing.append(str(path))
+                return original
+            css = inline_css_urls(path.read_text(encoding="utf-8"), path.parent)
+            media = attributes.get("media")
+            media_attr = f' media="{escape(media)}"' if media is not None else ""
+            return f"<style{media_attr}>\n{css}\n</style>"
+
+        def replace_attribute(match: re.Match) -> str:
+            name, equals, raw_value = match.groups()
+            key = name.lower()
+            if raw_value is None or not (key == "srcset" or tag == "img" and key == "src"):
+                return match.group()
+            quote = raw_value[0] if raw_value[0] in "\"'" else ""
+            value = unescape(raw_value[1:-1] if quote else raw_value)
+            inlined = inline_srcset(value) if key == "srcset" else inline_url(value, base)
+            if inlined == value:
+                return match.group()
+            quote = quote or '"'
+            return f"{name}{equals}{quote}{escape(inlined)}{quote}"
+
+        tag_end = len(tag) + 1
+        return original[:tag_end] + ATTRIBUTE.sub(replace_attribute, original[tag_end:])
+
+    line_starts = [0, *(match.end() for match in re.finditer("\n", html))]
+    replacements = []
+
+    class AssetTags(HTMLParser):
+        def handle_starttag(self, tag, attributes):
+            if tag not in ("img", "source", "link"):
+                return
+            original = self.get_starttag_text()
+            rewritten = inline_tag(tag, original, dict(reversed(attributes)))
+            if rewritten != original:
+                line, column = self.getpos()
+                start = line_starts[line - 1] + column
+                replacements.append((start, start + len(original), rewritten))
+
+    tags = AssetTags()
+    tags.feed(html)
+    tags.close()
+    parts = []
+    cursor = 0
+    for start, end, replacement in replacements:
+        parts.extend((html[cursor:start], replacement))
+        cursor = end
+    html = "".join([*parts, html[cursor:]])
 
     def inline_segment(segment: str) -> str:
-        segment = STYLESHEET.sub(replace_stylesheet, segment)
         segment = STYLE_BLOCK.sub(lambda m: m.group(1) + inline_css_urls(m.group(2), base) + m.group(3), segment)
-        segment = STYLE_ATTR.sub(lambda m: m.group(1) + m.group(2) + inline_css_urls(m.group(3), base) + m.group(2), segment)
-        segment = IMG_SRC.sub(replace_img, segment)
-        return IMG_SRC_BARE.sub(replace_img, segment)
+        return STYLE_ATTR.sub(lambda m: m.group(1) + m.group(2) + inline_css_urls(m.group(3), base) + m.group(2), segment)
 
     parts: list[str] = []
     cursor = 0

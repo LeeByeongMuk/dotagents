@@ -32,7 +32,7 @@ profile_args=(
 ./environment/profile.sh preview "${profile_args[@]}"
 ```
 
-`init`은 새 source만 허용한다. 기존 source와 config는 덮어쓰지 않는다. config·state·cache는 프로필 전용 경로를 쓴다. 기존 다른 chezmoi 프로필의 config를 재사용하면 그 hooks·자동화 설정도 적용될 수 있다. `preview`와 `status`는 destination을 바꾸지 않지만 chezmoi 내부 상태 파일은 만들 수 있다.
+`init`은 새 source만 허용한다. 기존 source와 config는 덮어쓰지 않는다. config·state·cache는 source 밖의 프로필 전용 경로에 둔다. 기존 다른 chezmoi 프로필의 config를 재사용하면 그 hooks·자동화 설정도 적용될 수 있다. `preview`와 `status`는 destination에 프로필 조각을 적용하지 않지만 chezmoi 내부 상태 파일은 만들 수 있다.
 
 diff를 검토한 뒤 다음 명령으로 임시 destination에 적용한다.
 
@@ -45,7 +45,7 @@ source의 파일을 고친 뒤 `preview` → `apply`를 반복한다. 적용은 
 
 ## 실제 사용자 환경에서 사용
 
-임시 실행을 검토한 뒤 별도의 지속 경로와 `--destination "$HOME"`을 선택해 같은 init → preview → apply 명령을 실행한다. 실제 적용은 사용자가 선택하는 별도 단계다. destination은 이미 존재해야 하며 모든 경로는 절대 경로여야 한다. source·config·state·cache를 적용 대상의 `.config/dotagents-environment/` 안에 두지 않는다. 여러 기기는 source만 Git으로 공유하고 config·state·cache는 기기별로 둔다. 원격 저장소 생성·push는 자동화하지 않는다.
+임시 실행을 검토한 뒤 별도의 지속 경로와 `--destination "$HOME"`을 선택해 같은 init → preview → apply 명령을 실행한다. 실제 적용은 사용자가 선택하는 별도 단계다. destination은 이미 존재해야 하며 모든 경로는 절대 경로여야 한다. source·config·state·cache는 적용 경로인 `$HOME/.config/dotagents-environment/`와 겹치지 않는 곳에 둔다. 예를 들어 `$HOME/.local/dotagents-env-profile/` 아래에 네 경로를 나란히 둘 수 있다. 여러 기기는 source만 Git으로 공유하고 config·state·cache는 기기별로 둔다. 원격 저장소 생성·push는 자동화하지 않는다.
 
 적용 후 기존 `.zshrc` 또는 `.bashrc`에 다음 행을 직접 추가해 활성화한다. 개인 override는 이 행 뒤에 둔다.
 

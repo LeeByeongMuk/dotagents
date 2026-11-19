@@ -227,7 +227,7 @@ while IFS= read -r case_json; do
     usage_json="$(jq -sc 'map(select(.usage? != null) | .usage) | last // {}' "$raw_file")"
     input_tokens="$(jq -c '.input_tokens // null' <<< "$usage_json")"
     output_tokens="$(jq -c '.output_tokens // null' <<< "$usage_json")"
-    reasoning_tokens="$(jq -c '.reasoning_tokens // .output_tokens_details.reasoning_tokens // null' <<< "$usage_json")"
+    reasoning_tokens="$(jq -c '.reasoning_output_tokens // .reasoning_tokens // .output_tokens_details.reasoning_tokens // null' <<< "$usage_json")"
     cache_read_tokens="$(jq -c '.cached_input_tokens // .input_tokens_details.cached_tokens // null' <<< "$usage_json")"
     cache_write_tokens="$(jq -c '.cache_write_input_tokens // .input_tokens_details.cache_write_tokens // null' <<< "$usage_json")"
     cost_usd="null"

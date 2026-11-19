@@ -1,11 +1,11 @@
 ---
 name: dotagents-promote
-description: Promote project-transcending conventions, rules, or template material from the current session into the shared dotagents repository. Use when the user asks to reflect a learned convention into dotagents or accepts a promotion candidate proposed in a workflow completion report. Stages changes on an isolated git worktree branch, never on the live main checkout, and never as a background side effect of another task.
+description: Promote project-transcending conventions, rules, or template material from the current session into the shared dotagents repository. Use when the user asks to reflect a learned convention into dotagents or accepts a promotion candidate proposed in a workflow completion report. Prepares changes in an isolated Git worktree.
 ---
 
 # Dotagents Promote
 
-Move durable, project-agnostic learnings into the dotagents single source deliberately. Invoking this skill authorizes edits and commits on an isolated promotion branch only. Merging into `main` remains a separate user decision.
+Move durable, project-agnostic learnings into the shared dotagents source on an isolated promotion branch. Follow the [Git rules](../../../rules/git.md) for commit authorization.
 
 ## Collect and classify candidates
 
@@ -27,9 +27,9 @@ Move durable, project-agnostic learnings into the dotagents single source delibe
 
 ## Verify and hand off
 
-1. Run `./tooling/scripts/check.sh` inside the worktree. It must pass before committing.
-2. Commit on the promotion branch with a message that names the promoted convention. Do not merge into `main` and do not push.
-3. Report the branch name, worktree path, and a diff summary. Merging is the user's approval act. After merge or rejection, remove the worktree with `git worktree remove`.
+1. Run `make check` inside the worktree.
+2. Hand off the promotion branch with unstaged changes by default. If the user explicitly requests a commit and verification passes, stage only the promotion changes and commit with a message that names the promoted convention. Do not merge into `main` and do not push.
+3. Report the branch name, worktree path, verification result, and a diff summary. Keep the worktree available for review.
 
 ## Safety
 

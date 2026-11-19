@@ -10,7 +10,8 @@
 | --- | --- |
 | 기본 설치·진단·커밋 훅 | Git, Bash, make, jq, ripgrep(`rg`) |
 | 전체 검사(`make check`·`make test`), 외부 스킬 명령 | 위 도구와 Python 3.11 이상 |
-| 외부 소스의 GitHub 경로 검증, PR 작업 | 인증된 GitHub CLI(`gh`) |
+| 외부 소스의 GitHub 경로 검증 (`check-sources.sh`) | Python 3.11 이상, 인증된 GitHub CLI(`gh`) |
+| PR 작업 | 인증된 GitHub CLI(`gh`) |
 | 선택 개발 환경 프로필 | 별도 chezmoi. [준비 방법](../environment/README.md) |
 
 macOS Homebrew에서는 `make deps`로 Git·jq·ripgrep·gh를 설치합니다. Python과 chezmoi는 이 명령이 설치하지 않습니다. `make doctor`는 기본 도구와 전역 설치 상태를 점검하며 Python 버전이나 chezmoi 준비 여부는 검사하지 않습니다.
@@ -90,7 +91,7 @@ managed 설치의 재설치에도 `--layout managed`를 명시합니다. `make i
 ./tooling/scripts/uninstall.sh --project /path/to/project
 ```
 
-기록에 있고 현재도 같은 원본을 가리키는 링크만 제거합니다. 백업은 대상 경로가 비어 있을 때 복원하며, 바뀌거나 사라진 대상은 기록과 함께 남겨 확인할 수 있게 합니다.
+기록에 있고 현재도 같은 원본을 가리키는 링크만 제거합니다. 백업은 대상 경로가 비어 있을 때 복원합니다. 백업이 대상을 잃은 심볼릭 링크인 경우에도 링크를 복원합니다. 바뀌거나 사라진 대상은 기록과 함께 남겨 확인할 수 있게 합니다.
 
 managed 제거는 공유 디렉터리·외부 스킬·사용자 설정을 남깁니다. 생성해 둔 최소 훅 설정도 남으므로 dotagents 훅을 더 이상 쓰지 않으면 해당 등록만 직접 제거합니다. [제거 후 남는 항목](designs/install-layouts.md#이행과-제거)
 

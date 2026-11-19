@@ -22,13 +22,15 @@ hook_path="$(git rev-parse --git-path hooks/commit-msg)"
 ln -s "$HOME/.agents/hooks/commit-message/commit-msg" "$hook_path"
 ```
 
+래퍼를 복사해 설치할 때는 같은 디렉터리에 `check.sh`도 복사합니다.
+
 ## 프로젝트 규칙 우선
 
 다음 중 하나면 공통 문체 검사를 건너뜁니다.
 
 - `git config dotagents.commitCheck false` 설정
 - 저장소 루트에 commitlint 설정 또는 `.gitlint` 존재
-- `.husky/commit-msg` 또는 이 래퍼가 아닌 `.git/hooks/commit-msg` 존재
+- Git이 사용하는 훅 디렉터리 또는 `.husky/`에 프로젝트의 `commit-msg` 존재. Git은 `core.hooksPath`와 연결된 worktree의 공용 Git 디렉터리를 반영해 훅 경로를 정합니다. Husky 9의 자동 생성 파일은 실제 프로젝트 훅이 있을 때 프로젝트 규칙을 적용합니다. 공통 래퍼는 링크하거나 복사해 설치해도 공통 문체를 검사합니다.
 
 도구 실행 전 훅은 문체 검사에 앞서 메시지와 경로를 확인하므로, 위 조건에 해당해도 실행 전에 읽을 수 있는 메시지를 요구할 수 있습니다.
 
@@ -36,7 +38,7 @@ ln -s "$HOME/.agents/hooks/commit-message/commit-msg" "$hook_path"
 
 공용 검사기는 헤더 형식·길이·마침표·명령형, 둘째 줄 공백, 서술형·과장 표현, 불릿·굵은 글씨를 검사합니다.
 
-`pre-tool-use.sh`는 `jq`로 호스트의 `tool_input.command`와 `cwd`를 읽고, `git commit`의 `-m`, `--message`, 히어독, `-F` 파일에서 메시지를 찾습니다. 두 호스트 모두 위반 시 종료 코드 2로 차단합니다. 커밋 인자의 `--no-edit`, `-c`, `-C`, `--fixup`, `--squash`는 건너뛰며 Git 전역 옵션이나 뒤따르는 다른 명령의 플래그는 이 판단에 쓰지 않습니다.
+`pre-tool-use.sh`는 `jq`로 호스트의 `tool_input.command`와 `cwd`를 읽고, `git commit`의 `-m`, `--message`, 히어독, `-F` 파일에서 메시지를 찾습니다. `-m "메시지"`와 `-m"메시지"`를 모두 처리합니다. 두 호스트 모두 위반 시 종료 코드 2로 차단합니다. 커밋 인자의 `--no-edit`, `-c`, `-C`, `--fixup`, `--squash`는 건너뛰며 Git 전역 옵션이나 뒤따르는 다른 명령의 플래그는 이 판단에 쓰지 않습니다.
 
 따옴표로 감싼 경로와 연속된 `git -C`를 해석하여 해당 저장소의 규칙과 상대 메시지 파일을 사용합니다. 변수·명령 치환으로 디렉터리를 확정할 수 없으면 직접 적도록 안내하고 차단합니다. 히어독 본문은 데이터로 취급하며, 셸 명령을 평가하거나 실행하지 않습니다.
 

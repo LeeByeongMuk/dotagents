@@ -176,6 +176,47 @@ fi
 [[ ! -e "$unsafe_project/.agents" ]] || fail "unsafe project install made partial changes"
 [[ ! -e "$outside_parent/skills/product-development-workflow" ]] || fail "project install escaped through .claude"
 
+echo "scenario 9b: legacy global operations reject parents routed through .agents"
+aliased_home="$TEST_ROOT/aliased-home"
+aliased_state="$TEST_ROOT/aliased-state"
+aliased_manifest="$aliased_state/dotagents/install.tsv"
+mkdir -p "$aliased_home/.agents/skills" "$aliased_home/.claude"
+ln -s ../skills-alias "$aliased_home/.claude/skills"
+ln -s .agents/skills "$aliased_home/skills-alias"
+aliased_install() { DOTAGENTS_HOME="$aliased_home" XDG_STATE_HOME="$aliased_state" "$moved_repo/tooling/scripts/install.sh" --global "$@"; }
+aliased_uninstall() { DOTAGENTS_HOME="$aliased_home" XDG_STATE_HOME="$aliased_state" "$moved_repo/tooling/scripts/uninstall.sh" --global "$@"; }
+source_skill="$moved_repo/agents/skills/fsd-refactor"
+original_source="$(readlink "$source_skill")"
+for arguments in --dry-run --force; do
+  ! aliased_install "$arguments" > "$TEST_ROOT/alias-output" 2>&1 || fail 'legacy install accepted a parent through the future .agents link'
+  grep -Fq 'unsafe legacy install target' "$TEST_ROOT/alias-output" || fail 'legacy install did not diagnose the unsafe parent'
+done
+[[ -d "$aliased_home/.agents" && ! -L "$aliased_home/.agents" && ! -e "$aliased_manifest" ]] || fail 'unsafe install changed target root or ledger'
+[[ "$(readlink "$source_skill")" == "$original_source" ]] || fail 'unsafe install replaced a source link'
+
+# A symlinked skills parent to an independent directory remains supported.
+unlink "$aliased_home/skills-alias"
+mkdir "$TEST_ROOT/independent-skills"
+ln -s "$TEST_ROOT/independent-skills" "$aliased_home/skills-alias"
+aliased_install --force >/dev/null
+aliased_install >/dev/null
+assert_link "$TEST_ROOT/independent-skills/fsd-refactor"
+cp "$aliased_manifest" "$TEST_ROOT/aliased-manifest-before"
+unlink "$aliased_home/skills-alias"
+ln -s .agents/skills "$aliased_home/skills-alias"
+! aliased_install --force >/dev/null 2>&1 || fail 'legacy reinstall accepted a parent through the live .agents link'
+! aliased_uninstall --dry-run >/dev/null 2>&1 || fail 'legacy uninstall preview accepted a parent through .agents'
+! aliased_uninstall >/dev/null 2>&1 || fail 'legacy uninstall accepted a parent through .agents'
+cmp -s "$aliased_manifest" "$TEST_ROOT/aliased-manifest-before" || fail 'unsafe operations changed the legacy ledger'
+assert_link "$aliased_home/.agents"
+assert_link "$aliased_home/.codex/AGENTS.md"
+[[ "$(readlink "$source_skill")" == "$original_source" ]] || fail 'unsafe operations changed the source link'
+unlink "$aliased_home/skills-alias"
+ln -s "$TEST_ROOT/independent-skills" "$aliased_home/skills-alias"
+aliased_uninstall >/dev/null
+[[ -d "$aliased_home/.agents/skills" && ! -L "$aliased_home/.agents" ]] || fail 'uninstall did not restore the original .agents directory'
+[[ ! -L "$TEST_ROOT/independent-skills/fsd-refactor" ]] || fail 'uninstall left a skill under the independent symlinked parent'
+
 echo "scenario 10: a global install into the real home runs only from main in the primary checkout"
 guard_repo="$TEST_ROOT/guard-repo"
 guard_home="$TEST_ROOT/guard-home"
@@ -277,6 +318,7 @@ for interruption in error TERM INT; do
   "$REPO_ROOT/tooling/scripts/install.sh" --project "$failed_project" --force >/dev/null
   "$REPO_ROOT/tooling/scripts/uninstall.sh" --project "$failed_project" >/dev/null
   grep -q 'original project rules' "$failed_project/AGENTS.md" || fail "$interruption retry lost the original backup record"
+  [[ "$(readlink "$failed_project/CLAUDE.md")" == "$TEST_ROOT/missing-original" ]] || fail "$interruption retry did not restore the dangling backup on uninstall"
 done
 
 echo "scenario 13: a failed upgrade preserves managed links, the manifest, and existing backups"

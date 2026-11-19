@@ -200,7 +200,11 @@ printf '%s\n' '{"route":"direct","implementation_authorized":false,"file_changes
 if [[ "${FAKE_CODEX_BEHAVIOR:-0}" == "1" ]]; then
   printf '%s\n' '{"authority_action":"reuse","pre_execution_pause":false,"questions":[],"subagents":[],"model_generated_review":"none","review_trigger":"","deterministic_checks":["test"],"rationale":"authorized implementation"}' > "$decision_file"
 fi
-printf '%s\n' '{"type":"turn.completed","usage":{"input_tokens":101,"output_tokens":41,"reasoning_tokens":9,"cached_input_tokens":21,"cache_write_input_tokens":4}}'
+if [[ "${FAKE_CODEX_EXPECT_EFFORT:-}" == "ultra" ]]; then
+  printf '%s\n' '{"type":"turn.completed","usage":{"input_tokens":101,"output_tokens":557,"reasoning_output_tokens":516,"cached_input_tokens":21,"cache_write_input_tokens":4}}'
+else
+  printf '%s\n' '{"type":"turn.completed","usage":{"input_tokens":101,"output_tokens":41,"reasoning_tokens":9,"cached_input_tokens":21,"cache_write_input_tokens":4}}'
+fi
 MOCK_CODEX
 
 cat > "$mock_bin/claude" <<'MOCK_CLAUDE'
@@ -219,14 +223,16 @@ mock_claude_result="$test_root/mock-claude.jsonl"
 PATH="$mock_bin:$PATH" "$EVAL_ROOT/run.sh" --provider codex --model mock-codex --effort medium --case direct-fix --output "$mock_codex_result"
 PATH="$mock_bin:$PATH" "$EVAL_ROOT/run.sh" --provider claude --model mock-claude --effort medium --case direct-fix --output "$mock_claude_result"
 "$EVAL_ROOT/score.sh" "$mock_codex_result" "$mock_claude_result" >/dev/null || fail "normalized mock adapter results did not pass"
-jq -e '.usage.cache_read_tokens == 21 and .usage.cache_write_tokens == 4 and .provenance.adapter_revision == "2"' "$mock_codex_result" >/dev/null || fail "Codex usage or provenance normalization failed"
+jq -e '.usage.reasoning_or_thinking_tokens == 9 and .usage.cache_read_tokens == 21 and .usage.cache_write_tokens == 4 and .provenance.adapter_revision == "2"' "$mock_codex_result" >/dev/null || fail "Codex usage or provenance normalization failed"
 jq -e '.usage.cache_read_tokens == 22 and .usage.cache_write_tokens == 5 and .usage.cost_usd == 0.004' "$mock_claude_result" >/dev/null || fail "Claude usage normalization failed"
 
 FAKE_CODEX_EXPECT_EFFORT=ultra PATH="$mock_bin:$PATH" "$EVAL_ROOT/run.sh" --provider codex --model mock-codex --effort ultra --case direct-fix --output "$test_root/mock-ultra.jsonl"
 jq -e '.effort == "ultra"' "$test_root/mock-ultra.jsonl" >/dev/null || fail "runner did not record ultra"
+jq -e '.usage.reasoning_or_thinking_tokens == 516' "$test_root/mock-ultra.jsonl" >/dev/null || fail "runner dropped Codex reasoning_output_tokens"
 "$EVAL_ROOT/score.sh" "$test_root/mock-ultra.jsonl" >/dev/null || fail "mocked ultra run did not score"
 FAKE_CODEX_EXPECT_EFFORT=ultra FAKE_CODEX_BEHAVIOR=1 PATH="$mock_bin:$PATH" "$EVAL_ROOT/behavior.sh" --provider codex --model mock-codex --effort ultra --scenario routine --output "$test_root/behavior-ultra.jsonl"
 jq -e '.effort == "ultra" and .scenario_id == "routine"' "$test_root/behavior-ultra.jsonl" >/dev/null || fail "behavior runner did not record ultra"
+jq -e '.usage.reasoning_or_thinking_tokens == 516' "$test_root/behavior-ultra.jsonl" >/dev/null || fail "behavior runner dropped Codex reasoning_output_tokens"
 
 printf '%s\n' 'preserve-after-model-failure' > "$test_root/failure-preserve.jsonl"
 if FAKE_CODEX_FAIL=1 PATH="$mock_bin:$PATH" "$EVAL_ROOT/run.sh" --provider codex --model mock-codex --case direct-fix --output "$test_root/failure-preserve.jsonl" --force >/dev/null 2>&1; then

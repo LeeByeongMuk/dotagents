@@ -29,6 +29,6 @@ Modern Web Guidance의 Git 커밋은 스킬 파일을 고정하고 `sources.lock
 
 owned 항목의 ID·원본 경로는 실제 디렉터리와 일치해야 하며 `make check`가 누락·중복·불일치를 검사합니다. 외부 커밋은 검토 후 `sources.lock`에 기록하고, 기존 설치 반영은 별도 `update`로 실행합니다. 레지스트리만 고쳐도 설치가 자동으로 바뀌지는 않습니다.
 
-`tooling/scripts/check-sources.sh`는 인증된 GitHub CLI로 잠금 커밋의 소스 상대 경로를 검증합니다. 호스트의 실행 성공이나 외부 스킬의 품질을 검증하는 명령은 아닙니다.
+`tooling/scripts/check-sources.sh`는 Python 3.11 이상에서 설치기와 같은 TOML 규칙으로 레지스트리를 읽고, 인증된 GitHub CLI로 잠금 커밋의 소스 상대 경로를 검증합니다.
 
 새 외부 항목에는 안정적인 ID, 출처, 버전 또는 커밋, 라이선스, 지원 호스트와 적용 정보를 기록합니다. 비밀 값 대신 필요한 환경 변수 이름만 적습니다.

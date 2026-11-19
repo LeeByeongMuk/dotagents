@@ -2,7 +2,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 source "$SCRIPT_DIR/lib/install-layout.sh"
+source "$SCRIPT_DIR/lib/paths.sh"
 
 DRY_RUN=0
 MODE="global"
@@ -46,9 +48,18 @@ fi
 
 metadata="${manifest}.meta.tsv"
 read_install_layout "$manifest" "$target_root" || fail "invalid installation metadata; restore it before removal"
-if [[ "$recorded_layout" == managed ]]; then
+if [[ -f "$manifest" ]]; then
+  previous_legacy_repo=""
+  if [[ "$recorded_layout" == legacy ]]; then
+    previous_legacy_repo="$(legacy_recorded_repository "$manifest" "$target_root")"
+  fi
   while IFS=$'\t' read -r target _ _; do
-    [[ -z "$target" || "$target" == "$MANAGED_LEDGER_HEADER" ]] || managed_target_parent "$target_root" "$target" || fail "unsafe managed removal target: $target"
+    [[ -n "$target" && "$target" != "$MANAGED_LEDGER_HEADER" ]] || continue
+    if [[ "$recorded_layout" == managed ]]; then
+      managed_target_parent "$target_root" "$target" || fail "unsafe managed removal target: $target"
+    else
+      legacy_target_parent "$target_root" "$target" "$REPO_ROOT" "$previous_legacy_repo" || fail "unsafe legacy removal target: $target; check for a parent through .agents or a source checkout"
+    fi
   done < "$manifest"
 fi
 
@@ -79,7 +90,7 @@ while IFS=$'\t' read -r target source backup; do
   [[ -n "$target" && "$target" != "$MANAGED_LEDGER_HEADER" ]] || continue
   if [[ -L "$target" && "$(readlink "$target")" == "$source" ]]; then
     unlink "$target"
-    if [[ "$backup" != "-" && -e "$backup" && ! -e "$target" && ! -L "$target" ]]; then
+    if [[ "$backup" != "-" && ( -e "$backup" || -L "$backup" ) && ! -e "$target" && ! -L "$target" ]]; then
       mv "$backup" "$target"
       echo "Restored backup: $target"
     fi

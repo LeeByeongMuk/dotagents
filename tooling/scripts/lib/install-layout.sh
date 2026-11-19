@@ -56,6 +56,29 @@ managed_target_parent() {
   [[ -n "$component" && "$component" != . && "$component" != .. ]]
 }
 
+# The legacy root link can change during install or when its backup is restored.
+# Reject any parent path that passes through it, or reaches a source checkout
+# directly. Ordinary symlinked host directories outside those roots still work.
+legacy_target_parent() {
+  local root="$1" target="$2" repo="$3" previous_repo="$4" relative parent resolved_root
+  [[ "$target" == "$root"/* ]] || return 1
+  relative="${target#"$root"/}"
+  case "/$relative/" in *'/../'*|*'/./'*|*'//'*) return 1 ;; esac
+  resolved_root="$(resolve_path "$root")" || return 1
+  parent="$(resolve_path "${target%/*}" "${resolved_root%/}/.agents")" || return 1
+  ! path_is_within "$repo" "$parent" || return 1
+  [[ -z "$previous_repo" ]] || ! path_is_within "$previous_repo" "$parent"
+}
+
+legacy_recorded_repository() {
+  local manifest="$1" root="$2" agents
+  [[ -f "$manifest" ]] || return 0
+  agents="$(awk -F '\t' -v target="$root/.agents" '$1 == target { print $2; exit }' "$manifest")"
+  if [[ "$agents" == /*/agents ]]; then
+    printf '%s\n' "${agents%/agents}"
+  fi
+}
+
 # Sidecar is data, never sourced. Old ledgers retain the unchanged three-column
 # format. Only managed installs need explicit metadata; a legacy .agents row or
 # an unrecorded legacy symlink remains supported by the calling diagnostic.

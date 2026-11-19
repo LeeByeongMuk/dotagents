@@ -4,6 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
+source "$SCRIPT_DIR/lib/paths.sh"
 
 usage() {
   cat <<'EOF'
@@ -115,11 +116,20 @@ if [[ "$action" != init ]]; then
   elif [[ -f "$project/package.json" ]]; then
     command -v jq >/dev/null 2>&1 || fail "jq is required to inspect package.json"
     # Report only known script names, never command contents or arbitrary metadata.
-    if scripts="$(jq -er 'if type != "object" then error("object required") elif has("scripts") then .scripts else {} end | if type != "object" then error("scripts object required") else keys[] | select(test("^(build|check|lint|test|typecheck)(:[A-Za-z0-9_-]+)*$")) end' "$project/package.json" 2>/dev/null)"; then
-      while IFS= read -r name; do echo "verification candidate: package.json script $name (not executed)"; done <<< "$scripts"
-      verification=1
-    elif jq -e 'type == "object" and (if has("scripts") then (.scripts | type == "object") else true end)' "$project/package.json" >/dev/null 2>&1; then
-      echo 'gap: no recognized verification script names in package.json'
+    if scripts="$(jq -ser '
+      if length == 1 and (.[0] | type == "object") then .[0] else error("object required") end
+      | if has("scripts") then .scripts else {} end
+      | if type == "object" then to_entries else error("scripts object required") end
+      | map(select(.key | test("^(build|check|lint|test|typecheck)(:[A-Za-z0-9_-]+)*$"))
+          | select(.value | type == "string" and test("\\S")) | .key)
+      | sort | join("\n")
+    ' "$project/package.json" 2>/dev/null)"; then
+      if [[ -n "$scripts" ]]; then
+        while IFS= read -r name; do echo "verification candidate: package.json script $name (not executed)"; done <<< "$scripts"
+        verification=1
+      else
+        echo 'gap: no recognized verification script names with nonblank commands in package.json'
+      fi
     else
       echo 'gap: package.json is invalid or scripts is not an object'
       missing=1
@@ -140,18 +150,26 @@ case "$selected" in /*) lexical="$selected" ;; *) lexical="$PWD/$selected" ;; es
 check_components "$lexical"
 # Never turn the source checkout, home, filesystem root, or their ancestors into
 # a target project. Descendants of the checkout are also source-owned.
-case "$project/" in "$REPO_ROOT/"*) fail "project is inside the dotagents source checkout" ;; esac
+! path_is_within "$REPO_ROOT" "$project" || fail "project is inside the dotagents source checkout"
 if command -v git >/dev/null 2>&1; then
   source_common="$(git_common_directory "$REPO_ROOT" || true)"
   project_common="$(git_common_directory "$project" || true)"
-  if [[ -n "$source_common" && "$source_common" == "$project_common" ]]; then
+  if [[ "$source_common" -ef "$project_common" ]]; then
     fail "project belongs to the dotagents source repository (including linked worktrees)"
   fi
 fi
-for protected in / "$REPO_ROOT" "${HOME:-/}"; do
-  case "$protected/" in "$project/"*) fail "project is a protected directory or its ancestor" ;; esac
+home_directory="$(resolve_path "${HOME:-/}")" || fail "cannot resolve the home directory"
+for protected in / "$REPO_ROOT" "$home_directory"; do
+  ! path_is_within "$project" "$protected" || fail "project is a protected directory or its ancestor"
 done
-case "$project/" in */.git/*|*/.agents/*|*/.claude/*|*/.codex/*|*/.gemini/*) fail "project is inside a tool configuration directory" ;; esac
+cursor="$project"
+while [[ "$cursor" != / ]]; do
+  parent="${cursor%/*}"
+  for tool_directory in .git .agents .claude .codex .gemini; do
+    [[ ! "$cursor" -ef "$parent/$tool_directory" ]] || fail "project is inside a tool configuration directory"
+  done
+  cursor="${parent:-/}"
+done
 
 sources=("$REPO_ROOT/agents/templates/$template/AGENTS.md" "$REPO_ROOT/agents/templates/context-docs/project-readme.md")
 destinations=(AGENTS.md .ai-context/README.md)
@@ -182,9 +200,10 @@ created=()
 context_created=0
 committed=0
 cleanup() {
-  local index target
+  local index target created_index
   if [[ "$committed" -eq 0 ]]; then
-    for index in "${created[@]}"; do
+    for ((created_index=0; created_index<${#created[@]}; created_index++)); do
+      index="${created[$created_index]}"
       target="$project/${destinations[$index]}"
       if [[ ! -L "$target" && "$target" -ef "$stage/${destinations[$index]##*/}" ]]; then rm -- "$target"; fi
     done

@@ -1,4 +1,4 @@
 interface:
   display_name: "Dotagents Promote"
   short_description: "Promote session learnings into the dotagents repository"
-  default_prompt: "Use $dotagents-promote to review this session for portable conventions and stage them on a promotion branch."
+  default_prompt: "Use $dotagents-promote to review this session for portable conventions and prepare the changes on a promotion branch."
