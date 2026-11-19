@@ -27,7 +27,7 @@
 
 ## 변경 절차
 
-1. [자산의 원본 위치](../agents/README.md#ai-자산의-위치)를 확인하고 그 원본을 수정합니다. 공통 규칙·호스트 지침 어댑터를 바꿨으면 `make build`를 실행합니다.
+1. [새 자산의 위치](../agents/README.md#새-자산의-위치-정하기)와 [기존 원본](../agents/README.md#ai-자산의-위치)을 확인하고 해당 원본을 수정합니다. 공통 규칙·호스트 지침 어댑터를 바꿨으면 `make build`를 실행합니다.
 2. 스킬은 [추가·제거 절차](../agents/skills/README.md), 훅은 [동작·지원 호스트·실패 정책](../agents/hooks/README.md), 외부 자산은 [레지스트리와 잠금](../agents/registry/README.md)을 함께 갱신합니다.
 3. 영향을 받는 사용 안내를 갱신하고, 문서 이동 시 상대 링크와 제목 앵커를 확인합니다. 문서별 원본은 [문서 목록](../docs/README.md)을 기준으로 연결합니다.
 4. `make check`와 `git diff --check`를 실행하고 이번 변경의 diff를 검토합니다.
