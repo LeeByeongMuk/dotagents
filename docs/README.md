@@ -43,7 +43,7 @@
 
 작업별 범위·수용 조건·검증·재개 지점은 채택한 PRD·이슈·스펙에서 관리하며, 별도 원본이 없을 때 `workflows/<run-id>/brief.md`를 사용합니다.
 
-- [dotagents 역할 정리 절차와 후속 TODO](workflows/dotagents-scope/brief.md)
+- [dotagents 역할 정리 작업 기록](workflows/dotagents-scope/brief.md)
 - [dotagents 개편 작업](workflows/dotagents-renewal/brief.md)
 - [Brief 중심 제품 개발 워크플로우](workflows/lean-product-workflow/brief.md)
 - [Model Fit 라우팅](workflows/model-fit-routing/brief.md)
