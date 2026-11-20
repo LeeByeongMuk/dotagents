@@ -41,10 +41,10 @@
 - [제품 워크플로우 Model Fit 평가](evals/product-development-workflow-model-fit.md)
 - [프로젝트·환경 인터페이스 의사결정 평가](evals/renewal-interface-decisions.md)
 
-작업별 범위·수용 조건·검증·재개 지점은 채택한 PRD·이슈·스펙에서 관리하며, 별도 원본이 없을 때 `workflows/<run-id>/brief.md`를 사용합니다.
+아래 기록에는 기능을 도입할 때 내린 결정과 당시 검증 범위가 담겨 있습니다.
 
 - [dotagents 역할 정리 작업 기록](workflows/dotagents-scope/brief.md)
-- [dotagents 개편 작업](workflows/dotagents-renewal/brief.md)
+- [설치·프로젝트 초기화·환경 프로필 개편](workflows/dotagents-renewal/brief.md)
 - [Brief 중심 제품 개발 워크플로우](workflows/lean-product-workflow/brief.md)
 - [Model Fit 라우팅](workflows/model-fit-routing/brief.md)
 
