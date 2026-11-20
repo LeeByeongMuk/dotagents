@@ -8,8 +8,8 @@
 | --- | --- | --- |
 | [product-development-workflow](product-development-workflow/SKILL.md) | 기획은 Plan, 구현은 Brief → Execute → Verify. 기존 PRD·이슈를 재사용 | “이 PRD대로 구현하고 검증해줘” |
 | [fsd-refactor](fsd-refactor/SKILL.md) | FSD를 이미 쓰는 프로젝트에서 동작·렌더 결과·URL·API를 보존하며 구조 정리 | “이 슬라이스의 FSD 위반을 검토해줘” |
-| [dotagents-promote](dotagents-promote/SKILL.md) | 재사용할 관례를 별도 worktree 브랜치에 반영하고 커밋. main 병합은 별도 결정 | “이번에 정한 공통 규칙을 dotagents에 반영해줘” |
-| [usage-guide](usage-guide/SKILL.md) | 화면·번호 설명·FAQ를 갖춘 최종 사용자용 16:9 PDF와 단일 HTML 제작 | “방금 만든 기능의 사용 가이드를 만들어줘” |
+| [dotagents-promote](dotagents-promote/SKILL.md) | 전역 설치 원본의 별도 worktree에 공통 관례를 반영. 기본은 스테이징 전 상태이며 명시적으로 요청하면 커밋 | “이번에 정한 공통 규칙을 내 dotagents에 반영해줘” |
+| [usage-guide](usage-guide/SKILL.md) | 화면과 단계별 설명을 갖춘 최종 사용자용 16:9 PDF와 단일 HTML 제작 | “방금 만든 기능의 사용 가이드를 만들어줘” |
 | [repo-activity-review](repo-activity-review/SKILL.md) | 저장소의 실제 변경·검증 근거로 기간별 개발 활동을 대화에 정리 | “이 저장소의 지난주 개발 활동을 정리해줘” |
 
 작은 수정·단일 버그·설명에는 제품 개발 워크플로우를 강제하지 않습니다. 제품 기획만 요청하면 파일이나 구현을 바꾸지 않는 Plan에서 끝납니다. [제품 개발 사용 안내](../../workflows/product-development/WORKFLOW.md)

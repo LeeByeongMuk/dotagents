@@ -13,7 +13,7 @@
 | 공통 | 구현 계획 정리 | 선택형 외부 스킬 `superpowers-writing-plans`, `gstack-autoplan` |
 | 공통 | 코드 변경 검토 | 선택형 외부 스킬 `gstack-review` |
 | 공통 | 저장소 활동 요약, 사용자 가이드 작성 | [repo-activity-review](owned/repo-activity-review/SKILL.md), [usage-guide](owned/usage-guide/SKILL.md) |
-| 공통 | 여러 프로젝트에서 쓸 관례를 dotagents에 반영 | [dotagents-promote](owned/dotagents-promote/SKILL.md) |
+| 전역 설치 유지보수 | 여러 프로젝트에서 쓸 관례를 본인이 관리하는 dotagents 원본에 반영 | [dotagents-promote](owned/dotagents-promote/SKILL.md) |
 | 프론트엔드 | 웹 UI, 브라우저 API와 호환성 가이드 조회 | 선택형 외부 스킬 [modern-web-guidance](../integrations/skills/modern-web-guidance/README.md) |
 | 프론트엔드 | FSD를 이미 채택한 프로젝트의 구조 정리 | [fsd-refactor](owned/fsd-refactor/SKILL.md) |
 | 프론트엔드 | 브라우저에서 사용자 흐름 검증 | 선택형 외부 스킬 `gstack-qa` |

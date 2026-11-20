@@ -6,13 +6,15 @@ Read this reference only when the workflow must create a local Brief or an exter
 
 - Source priority: reuse a current project PRD, issue, or specification.
 - Local fallback: `docs/workflows/<run-id>/brief.md`
-- Language: preserve an adopted project's language; write a new fallback in Korean.
+- Preserve the language of an adopted Brief. For a new local Brief or run record, use the language the user requests. Otherwise follow the project's documentation language, falling back to the conversation language if the project has no established one.
 - Status: `PLANNING`, `EXECUTING`, `VERIFYING`, or `COMPLETE`
 - History: update the same authority and local run record; use their history or Git instead of correction documents.
 
 Do not hash-lock a lean Brief or duplicate product facts. A resumed agent should find one authority for product facts and at most one local run record.
 
 ## Template
+
+Write the headings, field labels, and content in the selected language. Keep the run ID, status values, and acceptance criterion identifiers stable.
 
 ```markdown
 # 제품 Brief: <이름>
