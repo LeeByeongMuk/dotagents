@@ -31,6 +31,7 @@ case "$tool" in
     print_url=""
     for arg in "$@"; do
       case "$arg" in
+        --no-sandbox) echo 'Chrome sandbox disabled' >&2; exit 1 ;;
         --print-to-pdf=*) pdf="${arg#--print-to-pdf=}" ;;
         file://*) print_url="$arg" ;;
       esac
