@@ -32,7 +32,7 @@
 - [선택 환경 프로필 설계와 배포 비교](designs/environment-profile.md)
 - [설계 결정 목록](decisions/README.md)
 
-## 평가와 작업 기록
+## 평가
 
 평가 결과는 문서에 적힌 시점과 조건의 관찰입니다. 재실행 방법은 각 [평가 도구 안내](../tooling/README.md#평가)에 있습니다.
 
@@ -40,12 +40,5 @@
 - [제품 워크플로우 모델 행동 평가](evals/product-development-workflow-model-behavior.md)
 - [제품 워크플로우 Model Fit 평가](evals/product-development-workflow-model-fit.md)
 - [프로젝트·환경 인터페이스 의사결정 평가](evals/renewal-interface-decisions.md)
-
-작업별 범위·수용 조건·검증·재개 지점은 채택한 PRD·이슈·스펙에서 관리하며, 별도 원본이 없을 때 `workflows/<run-id>/brief.md`를 사용합니다.
-
-- [dotagents 역할 정리 절차와 후속 TODO](workflows/dotagents-scope/brief.md)
-- [dotagents 개편 작업](workflows/dotagents-renewal/brief.md)
-- [Brief 중심 제품 개발 워크플로우](workflows/lean-product-workflow/brief.md)
-- [Model Fit 라우팅](workflows/model-fit-routing/brief.md)
 
 사용법은 해당 안내 문서, 실행 계약은 스킬과 코드, 설계 근거는 `designs/`·`decisions/`가 소유합니다. 다른 문서에서는 원본으로 링크합니다.

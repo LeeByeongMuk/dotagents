@@ -20,30 +20,10 @@ macOS Homebrew에서는 `make deps`로 Git·jq·ripgrep·gh를 설치합니다. 
 
 | 방식 | 사용할 때 | 설정 처리 |
 | --- | --- | --- |
-| `legacy` 기본값 | `.agents` 전체와 호스트 설정을 dotagents 원본에 연결할 때 | Claude 설정·Codex 훅 설정도 링크 |
-| `managed` 선택 | 다른 도구의 스킬과 사용자 설정을 함께 유지할 때 | 기존 일반 설정 파일 보존, 없을 때만 최소 훅 설정 생성 |
+| `managed` 첫 설치 권장 | 다른 도구의 스킬과 사용자 설정을 함께 유지할 때 | 기존 일반 설정 파일 보존, 없을 때만 최소 훅 설정 생성 |
+| `legacy` 명령 기본값 | `.agents` 전체와 호스트 설정을 dotagents 원본에 연결할 때 | Claude 설정·Codex 훅 설정도 링크 |
 
 두 방식 모두 공통 지침과 모든 직접 만든 스킬을 연결합니다. 프로필로 일부 스킬만 고르는 기능은 없습니다. 경로별 소유권과 기록 형식의 원본은 [설치 레이아웃 설계](designs/install-layouts.md)입니다.
-
-### legacy 설치
-
-`make install`은 `--global --force`입니다. 충돌하는 기존 파일·디렉터리·링크를 타임스탬프가 붙은 형제 경로로 백업한 뒤 교체합니다. 백업한 설정은 활성 설정이 아니며, 이미 올바른 링크는 유지합니다.
-
-```bash
-make install-dry
-# 변경 대상을 검토한 뒤
-make install
-make doctor
-```
-
-충돌 시 백업·교체 대신 중단하려면 아래 명령을 사용합니다.
-
-```bash
-./tooling/scripts/install.sh --dry-run --global
-./tooling/scripts/install.sh --global
-```
-
-이 방식은 저장소의 Claude `settings.json`을 사용하므로 `bypassPermissions` 기본 모드도 적용됩니다. Codex `config.toml`과 Gemini 설정, 별도 설정 예제 파일은 설치하지 않습니다.
 
 ### managed 설치
 
@@ -56,6 +36,24 @@ make doctor
 공유 `.agents/skills`에는 직접 만든 스킬별 링크만 추가합니다. 기존 Claude·Codex 일반 설정 파일은 덮어쓰거나 병합하지 않습니다. 파일이 없을 때 생성한 최소 훅 설정도 이후에는 사용자 소유이며 자동 갱신하지 않습니다.
 
 기존 설정에 필수 훅이 없으면 doctor가 안내하는 예제에서 필요한 등록만 수동 통합합니다. 공유 부모 디렉터리나 설정 경로가 심볼릭 링크이면 중단하며 `--force`로 우회할 수 없습니다. legacy에서 전환할 때는 [이행 절차](designs/install-layouts.md#이행과-제거)에 따라 기존 설치를 제거한 뒤 다시 설치합니다.
+
+### legacy 설치
+
+`make install-dry`는 `--global --force`의 변경을 미리 보여주고, `make install`은 이를 적용합니다. 충돌하는 기존 파일·디렉터리·링크를 같은 디렉터리의 타임스탬프가 붙은 경로로 백업한 뒤 교체합니다. 이후 Claude는 저장소의 `settings.json` 전체를 사용하므로 권한 확인을 생략하는 `bypassPermissions` 모드, 플러그인과 상태줄 설정도 적용됩니다. Codex의 훅은 저장소의 `hooks.json`을 사용하며, Codex의 `config.toml`과 Gemini 사용자 설정은 각 호스트에서 관리합니다.
+
+```bash
+make install-dry
+# 변경 대상을 검토한 뒤
+make install
+make doctor
+```
+
+충돌이 있으면 중단하는 legacy 설치를 원할 때는 아래 명령을 사용합니다.
+
+```bash
+./tooling/scripts/install.sh --dry-run --global
+./tooling/scripts/install.sh --global
+```
 
 ### 설치 후 확인
 
@@ -112,6 +110,6 @@ managed 제거는 공유 디렉터리·외부 스킬·사용자 설정을 남깁
 
 ## 새 컴퓨터에서 복원
 
-저장소를 사용할 위치에 clone하고 [필요한 도구](#필요한-도구)를 준비한 뒤, 선택한 방식으로 dry-run → 설치 → doctor를 실행합니다. 전체 검증은 [유지보수 안내](../tooling/README.md#검증)를 따릅니다.
+저장소를 사용할 위치에 clone하고 [필요한 도구](#필요한-도구)를 준비합니다. 개인 백업에서 Claude·Codex 설정을 복원할 경우 설치 전에 복원하고 [managed 설치](#managed-설치)의 미리보기, 설치, 진단 순서를 따릅니다. 이전 컴퓨터에서 저장소의 호스트 설정 전체를 사용했고 그대로 복원하려면 [legacy 설치](#legacy-설치)를 선택합니다.
 
-로그인·인증값과 사용자 소유 설정은 로컬에서 별도로 준비합니다. [외부 스킬](external-skills.md)과 [개발 환경 프로필](../environment/README.md)도 각각 선택해 적용합니다.
+로그인·인증값은 새 컴퓨터에서 별도로 준비합니다. [외부 스킬](external-skills.md)과 [개발 환경 프로필](../environment/README.md)은 각각 선택해 적용합니다. 전체 검증은 [유지보수 안내](../tooling/README.md#검증)를 따릅니다.

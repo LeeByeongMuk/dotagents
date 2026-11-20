@@ -186,4 +186,4 @@ Codex와 Claude Code에 같은 내부 도구 순서를 강제하지 않는다. �
 - [Anthropic Claude prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices)
 - [Claude Code subagent context](https://code.claude.com/docs/en/sub-agents#what-loads-at-startup)
 
-초기 변경 전·후 행동 비교와 단일 실행 비용 신호는 [`docs/evals/product-development-workflow-model-behavior.md`](../evals/product-development-workflow-model-behavior.md)에 기록한다.
+변경 전후의 실행 결정과 후속 라우팅 검사를 재현하려면 [모델 행동 평가의 조건과 결과](../evals/product-development-workflow-model-behavior.md)를 참고한다.

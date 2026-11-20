@@ -17,34 +17,20 @@ git clone https://github.com/LeeByeongMuk/dotagents.git
 cd dotagents
 ```
 
-아래는 기본 `legacy` 설치입니다. **`make install`은 충돌하는 기존 항목을 백업하고 저장소 링크로 교체합니다.** Claude 설정과 Codex 훅 설정도 대상입니다. 기존 설정과 다른 도구의 스킬을 함께 유지하려면 [managed 설치](docs/install.md#managed-설치)를 먼저 확인하세요.
+처음 설치할 때는 `managed` 방식을 권장합니다. Claude의 `settings.json`과 Codex의 `hooks.json`이 일반 파일이면 그대로 사용하고, 파일이 없을 때만 최소 커밋 훅 설정을 만듭니다.
 
 ```bash
-make install-dry
+./tooling/scripts/install.sh --dry-run --global --layout managed
 # 출력된 변경 대상을 확인한 뒤 실행
-make install
+./tooling/scripts/install.sh --global --layout managed
 make doctor
 ```
 
-실제 홈에는 `main`의 주 체크아웃에서 설치합니다. 설치한 저장소는 링크의 원본이므로 유지해야 합니다. Codex 커밋 훅은 설치 후 `/hooks`에서 검토하고 신뢰해야 실행됩니다.
+실제 홈에는 `main`의 주 체크아웃에서 설치하고 링크 원본인 체크아웃을 유지합니다. `make doctor`가 기존 설정에 빠진 훅 등록을 알려주면 예시를 확인해 추가합니다. Codex에서는 `/hooks`에서 훅을 검토하고 신뢰해야 실행됩니다. [managed 설치](docs/install.md#managed-설치)
 
-## 할 수 있는 일
+`make install-dry`와 `make install`은 기존 `legacy` 방식의 미리보기와 적용 명령입니다. 적용하면 충돌 항목을 백업하고 Claude 설정 전체를 저장소 파일에 연결합니다. 이 설정에는 권한 확인을 생략하는 모드와 개인 플러그인·상태줄 구성이 포함됩니다. [legacy 설치](docs/install.md#legacy-설치)
 
-| 작업 | 안내 |
-| --- | --- |
-| 전역 설치, 갱신, 제거와 새 컴퓨터 복원 | [설치 안내](docs/install.md) |
-| 프로젝트 지침·컨텍스트 점검과 초기화 | [프로젝트 준비](docs/project-readiness.md) |
-| 환경과 작업에 맞는 스킬 선택 | [용도별 선택 목록](agents/skills/README.md#용도별-선택-목록) |
-| 제품 개발, FSD 리팩터링, 공통 관례 반영, 사용 가이드, 저장소 활동 정리 | [직접 만든 스킬과 사용 예](agents/skills/owned/README.md) |
-| 기획은 Plan, 구현은 Brief → Execute → Verify로 진행 | [제품 개발 워크플로우](agents/workflows/product-development/WORKFLOW.md) |
-| 커밋 메시지 검사와 프로젝트별 예외 설정 | [훅 안내](agents/hooks/README.md) |
-| 선택한 외부 스킬을 고정 커밋으로 설치·갱신·제거 | [외부 스킬 관리](docs/external-skills.md) |
-| 셸·Git 설정 조각을 선택적으로 적용 | [개발 환경 프로필](environment/README.md) |
-| Codex 모델·권한·CLI 프로필 설정 | [Codex 설정](agents/adapters/codex/README.md) |
-
-호스트별 훅과 MCP·플러그인·AI 자산 프로필의 지원 범위는 각 안내에서 확인할 수 있습니다. [훅](agents/hooks/README.md#진입점과-설치) · [외부 연동](agents/integrations/README.md) · [AI 자산 프로필](agents/profiles/README.md)
-
-전체 문서는 [문서 목록](docs/README.md), 원본의 위치와 새 자산을 둘 곳은 [저장소 구조](agents/README.md#새-자산의-위치-정하기)에서 확인할 수 있습니다.
+작업별 안내는 [문서 목록](docs/README.md)에서 확인할 수 있습니다. [AI 자산 프로필](agents/profiles/README.md) · [저장소 구조](agents/README.md#새-자산의-위치-정하기)
 
 ## 수정과 검증
 

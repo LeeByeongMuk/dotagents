@@ -103,7 +103,7 @@ else
 fi
 
 print_url="$(python3 -I -c 'import pathlib, sys; print(pathlib.Path(sys.argv[1]).as_uri())' "$print_copy")"
-"$chrome" --headless=new --disable-gpu --no-sandbox --allow-file-access-from-files \
+"$chrome" --headless=new --disable-gpu --allow-file-access-from-files \
   --user-data-dir="$work/profile" --no-pdf-header-footer --run-all-compositor-stages-before-draw \
   --virtual-time-budget=8000 --print-to-pdf="$staged_pdf" "$print_url" >/dev/null 2>&1 \
   || fail "Chrome failed to render the PDF"

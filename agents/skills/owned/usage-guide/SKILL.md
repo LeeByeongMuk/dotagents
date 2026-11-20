@@ -1,6 +1,6 @@
 ---
 name: usage-guide
-description: Build an end-user usage guide (사용 가이드, 매뉴얼, 사용 방법 안내서) as a 16:9 PDF plus a standalone HTML, with screen captures or CSS mockups, red numbered markers, matching step explanations, and an FAQ. Use when the user asks for a guide, manual, or how-to document that operators, merchants, customers, or other end users of a product will read, typically right after a feature was built or changed. Do not use for internal planning or policy review documents, release notes, API references, or developer READMEs.
+description: Create an illustrated end-user guide (사용 가이드, 매뉴얼, 사용 방법 안내서) as a 16:9 PDF and standalone HTML. Use for step-by-step instructions that help operators, merchants, or customers complete a task in a product.
 ---
 
 # Usage Guide
@@ -28,18 +28,15 @@ Settle these before writing. Derive each one from the conversation, the reposito
 
 ## Structure
 
-Copy `assets/skeleton.html` (as `guide.html`) and `assets/guide.css` into a fresh working directory, such as the session scratchpad, and write the guide there. Put captures in `img/` beside it. Keep this order:
+Copy `assets/skeleton.html` (as `guide.html`) and `assets/guide.css` into a fresh working directory. Put captures in `img/` beside it. A short guide can open directly on the task page with its title and purpose. For a longer guide, use the relevant parts of the template in this order.
 
-1. Cover: product, title, one-line purpose, reader, version, and date.
-2. Contents: two columns with section rows highlighted. Each `data-page-of="<page id>"` fills in its page number.
-3. "What is <feature>?": one lead paragraph, a flow of 4 to 6 boxes, 3 term cards, and a core rules table of 4 to 6 rows.
-4. Optional "where to find it": a table of tasks, menu paths, and who does them, plus the preparation order when tasks depend on each other.
-5. Optional PART divider per surface or phase when the guide spans more than one.
-6. One page per screen or task: a header with the section tag, the task title, and the menu path as the crumb; the screen on the left with red numbered markers; numbered steps on the right that match the markers; at most two callouts (참고 for context, 주의 for what fails or cannot be undone). Split a page that needs more than 6 steps.
-7. FAQ: 8 to 10 rows of situation and what to do, each situation phrased the way the reader would say it.
-8. Closing: the date and the screens the guide is based on, a note that names and amounts are examples, and related guides.
+1. A cover identifies the product, purpose, reader, version, and date. Add contents when readers need to navigate between tasks. Each row's `data-page-of` points to a section ID. Remove the row when you omit that section.
+2. Introduce concepts readers need before they start. Show a flow when order matters, explain unfamiliar terms, or collect rules that change a reader's choice. Use the number of entries the task requires.
+3. When tasks span menus, show where to find them and which role performs them. Use part dividers when readers need to distinguish surfaces or phases.
+4. Give each task page a title and a visible menu path. Place red numbered markers on the screen and match them to the numbered instructions beside it. Use 참고 for context and 주의 for a failure or irreversible action. Split a page when its screen or steps become hard to read.
+5. Add an FAQ when readers have recurring questions with verified answers. A note next to the relevant step can cover a single question. If the guide needs a closing page, use it for the date, covered screens, and relevant follow-up guides.
 
-A typical guide runs 10 to 18 pages. The skeleton script adds the footer and page numbers to light pages; do not write them by hand.
+The skeleton script adds footers and page numbers to light pages.
 
 ## Writing rules
 

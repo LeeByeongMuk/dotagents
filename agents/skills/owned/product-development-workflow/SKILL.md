@@ -32,7 +32,7 @@ Read `references/model-fit.md` only when its trigger below applies.
 ### Brief
 
 1. Reuse a current, authoritative project PRD, issue, or specification as the Brief when it can stay current and owns the product decisions.
-2. Only when no suitable authority exists, read `references/brief-template.md` completely and create one Korean living document at `docs/workflows/<run-id>/brief.md`, using a lowercase hyphenated run ID.
+2. Only when no suitable authority exists, read `references/brief-template.md` completely and create one living Brief at `docs/workflows/<run-id>/brief.md`, using a lowercase hyphenated run ID.
 3. When the authority is external or read-only, read the template and create a small local run record that links to it and owns only missing decisions, checkpoints, verification evidence, and remaining risks.
 4. Ensure the authority and any local run record together cover the same product fields required by the plan path, plus execution checkpoints and verification evidence. Use stable `AC-<number>` identifiers from planning through verification.
 5. Surface material assumptions, consequential alternatives, and user-owned open decisions together before Execute only when they could change the result. This is not an approval gate. Wait only when an open product decision blocks the direction.
@@ -75,8 +75,6 @@ Read the adopted product authority, any local run record, project rules, Git sta
 ## Complete the work
 
 For `lean`, finish after acceptance criteria have evidence, the run record and affected living context documents are current, and the requested delivery action is complete. Report unresolved risks and do not treat shipping as implicit.
-
-When the run surfaces a portable convention, list it as a dotagents promotion candidate with a proposed destination. Apply it only through the separately authorized `dotagents-promote` skill.
 
 ## Safety
 

@@ -96,7 +96,6 @@ grep -Fq 'references/model-fit.md' "$workflow_skill" || fail "workflow skill mus
 grep -Fq 'only when the user explicitly asks to choose or compare models' "$workflow_skill" || fail "workflow Model Fit must run only on an explicit user request"
 grep -Fq 'Separate the recommendation from execution' "$workflow_skill" || fail "workflow Model Fit must not imply model-switch authority"
 grep -Fq 'Do not require a fixed model-generated review pass' "$workflow_skill" || fail "workflow skill must not force a generic review pass"
-grep -Fq 'dotagents promotion candidate' "$workflow_skill" || fail "workflow skill must propose promotion candidates at completion"
 
 fsd_skill="$REPO_ROOT/agents/skills/owned/fsd-refactor/SKILL.md"
 [[ "$(sed -n '1p' "$fsd_skill")" == "---" ]] || fail "FSD skill is missing opening frontmatter"
