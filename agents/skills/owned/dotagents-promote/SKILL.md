@@ -1,6 +1,6 @@
 ---
 name: dotagents-promote
-description: Prepare reusable rules, templates, or skills in the checkout behind the user's global dotagents installation. Use when they ask to add a convention to their dotagents setup or accept a promotion candidate proposed in a workflow completion report.
+description: Identify reusable conventions for the user's own dotagents installation when they request candidates, or prepare changes when they ask to apply a convention.
 ---
 
 # Dotagents Promote
@@ -9,13 +9,13 @@ Use this workflow when maintaining your own global dotagents installation. The d
 
 ## Collect and classify candidates
 
-1. Start from the candidates the user named or accepted from a completion report. Otherwise review the current session for durable, project-agnostic learnings: corrected agent behavior, repeated conventions, reusable structures.
+1. Start with the conventions the user named. When asked to find candidates, review the session for corrected agent behavior, repeated conventions, and reusable structures.
 2. Assign each candidate one destination:
    - `agents/rules/<topic>.md`: meta-rules that hold in every project regardless of stack.
    - `agents/templates/<profile>/`: stack- or domain-specific conventions.
    - `agents/skills/owned/<name>/`: repeatable multi-step procedures.
    - Reject: anything tied to one project belongs in that project's `AGENTS.md`, not in dotagents.
-3. Reject candidates that contain project paths, service names, credentials, or one-off context. When the final list differs from what the user asked for, confirm it before editing.
+3. Exclude project paths, service names, credentials, and one-off context. For a candidate review, report the candidates and their destinations, then stop. Apply changes only when the user asks. Confirm any change to the requested scope before editing.
 
 ## Apply on an isolated worktree
 

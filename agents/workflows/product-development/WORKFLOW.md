@@ -29,4 +29,3 @@ $product-development-workflow 로 이 프로젝트에 인증 기능을 추가해
 - 실행 모델 권고(Model Fit)는 모델을 골라 달라고 요청할 때만 합니다.
 - gstack, Superpowers 같은 외부 스킬은 현재 작업에 필요한 능력만 개별로 사용합니다.
 - 배포, 푸시, PR 생성은 요청이 있을 때만 수행합니다.
-- 사용자가 자기 dotagents에 재사용할 관례를 찾아 달라고 요청하면 후보와 반영할 위치를 제안합니다. 해당 관례를 반영해 달라는 요청이 있을 때만 `dotagents-promote`를 사용합니다.

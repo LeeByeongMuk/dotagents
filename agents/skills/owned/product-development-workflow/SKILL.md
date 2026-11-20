@@ -76,8 +76,6 @@ Read the adopted product authority, any local run record, project rules, Git sta
 
 For `lean`, finish after acceptance criteria have evidence, the run record and affected living context documents are current, and the requested delivery action is complete. Report unresolved risks and do not treat shipping as implicit.
 
-Suggest a portable convention and its destination only when the user asks for candidates for their own dotagents installation. Use `dotagents-promote` only when the user explicitly authorizes applying the convention.
-
 ## Safety
 
 - Preserve project rules, user changes, package managers, test commands, and release policy.
