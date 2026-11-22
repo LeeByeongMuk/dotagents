@@ -7,6 +7,7 @@ BREW ?= brew
 
 help: ## 타깃 목록
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{ printf "  %-14s %s\n", $$1, $$2 }'
+	@printf '\n처음 설치할 때는 README의 managed 설치 절차를 따르세요.\n'
 
 deps: ## 필수 도구 설치 (macOS Homebrew)
 	$(BREW) install git jq ripgrep gh
@@ -23,10 +24,10 @@ check: ## 저장소 전체 검사
 test: ## 모든 회귀 테스트
 	@for t in tooling/tests/*_test.sh; do echo "== $$t"; "$$t" >/dev/null || exit 1; done; echo "all tests passed"
 
-install-dry: ## 기존 항목 백업 후 전역 설치 dry-run
+install-dry: ## legacy 전역 설치 미리보기 (백업·교체할 경로 확인)
 	./tooling/scripts/install.sh --dry-run --global --force
 
-install: ## 기존 항목 백업 후 전역 설치
+install: ## legacy 전역 설치 (충돌 항목 백업·교체, Claude 권한 확인 생략 모드 적용)
 	./tooling/scripts/install.sh --global --force
 
 uninstall: ## 전역 제거

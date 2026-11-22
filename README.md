@@ -6,10 +6,10 @@ Claude Code, Codex, Gemini에서 함께 쓰는 작업 규칙과 스킬을 모았
 
 ## 빠른 시작
 
-Git, Bash, make, jq, ripgrep이 필요합니다. 설치 후에도 에이전트가 이 저장소의 파일을 읽으므로 계속 보관할 위치에 복제하세요.
+Git, Bash, make, jq, ripgrep이 필요합니다. 전역 설치에는 `main` 브랜치를 사용합니다. 설치 후에도 에이전트가 이 저장소의 파일을 읽으므로 계속 보관할 위치에 복제하세요.
 
 ```bash
-git clone https://github.com/LeeByeongMuk/dotagents.git
+git clone --branch main https://github.com/LeeByeongMuk/dotagents.git
 cd dotagents
 ```
 
