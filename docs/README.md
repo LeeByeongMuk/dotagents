@@ -18,6 +18,7 @@
 
 ## 유지보수
 
+- [남은 유지보수 작업](TODO.md)
 - [저장소 구조와 새 자산의 위치](../agents/README.md#새-자산의-위치-정하기)
 - [관리 명령과 변경 검증](../tooling/README.md)
 - [스킬 추가·제거 절차](../agents/skills/README.md)
