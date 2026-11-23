@@ -41,7 +41,7 @@ make doctor
 
 ### legacy 설치
 
-`make install-dry`는 `--global --force`의 변경을 미리 보여주고, `make install`은 이를 적용합니다. 충돌하는 기존 파일·디렉터리·링크를 같은 디렉터리의 타임스탬프가 붙은 경로로 백업한 뒤 교체합니다. 이후 Claude는 저장소의 `settings.json` 전체를 사용하므로 권한 확인을 생략하는 `bypassPermissions` 모드, 플러그인과 상태줄 설정도 적용됩니다. Codex의 훅은 저장소의 `hooks.json`을 사용하며, Codex의 `config.toml`과 Gemini 사용자 설정은 각 호스트에서 관리합니다.
+`make install-dry`는 `--global --force`의 변경을 미리 보여주고, `make install`은 이를 적용합니다. 충돌하는 기존 파일·디렉터리·링크를 같은 디렉터리의 타임스탬프가 붙은 경로로 백업한 뒤 교체합니다. 이후 Claude는 저장소의 `settings.json` 전체를 사용하므로 권한 확인을 생략하는 `bypassPermissions` 모드, 플러그인과 상태줄 설정도 적용됩니다. 상태줄은 claude-hud 플러그인이 설치되어 있을 때만 표시됩니다. Codex의 훅은 저장소의 `hooks.json`을 사용하며, Codex의 `config.toml`과 Gemini 사용자 설정은 각 호스트에서 관리합니다.
 
 ```bash
 make install-dry

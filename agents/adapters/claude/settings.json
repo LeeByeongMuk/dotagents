@@ -26,7 +26,7 @@
   "disableRemoteControl": true,
   "statusLine": {
     "type": "command",
-    "command": "bash -c '\"/opt/homebrew/bin/node\" \"$(ls -td ~/.claude/plugins/cache/claude-hud/claude-hud/*/ 2>/dev/null | head -1)dist/index.js\"'"
+    "command": "bash -c 'd=\"$(ls -td ~/.claude/plugins/cache/claude-hud/claude-hud/*/ 2>/dev/null | head -1)\"; n=/opt/homebrew/bin/node; [ -x \"$n\" ] || n=\"$(command -v node)\"; if [ -n \"$d\" ] && [ -f \"${d}dist/index.js\" ] && [ -n \"$n\" ]; then exec \"$n\" \"${d}dist/index.js\"; fi'"
   },
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true,
